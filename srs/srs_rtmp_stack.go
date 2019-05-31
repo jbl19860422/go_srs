@@ -2,8 +2,9 @@ package srs
 
 import (
 	"bufio"
-	"time"
+	// "time"
 	log "github.com/sirupsen/logrus"
+	// "fmt"
 )
 
 type SrsHandshakeBytes struct {
@@ -13,10 +14,21 @@ type SrsHandshakeBytes struct {
 }
 
 func (this *SrsHandshakeBytes) ReadC0C1(c *SrsRtmpConn) int {
-	var ret int = 0
-	if len(this.C0C1) > 0 {
-		return ret
-	}
+	// var ret int = 0
+	// if len(this.C0C1) > 0 {
+	// 	return ret
+	// }
+
+	// this.C0C1 = make([]byte, 1537, 1537)
+	// var data []byte = make([]byte, 1024, 1024)
+	// _, err := c.Conn.Read(data)
+	// if err != nil {
+	// 	fmt.Println("read data failed, err=" + err.Error())
+	// 	return 0
+	// }
+	// str := string(data)
+	// fmt.Println("server recv:" + str)
+	// return 0
 	log.Info("start read c0c1", c.Conn)
 	reader := bufio.NewReader(c.Conn)
 	for {
@@ -24,10 +36,13 @@ func (this *SrsHandshakeBytes) ReadC0C1(c *SrsRtmpConn) int {
 		if err != nil {
 			log.Error("read c0c1 failed, err=", err.Error())
 		} else {
-			if n != 0 {
-				log.Info("read bytes len=", n)
-			}
-			time.Sleep(10*time.Millisecond)
+			log.Info("read bytes len=", n)
+			// if n != 0 {
+			// 	log.Info("read bytes len=", n)
+			// } else {
+
+			// }
+			// time.Sleep(10*time.Millisecond)
 			// log.Info("read bytes len=", n)
 			// break;
 		}

@@ -1,10 +1,10 @@
 package srs
 import (
-	_ "fmt"
+	// "fmt"
 	"net"
 	"strconv"
 	"errors"
-	log "github.com/sirupsen/logrus"
+	// log "github.com/sirupsen/logrus"
 )
 
 type SrsStreamListener struct {
@@ -18,11 +18,21 @@ func (s *SrsStreamListener) ListenAndAccept() error {
 	}
 
 	for {
-		conn, err := ln.Accept()
-		if err != nil {
-			//handle error
-		}
-		log.Info("get a connect")
+		
+		conn, _ := ln.Accept()
+		// var data []byte = make([]byte, 1024, 1024)
+		// _, err = conn.Read(data)
+		// if err != nil {
+		// 	fmt.Println("read data failed, err=" + err.Error())
+		// 	return nil
+		// }
+		// str := string(data)
+		// fmt.Println("server recv:" + str)
+
+		// if err != nil {
+		// 	//handle error
+		// }
+		// log.Info("get a connect")
 		go s.HandleConnection(conn)
 	}
 }
