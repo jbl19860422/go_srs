@@ -1,15 +1,16 @@
 package srs
 
 import (
-	log "github.com/sirupsen/logrus"
+	// log "github.com/sirupsen/logrus"
 	// "go_srs/srs/protocol"
 	// "fmt"
+	"log"
 )
 
 type SrsServer struct {
-	streams []SrsStream	
+	streams    []SrsStream
 	srsServers []*SrsRtmpServer
-	Listener *SrsStreamListener
+	Listener   *SrsStreamListener
 }
 
 func (this *SrsServer) StartProcess(port int) {
@@ -19,8 +20,6 @@ func (this *SrsServer) StartProcess(port int) {
 func (this *SrsServer) AcceptConnection(c *SrsRtmpConn) {
 	rtmpServer := NewSrsRtmpServer(c)
 	this.srsServers = append(this.srsServers, rtmpServer)
-	log.Info("star a new server")
+	log.Printf("star a new server")
 	go rtmpServer.Start()
 }
-
-

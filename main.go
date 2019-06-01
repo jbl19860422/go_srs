@@ -1,10 +1,10 @@
 package main
 
-import(
+import (
 	"time"
-	"os"
+	// "os"
 	"flag"
-	log "github.com/sirupsen/logrus"
+	// log "github.com/sirupsen/logrus"
 	"go_srs/srs"
 )
 
@@ -12,17 +12,17 @@ var (
 	port = flag.Int("p", 1935, "set port `port`")
 )
 
-func init() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-}
+// func init() {
+// 	log.SetFormatter(&log.JSONFormatter{})
+// 	log.SetOutput(os.Stdout)
+// }
 
 func main() {
 	flag.Parse()
 	//init server
 	l := &srs.SrsStreamListener{}
-	server := &srs.SrsServer{Listener:l}
+	server := &srs.SrsServer{Listener: l}
 	l.Svr = server
 	server.StartProcess(*port)
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 }
