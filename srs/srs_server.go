@@ -2,6 +2,7 @@ package srs
 
 import (
 	log "github.com/sirupsen/logrus"
+	"go_srs/srs/protocol"
 	// "fmt"
 )
 
@@ -22,11 +23,7 @@ func (this *SrsServer) StartProcess() {
 func (this *SrsServer) AcceptConnection(c *SrsRtmpConn) {
 	rtmpServer := &SrsRtmpServer{
 		Conn:c,
-		HandShaker:SrsHandshakeBytes{
-			C0C1:make([]byte, 1537),
-			S0S1S2:make([]byte, 3073),
-			C2:make([]byte, 1536),
-		},
+		HandShaker:protocol.SrsHandshakeBytes{},
 	}
 	this.srsServers = append(this.srsServers, rtmpServer)
 	log.Info("star a new server")

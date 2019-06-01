@@ -3,7 +3,7 @@ package main
 import (
 	"net"
 	// "fmt"
-	"time"
+	_ "time"
 )
 
 func main() {
@@ -14,8 +14,5 @@ func main() {
 
 	str := []byte("test client")
 	conn.Write(str)
-
-	for {
-		time.Sleep(1*time.Second)
-	}
+	conn.Close();
 }
