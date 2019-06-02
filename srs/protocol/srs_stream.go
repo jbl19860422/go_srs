@@ -55,6 +55,16 @@ func (s *SrsStream) read_nbytes(n int32) (b []byte, err error) {
 	return
 }
 
+func (s *SrsStream) read_int8() (v int8, err error) {
+	b, err := s.read_nbytes(1)
+	if err != nil {
+		return
+	}
+	bin_buf := bytes.NewBuffer(b)
+	binary.Read(bin_buf, binary.LittleEndian, &v)
+	return
+}
+
 func (s *SrsStream) read_int16() (v int16, err error) {
 	b, err := s.read_nbytes(2)
 	if err != nil {

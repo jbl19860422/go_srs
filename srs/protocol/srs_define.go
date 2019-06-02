@@ -74,3 +74,23 @@ const (
 	*/
 	RTMP_MSG_AggregateMessage = 0x16
 )
+
+/**
+ * amf0 command message, command name macros
+ */
+const (
+	RTMP_AMF0_COMMAND_CONNECT        = "connect"
+	RTMP_AMF0_COMMAND_CREATE_STREAM  = "createStream"
+	RTMP_AMF0_COMMAND_CLOSE_STREAM   = "closeStream"
+	RTMP_AMF0_COMMAND_PLAY           = "play"
+	RTMP_AMF0_COMMAND_PAUSE          = "pause"
+	RTMP_AMF0_COMMAND_ON_BW_DONE     = "onBWDone"
+	RTMP_AMF0_COMMAND_ON_STATUS      = "onStatus"
+	RTMP_AMF0_COMMAND_RESULT         = "_result"
+	RTMP_AMF0_COMMAND_ERROR          = "_error"
+	RTMP_AMF0_COMMAND_RELEASE_STREAM = "releaseStream"
+	RTMP_AMF0_COMMAND_FC_PUBLISH     = "FCPublish"
+	RTMP_AMF0_COMMAND_UNPUBLISH      = "FCUnpublish"
+	RTMP_AMF0_COMMAND_PUBLISH        = "publish"
+	RTMP_AMF0_DATA_SAMPLE_ACCESS     = "|RtmpSampleAccess"
+)
