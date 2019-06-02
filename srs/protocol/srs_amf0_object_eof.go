@@ -35,3 +35,12 @@ func (this *SrsAmf0ObjectEOF) read(s *SrsStream) (err error) {
 	}
 	return
 }
+
+func (this *SrsAmf0ObjectEOF) write(stream *SrsStream) error {
+	b := make([]byte, 3)
+	b[0] = 0
+	b[1] = 0
+	b[2] = 9
+	stream.write_bytes(b)
+	return nil
+}

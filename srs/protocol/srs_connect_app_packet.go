@@ -59,5 +59,27 @@ func (this *SrsConnectAppPacket) decode(s *SrsStream) error {
 }
 
 func (s *SrsConnectAppPacket) encode() ([]byte, error) {
+	stream := NewSrsStream([]byte{}, 0)
+	err := srs_amf0_write_string(stream, s.command_name)
+	if err != nil {
+		return nil, err
+	}
+
+	err = srs_amf0_write_number(stream, s.transaction_id)
+	if err != nil {
+		return nil, err
+	}
+
+	// if ((ret = props->write(stream)) != ERROR_SUCCESS) {
+	//     srs_error("encode props failed. ret=%d", ret);
+	//     return ret;
+	// }
+
+	// srs_verbose("encode props success.");
+
+	// if ((ret = info->write(stream)) != ERROR_SUCCESS) {
+	//     srs_error("encode info failed. ret=%d", ret);
+	//     return ret;
+	// }
 	return nil, nil
 }

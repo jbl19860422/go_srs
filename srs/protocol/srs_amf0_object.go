@@ -54,8 +54,18 @@ func (this *SrsAmf0Object) GetNumberProperty(key string) (s float64, err error) 
 	return
 }
 
+func (this *SrsAmf0Object) SetStringProperty(key string, v string) {
+	this.properties[key] = v
+	return
+}
+
+func (this *SrsAmf0Object) SetNumberProperty(key string, v float64) {
+	this.properties[key] = v
+	return
+}
+
 func NewSrsAmf0Object() *SrsAmf0Object {
-	s := &SrsAmf0Object{}
+	s := &SrsAmf0Object{eof: &SrsAmf0ObjectEOF{}}
 	s.properties = make(map[string]interface{})
 	return s
 }
@@ -97,4 +107,28 @@ func (this *SrsAmf0Object) read(stream *SrsStream) (err error) {
 		log.Print("properties len=", len(this.properties))
 	}
 	return
+}
+
+func (this *SrsAmf0Object) write(stream *SrsStream) error {
+	stream.write_1byte(RTMP_AMF0_Object)
+	// value
+	for k, v := range this.properties {
+		srs_amf0_write_utf8(stream, k)
+		encodeAmf0(stream, v)
+	}
+
+	_ = this.eof.write(stream)
+	return nil
+}
+
+func (s *SrsAmf0Object) total_size() int {
+	var size int = 1
+	var sz SrsAmf0Size = SrsAmf0Size{}
+	for k, v := range s.properties {
+		size += sz.utf8(k)
+		size += sz.any(v)
+	}
+
+	size += sz.object_eof()
+	return size
 }

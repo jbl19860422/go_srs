@@ -50,6 +50,21 @@ func srs_amf0_read_string(s *SrsStream) (val string, err error) {
 	return
 }
 
+func srs_amf0_write_string(s *SrsStream, val string) error {
+	marker := byte(RTMP_AMF0_String)
+	len := int16(len(val))
+	len_buf := make([]byte, 2)
+	len_buf[0] = byte((len >> 8) & 0x0F)
+	len_buf[1] = byte((len) & 0x0F)
+	b := []byte(val)
+	data := make([]byte, 0)
+	data = append(data, marker)
+	data = append(data, len_buf...)
+	data = append(data, b...)
+	s.write_bytes(data)
+	return nil
+}
+
 func srs_amf0_read_utf8(s *SrsStream) (val string, err error) {
 	if !s.require(2) {
 		err = errors.New("amf0 read string length failed")
@@ -70,6 +85,19 @@ func srs_amf0_read_utf8(s *SrsStream) (val string, err error) {
 	return
 }
 
+func srs_amf0_write_utf8(s *SrsStream, val string) error {
+	len := int16(len(val))
+	len_buf := make([]byte, 2)
+	len_buf[0] = byte((len >> 8) & 0x0F)
+	len_buf[1] = byte((len) & 0x0F)
+	b := []byte(val)
+	data := make([]byte, 0)
+	data = append(data, len_buf...)
+	data = append(data, b...)
+	s.write_bytes(data)
+	return nil
+}
+
 func srs_amf0_read_number(s *SrsStream) (val float64, err error) {
 	marker, err := s.read_int8()
 	if err != nil {
@@ -86,6 +114,13 @@ func srs_amf0_read_number(s *SrsStream) (val float64, err error) {
 		return 0, err
 	}
 	return
+}
+
+func srs_amf0_write_number(s *SrsStream, val float64) error {
+	marker := byte(RTMP_AMF0_Number)
+	s.write_1byte(marker)
+	s.write_float64(val)
+	return nil
 }
 
 func srs_amf0_read_boolean(s *SrsStream) (val bool, err error) {
@@ -245,6 +280,36 @@ func decodeAmf0(stream *SrsStream) (v interface{}, err error) {
 		}
 	// User defined
 	case RTMP_AMF0_Invalid:
+		{
+
+		}
+	}
+	return
+}
+
+func encodeAmf0(stream *SrsStream, v interface{}) (err error) {
+	switch v.(type) {
+	case float64:
+		{
+			err = srs_amf0_write_number(stream, v.(float64))
+			break
+		}
+	case bool:
+		{
+			// v, err = srs_amf0_read_number(stream)
+			break
+		}
+	case string:
+		{
+			err = srs_amf0_write_string(stream, v.(string))
+			break
+		}
+	case SrsAmf0Object:
+		{
+			err = encodeAmf0(stream, v)
+			break
+		}
+	case nil:
 		{
 
 		}

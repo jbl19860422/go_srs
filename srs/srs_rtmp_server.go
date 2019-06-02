@@ -97,8 +97,16 @@ func (this *SrsRtmpServer) service_cycle() int {
 		return -2
 	}
 
+	this.request.ip = this.Conn.Conn.RemoteAddr().String()
+	log.Print("start respone connect_app")
+	time.Sleep(10 * time.Millisecond)
+	err = this.response_connect_app()
+	if err != nil {
+		log.Print("response_connect_app error")
+	}
+
 	for {
-		time.Sleep(10*time.Second)
+		time.Sleep(10 * time.Second)
 	}
 	return 0
 }
@@ -163,9 +171,60 @@ func (this *SrsRtmpServer) set_window_ack_size(act_size int32) error {
 }
 
 func (this *SrsRtmpServer) set_peer_bandwidth(bandwidth int, typ int8) error {
-    pkt := protocol.NewSrsSetPeerBandwidthPacket();
-    pkt.Bandwidth = int32(bandwidth)
+	pkt := protocol.NewSrsSetPeerBandwidthPacket()
+	pkt.Bandwidth = int32(bandwidth)
 	pkt.Typ = typ
 	err := this.Protocol.SendPacket(pkt, 0)
 	return err
+}
+
+func (this *SrsRtmpServer) response_connect_app() error {
+	pkt := protocol.NewSrsConnectAppResPacket()
+	_ = pkt
+	pkt.Props.SetStringProperty("fmsVer", "FMS/3,5,3,888")
+	pkt.Props.SetNumberProperty("capabilities", float64(127))
+	pkt.Props.SetNumberProperty("mode", float64(1))
+	pkt.Info.SetStringProperty("level", "status")
+	pkt.Info.SetStringProperty("code", "NetConnection.Connect.Success")
+	pkt.Info.SetStringProperty("description", "Connection succeeded")
+	pkt.Info.SetNumberProperty("objectEncoding", float64(0))
+	err := this.Protocol.SendPacket(pkt, 0)
+	return err
+	// pkt->props->set("fmsVer", SrsAmf0Any::str("FMS/"RTMP_SIG_FMS_VER));
+	// pkt->props->set("capabilities", SrsAmf0Any::number(127));
+	// pkt->props->set("mode", SrsAmf0Any::number(1));
+
+	// pkt->info->set(StatusLevel, SrsAmf0Any::str(StatusLevelStatus));
+	// pkt->info->set(StatusCode, SrsAmf0Any::str(StatusCodeConnectSuccess));
+	// pkt->info->set(StatusDescription, SrsAmf0Any::str("Connection succeeded"));
+	// pkt->info->set("objectEncoding", SrsAmf0Any::number(req->objectEncoding));
+	// SrsAmf0EcmaArray* data = SrsAmf0Any::ecma_array();
+	// pkt->info->set("data", data);
+
+	// data->set("version", SrsAmf0Any::str(RTMP_SIG_FMS_VER));
+	// data->set("srs_sig", SrsAmf0Any::str(RTMP_SIG_SRS_KEY));
+	// data->set("srs_server", SrsAmf0Any::str(RTMP_SIG_SRS_SERVER));
+	// data->set("srs_license", SrsAmf0Any::str(RTMP_SIG_SRS_LICENSE));
+	// data->set("srs_role", SrsAmf0Any::str(RTMP_SIG_SRS_ROLE));
+	// data->set("srs_url", SrsAmf0Any::str(RTMP_SIG_SRS_URL));
+	// data->set("srs_version", SrsAmf0Any::str(RTMP_SIG_SRS_VERSION));
+	// data->set("srs_site", SrsAmf0Any::str(RTMP_SIG_SRS_WEB));
+	// data->set("srs_email", SrsAmf0Any::str(RTMP_SIG_SRS_EMAIL));
+	// data->set("srs_copyright", SrsAmf0Any::str(RTMP_SIG_SRS_COPYRIGHT));
+	// data->set("srs_primary", SrsAmf0Any::str(RTMP_SIG_SRS_PRIMARY));
+	// data->set("srs_authors", SrsAmf0Any::str(RTMP_SIG_SRS_AUTHROS));
+
+	// if (server_ip) {
+	//     data->set("srs_server_ip", SrsAmf0Any::str(server_ip));
+	// }
+	// // for edge to directly get the id of client.
+	// data->set("srs_pid", SrsAmf0Any::number(getpid()));
+	// data->set("srs_id", SrsAmf0Any::number(_srs_context->get_id()));
+
+	// if ((ret = protocol->send_and_free_packet(pkt, 0)) != ERROR_SUCCESS) {
+	//     srs_error("send connect app response message failed. ret=%d", ret);
+	//     return ret;
+	// }
+	// srs_info("send connect app response message success.");
+
 }

@@ -1,10 +1,10 @@
 package protocol
 
 import (
-	"errors"
 	"bytes"
-	"log"
 	"encoding/binary"
+	"errors"
+	"log"
 )
 
 type SrsStream struct {
@@ -23,7 +23,7 @@ func NewSrsStream(data []byte, len int32) *SrsStream {
 		p:       data,
 		bytes:   data,
 		n_bytes: len,
-		pos:	 0,
+		pos:     0,
 	}
 }
 
@@ -124,6 +124,12 @@ func (s *SrsStream) read_float64() (v float64, err error) {
 	return
 }
 
+func (s *SrsStream) write_float64(v float64) (err error) {
+	bin_buf := Float64ToByte(v)
+	log.Print("...................len=", len(bin_buf), "...................")
+	s.write_bytes(bin_buf)
+	return nil
+}
 
 func (s *SrsStream) read_string(len int32) (str string, err error) {
 	if !s.require(len) {
@@ -137,6 +143,9 @@ func (s *SrsStream) read_string(len int32) (str string, err error) {
 	return
 }
 
+func (s *SrsStream) write_1byte(b byte) {
+	s.p = append(s.p, b)
+}
 func (s *SrsStream) write_bytes(d []byte) {
 	s.p = append(s.p, d...)
 }
