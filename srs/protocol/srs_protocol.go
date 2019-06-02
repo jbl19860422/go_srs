@@ -6,9 +6,12 @@ import (
 	"errors"
 	"log"
 	"net"
+	"context"
+	// "reflect"
 )
 
 const SRS_PERF_CHUNK_STREAM_CACHE = 16
+const SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE = 128
 
 type SrsProtocol struct {
 	chunkCache []*SrsChunkStream
@@ -29,7 +32,10 @@ func NewSrsProtocol() *SrsProtocol {
 	for cid = 0; cid < SRS_PERF_CHUNK_STREAM_CACHE; cid++ {
 		cache[cid] = NewSrsChunkStream(cid)
 	}
-	return &SrsProtocol{chunkCache: cache}
+	return &SrsProtocol{
+		chunkCache: cache,
+		in_chunk_size:SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE,
+	}
 }
 
 var mh_sizes = [4]int{11, 7, 3, 0}
@@ -305,10 +311,10 @@ func (s *SrsProtocol) ReadMessageHeader(conn *net.Conn, chunk *SrsChunkStream, f
 	return
 }
 
-func (s *SrsProtocol) RecvInterlacedMessage(conn *net.Conn) (error, *SrsRtmpMessage) {
+func (s *SrsProtocol) RecvInterlacedMessage(conn *net.Conn) (*SrsRtmpMessage, error) {
 	fmt, cid, err := s.ReadBasicHeader(conn)
 	if nil != err {
-		// fmt.Println("read basic header failed, err=", err)
+		log.Print("read basic header failed, err=", err)
 		return nil, nil
 	}
 
@@ -330,16 +336,18 @@ func (s *SrsProtocol) RecvInterlacedMessage(conn *net.Conn) (error, *SrsRtmpMess
 	err = s.ReadMessageHeader(conn, chunk, fmt)
 	if err != nil {
 		log.Print("read message header ", err)
-		return err, nil
+		return nil, err
 	}
 
+	log.Print("read message header succeed")
 	var msg *SrsRtmpMessage = nil
 	if msg, err = s.RecvMessagePayload(conn, chunk); err != nil {
 		log.Print("RecvMessagePayload failed")
-		return err, nil
+		return nil, err
 	}
+	// log.Print("read payload succeed, len=", msg.size)
 
-	return nil, msg
+	return msg, nil
 }
 
 func (s *SrsProtocol) RecvMessagePayload(conn *net.Conn, chunk *SrsChunkStream) (msg *SrsRtmpMessage, err error) {
@@ -348,6 +356,7 @@ func (s *SrsProtocol) RecvMessagePayload(conn *net.Conn, chunk *SrsChunkStream) 
 	}
 
 	// the chunk payload size.
+	//期望的剩余数据长度=总长度-已经接收的长度
 	payload_size := chunk.Header.payload_length - chunk.RtmpMessage.size
 
 	if s.in_chunk_size < payload_size {
@@ -372,12 +381,121 @@ func (s *SrsProtocol) RecvMessagePayload(conn *net.Conn, chunk *SrsChunkStream) 
 	log.Print("recv payload_length=", chunk.Header.payload_length)
 
 	if chunk.Header.payload_length == chunk.RtmpMessage.size {
+		log.Print("recv new message")
 		new_msg := chunk.RtmpMessage
 		chunk.RtmpMessage = nil
 		return new_msg, nil
 	}
 
+	log.Print("not a message payload_length=", chunk.Header.payload_length, "&size=", chunk.RtmpMessage.size)
+
 	_ = payload_size
 	_ = buffer1
 	return nil, nil
+}
+
+func (s *SrsProtocol) RecvMessage(conn *net.Conn) (*SrsRtmpMessage, error) {
+	for {
+		rtmp_msg, err := s.RecvInterlacedMessage(conn)
+		if err != nil {
+			log.Print("recv a message")
+		}
+
+		if rtmp_msg == nil {
+			log.Print("recv a empty message")
+			continue
+		}
+
+		if rtmp_msg.size <= 0 || rtmp_msg.header.payload_length <= 0 {
+			log.Print("ignore empty message")
+			continue
+		}
+
+		if err = s.onRecvMessage(rtmp_msg); err != nil {
+			return nil, err
+		}
+
+		return rtmp_msg, nil
+	}
+	return nil, nil
+}
+
+func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) (packet SrsPacket, err error) {
+	if msg.header.IsAmf0Command() || msg.header.IsAmf3Command() || msg.header.IsAmf0Data() || msg.header.IsAmf3Data() {
+		// skip 1bytes to decode the amf3 command.
+		if msg.header.IsAmf3Command() && stream.require(1) {
+			stream.skip(1)
+		}
+		// amf0 command message.
+		// need to read the command name.
+		var command string
+		command, err = srs_amf0_read_string(stream)
+		if err != nil {
+			log.Print("srs_amf0_read_string error, err=", err)
+			err = errors.New("srs_amf0_read_string error")
+			return
+		}
+
+		log.Print("srs_amf0_read_string command=", command)
+		_ = command
+	} else if(msg.header.IsSetChunkSize()) {
+		p := NewSrsSetChunkSizePacket();
+		err = p.decode(stream)
+		log.Print("NewSrsSetChunkSizePacket ", p.chunk_size)
+		// 
+		packet = p
+		return
+	}
+	return
+}
+
+func (s *SrsProtocol) decode_message(msg *SrsRtmpMessage) (packet SrsPacket, err error) {
+	stream := NewSrsStream(msg.payload, msg.size)
+	if stream == nil {
+		err = errors.New("newsrsstream failed")
+		return
+	}
+
+	packet, err = s.do_decode_message(msg, stream)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func (s *SrsProtocol) onRecvMessage(msg *SrsRtmpMessage) error {
+	if msg.header.message_type == RTMP_MSG_SetChunkSize || msg.header.message_type == RTMP_MSG_UserControlMessage || msg.header.message_type == RTMP_MSG_WindowAcknowledgementSize {
+		packet, err := s.decode_message(msg)
+		if err != nil {
+			log.Print("decode packet from message payload failed. ")
+		}
+		_ = packet
+	}
+	return nil
+}
+
+func (s *SrsProtocol) LoopMessage(ctx context.Context, conn *net.Conn) {
+	for {
+		msg, err := s.RecvMessage(conn)
+		if err != nil {
+			continue
+		}
+
+		if msg == nil {
+			continue
+		}
+
+		if err = s.onRecvMessage(msg); err != nil {
+			continue
+		}
+		select {
+		case <-ctx.Done() : {//结束
+
+		}
+		default : {
+
+		}
+		}
+	}
 }

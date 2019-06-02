@@ -43,49 +43,49 @@ type SrsMessageHeader struct {
 }
 
 func (s *SrsMessageHeader) IsAudio() bool {
-	return false
+	return s.message_type == RTMP_MSG_AudioMessage
 }
 
 func (s *SrsMessageHeader) IsVideo() bool {
-	return false
+	return s.message_type == RTMP_MSG_VideoMessage
 }
 
 func (s *SrsMessageHeader) IsAmf0Command() bool {
-	return false
+	return s.message_type == RTMP_MSG_AMF0CommandMessage
 }
 
 func (s *SrsMessageHeader) IsAmf0Data() bool {
-	return false
+	return s.message_type == RTMP_MSG_AMF0DataMessage
 }
 
 func (s *SrsMessageHeader) IsAmf3Command() bool {
-	return false
+	return s.message_type == RTMP_MSG_AMF3CommandMessage
 }
 
 func (s *SrsMessageHeader) IsAmf3Data() bool {
-	return false
+	return s.message_type == RTMP_MSG_AMF3DataMessage
 }
 
 func (s *SrsMessageHeader) IsWindowAckledgementSize() bool {
-	return false
+	return s.message_type == RTMP_MSG_WindowAcknowledgementSize
 }
 
 func (s *SrsMessageHeader) IsAckledgement() bool {
-	return false
+	return s.message_type == RTMP_MSG_Acknowledgement
 }
 
 func (s *SrsMessageHeader) IsSetChunkSize() bool {
-	return false
+	return s.message_type == RTMP_MSG_SetChunkSize
 }
 
 func (s *SrsMessageHeader) IsUserControlMessage() bool {
-	return false
+	return s.message_type == RTMP_MSG_UserControlMessage
 }
 
 func (s *SrsMessageHeader) IsSetPeerBandwidth() bool {
-	return false
+	return s.message_type == RTMP_MSG_SetPeerBandwidth
 }
 
 func (s *SrsMessageHeader) IsAggregate() bool {
-	return false
+	return s.message_type == RTMP_MSG_AggregateMessage
 }

@@ -8,7 +8,6 @@ import (
 )
 
 type SrsServer struct {
-	streams    []SrsStream
 	srsServers []*SrsRtmpServer
 	Listener   *SrsStreamListener
 }
