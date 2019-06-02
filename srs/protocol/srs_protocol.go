@@ -402,7 +402,7 @@ func (s *SrsProtocol) RecvMessagePayload(conn *net.Conn, chunk *SrsChunkStream) 
 	return nil, nil
 }
 
-func (s *SrsProtocol) recv_message(conn *net.Conn) (*SrsRtmpMessage, error) {
+func (s *SrsProtocol) RecvMessage(conn *net.Conn) (*SrsRtmpMessage, error) {
 	for {
 		rtmp_msg, err := s.RecvInterlacedMessage(conn)
 		if err != nil {
@@ -452,7 +452,12 @@ func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) 
 			err = p.decode(stream)
 			packet = p
 			return
-        }
+        } else if command == RTMP_AMF0_COMMAND_RELEASE_STREAM {
+			p := NewSrsFMLEStartPacket()
+			err = p.decode(stream)
+			packet = p
+			return
+		}
 
 	} else if(msg.header.IsSetChunkSize()) {
 		p := NewSrsSetChunkSizePacket();
@@ -504,7 +509,7 @@ func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 
 func (s *SrsProtocol) ExpectMessage(conn *net.Conn, packet SrsPacket) (SrsPacket) {
 	for {
-		msg, err := s.recv_message(conn)
+		msg, err := s.RecvMessage(conn)
 		if err != nil {
 			continue
 		}

@@ -70,16 +70,5 @@ func (s *SrsConnectAppPacket) encode() ([]byte, error) {
 		return nil, err
 	}
 
-	// if ((ret = props->write(stream)) != ERROR_SUCCESS) {
-	//     srs_error("encode props failed. ret=%d", ret);
-	//     return ret;
-	// }
-
-	// srs_verbose("encode props success.");
-
-	// if ((ret = info->write(stream)) != ERROR_SUCCESS) {
-	//     srs_error("encode info failed. ret=%d", ret);
-	//     return ret;
-	// }
 	return nil, nil
 }

@@ -106,10 +106,21 @@ func (this *SrsRtmpServer) service_cycle() int {
 	}
 
 	for {
-		time.Sleep(10 * time.Second)
+		this.stream_service_cycle()
 	}
 	return 0
 }
+
+func (this *SrsRtmpServer) stream_service_cycle() {
+
+}
+
+func (this *SrsRtmpServer) identify_client() error {
+	for {
+		msg, err := this.Protocol.RecvMessage()
+	}
+}
+
 func (this *SrsRtmpServer) connect_app() error {
 	// ctx, cancel := context.WithCancel(context.Background())
 	// go this.Protocol.LoopMessage(ctx, &(this.Conn.Conn))
@@ -135,8 +146,14 @@ func (this *SrsRtmpServer) connect_app() error {
 	this.request.schema = u.Scheme
 	this.request.host = u.Host
 	p := strings.Split(u.Path, "/")
-	this.request.app = p[1]
-	this.request.stream = p[2]
+	if len(p) >= 2 {
+		this.request.app = p[1]
+	}
+
+	if len(p) >= 3 {
+		this.request.stream = p[2]
+	}
+
 	m, _ := url.ParseQuery(u.RawQuery)
 	log.Print("****************************", this.request.schema)
 	log.Print("****************************", this.request.host)
