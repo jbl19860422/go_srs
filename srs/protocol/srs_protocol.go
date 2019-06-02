@@ -465,13 +465,24 @@ func (s *SrsProtocol) decode_message(msg *SrsRtmpMessage) (packet SrsPacket, err
 }
 
 func (s *SrsProtocol) onRecvMessage(msg *SrsRtmpMessage) error {
+	var packet SrsPacket
+	log.Print("message.type=", msg.header.message_type)
 	if msg.header.message_type == RTMP_MSG_SetChunkSize || msg.header.message_type == RTMP_MSG_UserControlMessage || msg.header.message_type == RTMP_MSG_WindowAcknowledgementSize {
-		packet, err := s.decode_message(msg)
+		var err error
+		packet, err = s.decode_message(msg)
 		if err != nil {
 			log.Print("decode packet from message payload failed. ")
+			return errors.New("decode packet from message payload failed.")
 		}
 		_ = packet
 	}
+
+	if msg.header.message_type == RTMP_MSG_SetChunkSize {
+		//参数检查
+		s.in_chunk_size = packet.(*SrsSetChunkSizePacket).chunk_size;
+		log.Print("in_chunk_size=", s.in_chunk_size)
+	}
+
 	return nil
 }
 

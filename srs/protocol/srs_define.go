@@ -29,8 +29,8 @@ const (
 	Procedure Calls (RPC) over streams that are communicated using the
 	command messages to the peer.
 	*/
-	RTMP_MSG_AMF3CommandMessage = 0x11
-	RTMP_MSG_AMF0CommandMessage = 0x14
+	RTMP_MSG_AMF3CommandMessage = 0x11 //17	AMF3
+	RTMP_MSG_AMF0CommandMessage = 0x14 //20	AFM0
 	/**
 	3.2. Data message
 	The client or the server sends this message to send Metadata or any
