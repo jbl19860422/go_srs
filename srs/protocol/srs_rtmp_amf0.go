@@ -101,13 +101,14 @@ func srs_amf0_read_boolean(s *SrsStream) (val bool, err error) {
 
 	val, err = s.read_bool()
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 	return
 }
 
 func srs_amf0_read_null(s *SrsStream) (err error) {
-	if marker, err := s.read_int8(); err != nil {
+	var marker int8
+	if marker, err = s.read_int8(); err != nil {
 		return
 	}
 
@@ -118,45 +119,137 @@ func srs_amf0_read_null(s *SrsStream) (err error) {
 	return
 }
 
-func srs_amf0_read_undefined(SrsStream* stream) (err error) {
-	if marker, err := s.read_int8(); err != nil {
+func srs_amf0_read_undefined(stream *SrsStream) (err error) {
+	var marker int8
+	if marker, err = stream.read_int8(); err != nil {
 		return
 	}
 
 	if marker != RTMP_AMF0_Undefined {
 		err = errors.New("amf0 check undefined marker failed")
 	}
-	return 
+	return
 }
 
-func srs_amf0_is_object_eof(s *SrsStream) bool {
+func srs_amf0_is_object_eof(stream *SrsStream) bool {
 	// detect the object-eof specially
-	if (stream->require(3)) {//marker = 9（RTMP_AMF0_ObjectEnd），后面带两个0表示结束
-		flag_buf := stream->read_nbytes(3);
-		stream->skip(-3);
-		bin_buf := bytes.NewBuffer(flag_buf)
-		var flag int32
-		binary.Read(bin_buf, binary.BigEndian, &flag)
-		return 0x09 == flag
+	if stream.require(3) { //marker = 9（RTMP_AMF0_ObjectEnd），后面带两个0表示结束
+		flag_buf, err := stream.read_nbytes(3)
+		if err != nil {
+			return false
+		}
+
+		stream.skip(-3)
+		log.Printf("flag_buf=%x %x %x", flag_buf[0], flag_buf[1], flag_buf[2])
+		if flag_buf[0] == 0 && flag_buf[1] == 0 && flag_buf[2] == 9 {
+			return true
+		}
+		return false
 	}
-	
-	return false;
+
+	return false
 }
 
-func srs_amf0_read_any(SrsStream* stream, SrsAmf0Any** ppvalue) (err error)
-{
-    if ((ret = SrsAmf0Any::discovery(stream, ppvalue)) != ERROR_SUCCESS) {
-        srs_error("amf0 discovery any elem failed. ret=%d", ret);
-        return ret;
-    }
+func decodeAmf0(stream *SrsStream) (v interface{}, err error) {
+	var marker int8
+	if marker, err = stream.read_int8(); err != nil {
+		return
+	}
+	stream.skip(-1)
 
-    if ((ret = (*ppvalue)->read(stream)) != ERROR_SUCCESS) {
-        srs_error("amf0 parse elem failed. ret=%d", ret);
-        srs_freep(*ppvalue);
-        return ret;
-    }
-    
-    return ret;
+	switch marker {
+	case RTMP_AMF0_Number:
+		{
+			v, err = srs_amf0_read_number(stream)
+			break
+		}
+	case RTMP_AMF0_Boolean:
+		{
+			v, err = srs_amf0_read_number(stream)
+			break
+		}
+	case RTMP_AMF0_String:
+		{
+			v, err = srs_amf0_read_string(stream)
+			log.Print("value=", v)
+			break
+		}
+	case RTMP_AMF0_Object:
+		{
+			v, err = decodeAmf0(stream)
+			break
+		}
+	case RTMP_AMF0_MovieClip:
+		{
+
+		}
+	case RTMP_AMF0_Null:
+		{
+			err = srs_amf0_read_null(stream)
+			break
+		}
+	case RTMP_AMF0_Undefined:
+		{
+			err = srs_amf0_read_undefined(stream)
+			break
+		}
+	case RTMP_AMF0_Reference:
+		{
+
+		}
+	case RTMP_AMF0_EcmaArray:
+		{
+
+		}
+	case RTMP_AMF0_ObjectEnd:
+		{
+
+		}
+	case RTMP_AMF0_StrictArray:
+		{
+
+		}
+	case RTMP_AMF0_Date:
+		{
+
+		}
+	case RTMP_AMF0_LongString:
+		{
+
+		}
+	case RTMP_AMF0_UnSupported:
+		{
+
+		}
+	case RTMP_AMF0_RecordSet:
+		{
+
+		}
+	case RTMP_AMF0_XmlDocument:
+		{
+
+		}
+	case RTMP_AMF0_TypedObject:
+		{
+
+		}
+	// AVM+ object is the AMF3 object.
+	case RTMP_AMF0_AVMplusObject:
+		{
+
+		}
+	// origin array whos data takes the same form as LengthValueBytes
+	case RTMP_AMF0_OriginStrictArray:
+		{
+
+		}
+	// User defined
+	case RTMP_AMF0_Invalid:
+		{
+
+		}
+	}
+	return
 }
 
 type SrsAmf0AnyInterface interface {
@@ -176,20 +269,21 @@ type SrsAmf0AnyInterface interface {
 	write(s *SrsStream) error
 	copy(s *SrsAmf0Any) error
 }
+
 /**
 * any amf0 value.
 * 2.1 Types Overview
-* value-type = number-type | boolean-type | string-type | object-type 
-*         | null-marker | undefined-marker | reference-type | ecma-array-type 
-*         | strict-array-type | date-type | long-string-type | xml-document-type 
+* value-type = number-type | boolean-type | string-type | object-type
+*         | null-marker | undefined-marker | reference-type | ecma-array-type
+*         | strict-array-type | date-type | long-string-type | xml-document-type
 *         | typed-object-type
-*/
+ */
 type SrsAmf0Any struct {
 	marker int8
 }
 
 func (s *SrsAmf0Any) is_string() bool {
-	return s.marker == RTMP_AMF0_String;
+	return s.marker == RTMP_AMF0_String
 }
 
 func (s *SrsAmf0Any) is_boolean() bool {
@@ -213,7 +307,7 @@ func (s *SrsAmf0Any) is_object() bool {
 }
 
 func (s *SrsAmf0Any) is_object_eof() bool {
-    return s.marker == RTMP_AMF0_ObjectEnd
+	return s.marker == RTMP_AMF0_ObjectEnd
 }
 
 func (s *SrsAmf0Any) is_ecma_array() bool {
@@ -231,15 +325,3 @@ func (s *SrsAmf0Any) is_date() bool {
 func (s *SrsAmf0Any) is_complex_object() bool {
 	return s.is_object() || s.is_object_eof() || s.is_ecma_array() || s.is_strict_array()
 }
-
-
-
-
-
-
-
-
-
-
-
-

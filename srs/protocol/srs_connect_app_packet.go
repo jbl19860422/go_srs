@@ -1,8 +1,8 @@
 package protocol
 
 import (
-	"log"
 	"errors"
+	"log"
 )
 
 type SrsConnectAppPacket struct {
@@ -14,17 +14,29 @@ type SrsConnectAppPacket struct {
 	 * Always set to 1.
 	 */
 	transaction_id float64
+
+	CommandObj *SrsAmf0Object
 }
 
 func NewSrsConnectAppPacket() *SrsConnectAppPacket {
-	return &SrsConnectAppPacket{command_name:"connect"}
+	return &SrsConnectAppPacket{
+		command_name: "connect",
+		CommandObj:   NewSrsAmf0Object(),
+	}
+}
+
+func (s *SrsConnectAppPacket) get_message_type() int8 {
+	return RTMP_MSG_AMF0CommandMessage
+}
+
+func (s *SrsConnectAppPacket) get_prefer_cid() int32 {
+	return RTMP_CID_OverConnection
 }
 
 func (this *SrsConnectAppPacket) decode(s *SrsStream) error {
 	var err error
 	this.transaction_id, err = srs_amf0_read_number(s)
 	if err != nil {
-		log.Print("srs_amf0_read_string 2222222222222222")
 		return err
 	}
 
@@ -34,11 +46,18 @@ func (this *SrsConnectAppPacket) decode(s *SrsStream) error {
 		return err
 	}
 
-	log.Printf("transaction_id=%.1f", this.transaction_id)
+	err = this.CommandObj.read(s)
+	if err != nil {
+		log.Print("command read failed")
+		return err
+	} else {
+		log.Print("command_obj read succeed")
+	}
 
+	log.Print("properties len = ", len(this.CommandObj.properties))
 	return nil
 }
 
-func (s *SrsConnectAppPacket) encode(payload []byte, size int32) int32 {
-	return 0
+func (s *SrsConnectAppPacket) encode() ([]byte, error) {
+	return nil, nil
 }

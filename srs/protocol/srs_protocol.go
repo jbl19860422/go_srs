@@ -6,7 +6,7 @@ import (
 	"errors"
 	"log"
 	"net"
-	"context"
+	_ "context"
 	"reflect"
 )
 
@@ -14,6 +14,7 @@ const SRS_PERF_CHUNK_STREAM_CACHE = 16
 const SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE = 128
 
 type SrsProtocol struct {
+	conn *net.Conn
 	chunkCache []*SrsChunkStream
 	/**
 	 * chunk stream to decode RTMP messages.
@@ -24,17 +25,24 @@ type SrsProtocol struct {
 	 * input chunk size, default to 128, set by peer packet.
 	 */
 	in_chunk_size int32
+	/**
+    * output chunk size, default to 128, set by config.
+    */
+	out_chunk_size int32
 }
 
-func NewSrsProtocol() *SrsProtocol {
+func NewSrsProtocol(c *net.Conn) *SrsProtocol {
 	cache := make([]*SrsChunkStream, SRS_PERF_CHUNK_STREAM_CACHE)
 	var cid int32
 	for cid = 0; cid < SRS_PERF_CHUNK_STREAM_CACHE; cid++ {
 		cache[cid] = NewSrsChunkStream(cid)
 	}
+
 	return &SrsProtocol{
 		chunkCache: cache,
+		conn:c,
 		in_chunk_size:SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE,
+		out_chunk_size:SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE,
 	}
 }
 
@@ -494,7 +502,7 @@ func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 	return nil
 }
 
-func (s *SrsProtocol) LoopMessage(ctx context.Context, conn *net.Conn) {
+func (s *SrsProtocol) ExpectMessage(conn *net.Conn, packet SrsPacket) (SrsPacket) {
 	for {
 		msg, err := s.recv_message(conn)
 		if err != nil {
@@ -505,48 +513,191 @@ func (s *SrsProtocol) LoopMessage(ctx context.Context, conn *net.Conn) {
 			continue
 		}
 
-		if err = s.on_recv_message(msg); err != nil {
+		p, err1 := s.decode_message(msg)
+		if err1 != nil {
+			log.Print("decode message failed, err=", err1)
 			continue
 		}
-		select {
-		case <-ctx.Done() : {//结束
 
+		if reflect.TypeOf(p) != reflect.TypeOf(packet) {
+			log.Print("drop message")
+			continue
 		}
-		default : {
-
-		}
-		}
+		return p
 	}
+	return nil
 }
 
-func (s *SrsProtocol) ExpectMessage(conn *net.Conn, packet SrsPacket) {
-	for {
-		msg, err := s.recv_message(conn)
-		if err != nil {
-			log.Print("start to decode_message 111111")
-			continue
-		}
+func (s *SrsProtocol) SendPacket(packet SrsPacket, stream_id int32) error {
+	err := s.do_send_packet(packet, stream_id)
+	return err
+}
 
-		if msg == nil {
-			log.Print("start to decode_message 22222222")
-			continue
-		}
+func (s *SrsProtocol) do_send_packet(packet SrsPacket, stream_id int32) error {
+	payload, err := packet.encode()
+	if err != nil {
+		return err
+	}
 
-		log.Print("start to decode_message 333333")
-		p, err := s.decode_message(msg)
-		if err != nil {
-			log.Print("decode message failed, err=", err)
-			continue
-		}
+	if len(payload) <= 0 {
+		return errors.New("packet is empty, ignore empty message.")
+	}
 
-		t1 := reflect.TypeOf(packet)
-		t2 := reflect.TypeOf(p)
-		log.Print("t1=", t1, "&t2=", t2)
-		if t1 == t2 {
-			log.Print("equal ")
+	var header SrsMessageHeader
+	header.payload_length = int32(len(payload))
+	header.message_type = packet.get_message_type()
+	header.stream_id = stream_id
+	header.perfer_cid = packet.get_prefer_cid()
+
+	err = s.do_simple_send(&header, payload)
+	return err
+}
+
+func (s *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) error {
+	var sended_count int = 0
+	var d []byte
+	var err error
+	for sended_count < len(payload) {
+		if sended_count == 0 {
+			log.Print("cid=", mh.perfer_cid,",timestamp=", mh.timestamp, ",payload_length=", mh.payload_length, ",type=", mh.message_type, ",stream_id=", mh.stream_id)
+			d, err = srs_chunk_header_c0(mh.perfer_cid, int32(mh.timestamp), mh.payload_length, mh.message_type, mh.stream_id)
+			if err != nil {
+				return err
+			}
 		} else {
-			log.Print("not equal")
+			//srs_chunk_header_c3
 		}
+		log.Print("write len==", len(d))
+		for i:= 0; i < len(d); i++ {
+			log.Printf("%x ", d[i])
+		}
+		// n1 , err1 := (*s.conn).Write(d)
+		// if err1 != nil {
+		// 	return err1
+		// }
 
+		d = append(d, payload...)
+		// log.Print("write succeed len=", n1)
+		// log.Print("write body len==", len(payload))
+		n2, err2 := (*s.conn).Write(d)
+		if err2 != nil {
+			return err2
+		}
+		sended_count += n2
+		log.Print("sended_count=",sended_count)
 	}
+	return nil
 }
+
+const SRS_CONSTS_RTMP_MAX_FMT0_HEADER_SIZE = 16
+
+func srs_chunk_header_c0(perfer_cid int32, timestamp int32, payload_length int32, message_type int8, stream_id int32) ([]byte, error) {
+	var len int32 = 0
+	// to directly set the field.
+	data := make([]byte, SRS_CONSTS_RTMP_MAX_FMT0_HEADER_SIZE)
+	// write new chunk stream header, fmt is 0
+	data[0] = byte(0x00 | (perfer_cid & 0x3F))
+	len += 1
+    // chunk message header, 11 bytes
+    // timestamp, 3bytes, big-endian
+    if timestamp < RTMP_EXTENDED_TIMESTAMP {
+		b := IntToBytes(int(timestamp))
+		data[1] = b[2]
+		data[2] = b[1]
+		data[3] = b[0]
+    } else {
+		data[1] = 0xFF
+		data[2] = 0xFF
+		data[3] = 0xFF
+	}
+	len += 3
+    
+	// message_length, 3bytes, big-endian
+	log.Print("payload_length=",payload_length)
+	b := IntToBytes(int(payload_length))
+	log.Printf("%x %x %x", b[0], b[1], b[2])
+    data[4] = b[2]
+    data[5] = b[1]
+    data[6] = b[0]
+    len += 3
+    // message_type, 1bytes
+	data[7] = byte(message_type)
+	// log.Print("data[7]=", data[7])
+	len += 1
+    // stream_id, 4bytes, little-endian
+	b = IntToBytes(int(stream_id))
+	data[8] = b[0]
+	data[9] = b[1]
+	data[10] = b[2]
+	data[11] = b[3]
+    len += 4
+    // for c0
+    // chunk extended timestamp header, 0 or 4 bytes, big-endian
+    //
+    // for c3:
+    // chunk extended timestamp header, 0 or 4 bytes, big-endian
+    // 6.1.3. Extended Timestamp
+    // This field is transmitted only when the normal time stamp in the
+    // chunk message header is set to 0x00ffffff. If normal time stamp is
+    // set to any value less than 0x00ffffff, this field MUST NOT be
+    // present. This field MUST NOT be present if the timestamp field is not
+    // present. Type 3 chunks MUST NOT have this field.
+    // adobe changed for Type3 chunk:
+    //        FMLE always sendout the extended-timestamp,
+    //        must send the extended-timestamp to FMS,
+    //        must send the extended-timestamp to flash-player.
+    // @see: ngx_rtmp_prepare_message
+    // @see: http://blog.csdn.net/win_lin/article/details/13363699
+    // TODO: FIXME: extract to outer.
+    if timestamp >= RTMP_EXTENDED_TIMESTAMP {
+		b = IntToBytes(int(timestamp))
+		data[12] = b[3]
+		data[13] = b[2]
+		data[14] = b[1]
+		data[15] = b[0]
+		len += 4
+	}
+	log.Print("***************len=", len, "***************")
+	return data[:len], nil
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// func (s *SrsProtocol) LoopMessage(ctx context.Context, conn *net.Conn) {
+// 	for {
+// 		msg, err := s.recv_message(conn)
+// 		if err != nil {
+// 			continue
+// 		}
+
+// 		if msg == nil {
+// 			continue
+// 		}
+
+// 		if err = s.on_recv_message(msg); err != nil {
+// 			continue
+// 		}
+// 		select {
+// 		case <-ctx.Done() : {//结束
+
+// 		}
+// 		default : {
+
+// 		}
+// 		}
+// 	}
+// }

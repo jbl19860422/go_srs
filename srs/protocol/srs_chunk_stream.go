@@ -9,8 +9,6 @@ const (
 	RTMP_FMT_TYPE3 = 3
 )
 
-const RTMP_EXTENDED_TIMESTAMP = 0xFFFFFF
-
 type SrsChunkStream struct {
 	/**
 	 * represents the basic header fmt,

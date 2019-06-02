@@ -1,7 +1,5 @@
 package protocol
 
-const RTMP_CID_ProtocolControl = 0x02
-
 const (
 	RTMP_MSG_SetChunkSize               = 0x01
 	RTMP_MSG_AbortMessage               = 0x02
@@ -94,3 +92,58 @@ const (
 	RTMP_AMF0_COMMAND_PUBLISH        = "publish"
 	RTMP_AMF0_DATA_SAMPLE_ACCESS     = "|RtmpSampleAccess"
 )
+
+/****************************************************************************
+ *****************************************************************************
+ ****************************************************************************/
+const (
+	/**
+	 * the chunk stream id used for some under-layer message,
+	 * for example, the PC(protocol control) message.
+	 */
+	RTMP_CID_ProtocolControl = 0x02
+	/**
+	 * the AMF0/AMF3 command message, invoke method and return the result, over NetConnection.
+	 * generally use 0x03.
+	 */
+	RTMP_CID_OverConnection = 0x03
+	/**
+	 * the AMF0/AMF3 command message, invoke method and return the result, over NetConnection,
+	 * the midst state(we guess).
+	 * rarely used, e.g. onStatus(NetStream.Play.Reset).
+	 */
+	RTMP_CID_OverConnection2 = 0x04
+	/**
+	 * the stream message(amf0/amf3), over NetStream.
+	 * generally use 0x05.
+	 */
+	RTMP_CID_OverStream = 0x05
+	/**
+	 * the stream message(amf0/amf3), over NetStream, the midst state(we guess).
+	 * rarely used, e.g. play("mp4:mystram.f4v")
+	 */
+	RTMP_CID_OverStream2 = 0x08
+	/**
+	 * the stream message(video), over NetStream
+	 * generally use 0x06.
+	 */
+	RTMP_CID_Video = 0x06
+	/**
+	 * the stream message(audio), over NetStream.
+	 * generally use 0x07.
+	 */
+	RTMP_CID_Audio = 0x07
+)
+
+/**
+ * 6.1. Chunk Format
+ * Extended timestamp: 0 or 4 bytes
+ * This field MUST be sent when the normal timsestamp is set to
+ * 0xffffff, it MUST NOT be sent if the normal timestamp is set to
+ * anything else. So for values less than 0xffffff the normal
+ * timestamp field SHOULD be used in which case the extended timestamp
+ * MUST NOT be present. For values greater than or equal to 0xffffff
+ * the normal timestamp field MUST NOT be used and MUST be set to
+ * 0xffffff and the extended timestamp MUST be sent.
+ */
+const RTMP_EXTENDED_TIMESTAMP = 0xFFFFFF
