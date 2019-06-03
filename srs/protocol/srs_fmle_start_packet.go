@@ -11,8 +11,10 @@ type SrsFMLEStartPacket struct {
 	Stream_name    string
 }
 
-func NewSrsFMLEStartPacket() *SrsFMLEStartPacket {
-	return &SrsFMLEStartPacket{}
+func NewSrsFMLEStartPacket(name string) *SrsFMLEStartPacket {
+	return &SrsFMLEStartPacket{
+		command_name: name,
+	}
 }
 
 func (s *SrsFMLEStartPacket) get_message_type() int8 {
@@ -25,27 +27,33 @@ func (s *SrsFMLEStartPacket) get_prefer_cid() int32 {
 
 func (this *SrsFMLEStartPacket) decode(stream *SrsStream) error {
 	var err error
-	this.command_name, err = srs_amf0_read_string(stream)
-	if err != nil {
-		return err
-	}
+	// this.command_name, err = srs_amf0_read_string(stream)
+	// if err != nil {
+	// 	log.Print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx1")
+	// 	return err
+	// }
 
 	if len(this.command_name) <= 0 || (this.command_name != RTMP_AMF0_COMMAND_RELEASE_STREAM && this.command_name != RTMP_AMF0_COMMAND_FC_PUBLISH && this.command_name != RTMP_AMF0_COMMAND_UNPUBLISH) {
+		log.Print("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk")
 		return errors.New("amf0 decode FMLE start command_name failed.")
 	}
 
 	this.Transaction_id, err = srs_amf0_read_number(stream)
 	if err != nil {
+		log.Print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx2")
 		return err
 	}
+	log.Print("Transaction_id=", this.Transaction_id)
 
 	err = srs_amf0_read_null(stream)
 	if err != nil {
+		log.Print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx3")
 		return err
 	}
 
 	this.Stream_name, err = srs_amf0_read_string(stream)
 	if err != nil {
+		log.Print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxx4")
 		return errors.New("amf0 decode FMLE start stream_name failed")
 	}
 	log.Print("StreamName=", this.Stream_name)

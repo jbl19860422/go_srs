@@ -160,3 +160,42 @@ const (
  * 0xffffff and the extended timestamp MUST be sent.
  */
 const RTMP_EXTENDED_TIMESTAMP = 0xFFFFFF
+
+// default vhost of rtmp
+const SRS_CONSTS_RTMP_DEFAULT_VHOST = "__defaultVhost__"
+
+// default port of rtmp
+const SRS_CONSTS_RTMP_DEFAULT_PORT = "1935"
+
+const RTMP_SIG_FMS_VER = "3,5,3,888"
+const RTMP_SIG_AMF0_VER = 0
+const RTMP_SIG_CLIENT_ID = "ASAICiss"
+
+// FMLE
+const RTMP_AMF0_COMMAND_ON_FC_PUBLISH = "onFCPublish"
+const RTMP_AMF0_COMMAND_ON_FC_UNPUBLISH = "onFCUnpublish"
+
+/**
+ * onStatus consts.
+ */
+const (
+	StatusLevel       = "level"
+	StatusCode        = "code"
+	StatusDescription = "description"
+	StatusDetails     = "details"
+	StatusClientId    = "clientid"
+	// status value
+	StatusLevelStatus = "status"
+	// status error
+	StatusLevelError = "error"
+	// code value
+	StatusCodeConnectSuccess   = "NetConnection.Connect.Success"
+	StatusCodeConnectRejected  = "NetConnection.Connect.Rejected"
+	StatusCodeStreamReset      = "NetStream.Play.Reset"
+	StatusCodeStreamStart      = "NetStream.Play.Start"
+	StatusCodeStreamPause      = "NetStream.Pause.Notify"
+	StatusCodeStreamUnpause    = "NetStream.Unpause.Notify"
+	StatusCodePublishStart     = "NetStream.Publish.Start"
+	StatusCodeDataStart        = "NetStream.Data.Start"
+	StatusCodeUnpublishSuccess = "NetStream.Unpublish.Success"
+)

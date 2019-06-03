@@ -107,23 +107,40 @@ func (this *SrsRtmpServer) service_cycle() int {
 
 	for {
 		this.stream_service_cycle()
+		for {
+			time.Sleep(time.Second * 1)
+		}
 	}
 
-	for {
-		time.Sleep(time.Second * 1)
-	}
+	
 	return 0
 }
 
 func (this *SrsRtmpServer) stream_service_cycle() {
 	var typ protocol.SrsRtmpConnType
-	typ, _ = this.identify_client()
-	// srs_discovery_tc_url(req->tcUrl, req->schema, req->host, req->vhost, req->app, req->stream, req->port, req->param);
+	this.request.typ, this.request.stream, _ = this.identify_client()
+	log.Print("***************identify_client done ,type=", typ);
+	var err error
+	this.request.schema, this.request.host, this.request.vhost, this.request.app, _, this.request.port, this.request.param, err = protocol.Srs_discovery_tc_url(this.request.tcUrl)
+	if err != nil {
+		log.Print("Srs_discovery_tc_url failed")
+		return
+	} else {
+		log.Print("Srs_discovery_tc_url succeed, stream_name=", this.request.stream)
+	}
+
+	switch(this.request.typ) {
+	case protocol.SrsRtmpConnFMLEPublish:{
+		log.Print("******************start SrsRtmpConnFMLEPublish*******************")
+		this.Protocol.Start_fmle_publish(0)
+	}
+	}
 	_ = typ
 }
 
-func (this *SrsRtmpServer) identify_client() (protocol.SrsRtmpConnType, error) {
+func (this *SrsRtmpServer) identify_client() (protocol.SrsRtmpConnType, string, error) {
 	var typ protocol.SrsRtmpConnType
+	var streamname string
 	for {
 		msg, err := this.Protocol.RecvMessage(&(this.Conn.Conn))
 		if err != nil {
@@ -146,31 +163,33 @@ func (this *SrsRtmpServer) identify_client() (protocol.SrsRtmpConnType, error) {
 		// }
 		case (*protocol.SrsFMLEStartPacket):
 			{
-				log.Print("SrsFMLEStartPacket")
-				typ, err = this.identify_fmle_publish_client(pkt.(*protocol.SrsFMLEStartPacket))
+				log.Print("SrsFMLEStartPacket streamname=", pkt.(*protocol.SrsFMLEStartPacket).Stream_name)
+				typ, streamname, err = this.identify_fmle_publish_client(pkt.(*protocol.SrsFMLEStartPacket))
 				if err != nil {
 					log.Print("identify_fmle_publish_client reeturn")
-					return typ, nil
+					return typ, streamname, nil
 				}
+				return typ, streamname, nil
 			}
 			// case SrsPlayPacket:{
 			// 	log.Print("SrsPlayPacket")
 			// }
 		}
-		return typ, nil
+		return typ, streamname, nil
 	}
 	_ = typ
-	return typ, nil
+	return typ, streamname, nil
 }
 
-func (this *SrsRtmpServer) identify_fmle_publish_client(req *protocol.SrsFMLEStartPacket) (protocol.SrsRtmpConnType, error) {
+func (this *SrsRtmpServer) identify_fmle_publish_client(req *protocol.SrsFMLEStartPacket) (protocol.SrsRtmpConnType, string, error) {
 	typ := protocol.SrsRtmpConnType(protocol.SrsRtmpConnFMLEPublish)
+	log.Print("")
 	pkt := protocol.NewSrsFMLEStartResPacket(req.Transaction_id)
 	err := this.Protocol.SendPacket(pkt, 0)
 	if err != nil {
-		return typ, err
+		return typ, req.Stream_name, err
 	}
-	return typ, nil
+	return typ, req.Stream_name, nil
 }
 
 func (this *SrsRtmpServer) connect_app() error {

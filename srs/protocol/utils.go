@@ -3,6 +3,8 @@ package protocol
 import (
 	"bytes"
 	"encoding/binary"
+	"net/url"
+	"strings"
 	"math"
 )
 
@@ -71,4 +73,39 @@ func (s SrsAmf0Size) any(v interface{}) int {
 
 	}
 	return size
+}
+
+func Srs_discovery_tc_url(tcUrl string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
+	var err1 error
+	u, err1 := url.Parse(tcUrl)
+	if err1 != nil {
+		err = err1
+		return
+	}
+
+	schema = u.Scheme
+	host = u.Host
+	port = SRS_CONSTS_RTMP_DEFAULT_PORT
+	if len(u.Port()) >= 0 {
+		port = u.Port()
+	}
+
+	m, _ := url.ParseQuery(u.RawQuery)
+	vhost_params, ok := m["vhost"]
+	if ok {
+		vhost = vhost_params[0]
+	}
+
+	p := strings.Split(u.Path, "/")
+	if len(p) >= 2 {
+		app = p[1]
+	}
+
+	if len(p) >= 3 {
+		stream = p[2]
+	}
+
+	param = u.RawQuery
+	err = nil
+	return
 }

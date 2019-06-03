@@ -56,6 +56,7 @@ func (this *SrsAmf0Object) GetNumberProperty(key string) (s float64, err error) 
 
 func (this *SrsAmf0Object) SetStringProperty(key string, v string) {
 	this.properties[key] = v
+	log.Print("SetStringProperty v=", v)
 	return
 }
 
@@ -114,6 +115,7 @@ func (this *SrsAmf0Object) write(stream *SrsStream) error {
 	// value
 	for k, v := range this.properties {
 		srs_amf0_write_utf8(stream, k)
+		log.Print("encodeAmf0 v=", v)
 		encodeAmf0(stream, v)
 	}
 
