@@ -429,6 +429,7 @@ func (s *SrsProtocol) RecvMessage(conn *net.Conn) (*SrsRtmpMessage, error) {
 }
 
 func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) (packet SrsPacket, err error) {
+	log.Print("***************do_decode_message start*****************")
 	if msg.header.IsAmf0Command() || msg.header.IsAmf3Command() || msg.header.IsAmf0Data() || msg.header.IsAmf3Data() {
 		// skip 1bytes to decode the amf3 command.
 		if msg.header.IsAmf3Command() && stream.require(1) {
@@ -453,6 +454,11 @@ func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) 
 			packet = p
 			return
         } else if command == RTMP_AMF0_COMMAND_RELEASE_STREAM {
+			p := NewSrsFMLEStartPacket()
+			err = p.decode(stream)
+			packet = p
+			return
+		} else if command == RTMP_AMF0_COMMAND_FC_PUBLISH {
 			p := NewSrsFMLEStartPacket()
 			err = p.decode(stream)
 			packet = p

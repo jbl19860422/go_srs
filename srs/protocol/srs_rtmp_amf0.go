@@ -154,6 +154,12 @@ func srs_amf0_read_null(s *SrsStream) (err error) {
 	return
 }
 
+func srs_amf0_write_null(stream *SrsStream) error {
+	marker := byte(RTMP_AMF0_Null)
+	stream.write_1byte(marker)
+	return nil
+}
+
 func srs_amf0_read_undefined(stream *SrsStream) (err error) {
 	var marker int8
 	if marker, err = stream.read_int8(); err != nil {
@@ -164,6 +170,12 @@ func srs_amf0_read_undefined(stream *SrsStream) (err error) {
 		err = errors.New("amf0 check undefined marker failed")
 	}
 	return
+}
+
+func srs_amf0_write_undefined(stream *SrsStream) error {
+	marker := byte(RTMP_AMF0_Undefined)
+	stream.write_1byte(marker)
+	return nil
 }
 
 func srs_amf0_is_object_eof(stream *SrsStream) bool {

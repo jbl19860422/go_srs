@@ -108,17 +108,22 @@ func (this *SrsRtmpServer) service_cycle() int {
 	for {
 		this.stream_service_cycle()
 	}
+
+	for {
+		time.Sleep(time.Second * 1)
+	}
 	return 0
 }
 
 func (this *SrsRtmpServer) stream_service_cycle() {
-	_ = this.identify_client()
-	for {
-		time.Sleep(time.Second*1)
-	}
+	var typ protocol.SrsRtmpConnType
+	typ, _ = this.identify_client()
+	// srs_discovery_tc_url(req->tcUrl, req->schema, req->host, req->vhost, req->app, req->stream, req->port, req->param);
+	_ = typ
 }
 
-func (this *SrsRtmpServer) identify_client() error {
+func (this *SrsRtmpServer) identify_client() (protocol.SrsRtmpConnType, error) {
+	var typ protocol.SrsRtmpConnType
 	for {
 		msg, err := this.Protocol.RecvMessage(&(this.Conn.Conn))
 		if err != nil {
@@ -130,7 +135,7 @@ func (this *SrsRtmpServer) identify_client() error {
 			continue
 		}
 
-		if !header.IsAmf0Command() || !header.IsAmf3Command() {
+		if !header.IsAmf0Command() && !header.IsAmf3Command() {
 			continue
 		}
 
@@ -139,16 +144,33 @@ func (this *SrsRtmpServer) identify_client() error {
 		// case SrsCreateStreamPacket: {
 		// 	log.Print("SrsCreateStreamPacket")
 		// }
-		case (*protocol.SrsFMLEStartPacket):{
-			log.Print("SrsFMLEStartPacket")
+		case (*protocol.SrsFMLEStartPacket):
+			{
+				log.Print("SrsFMLEStartPacket")
+				typ, err = this.identify_fmle_publish_client(pkt.(*protocol.SrsFMLEStartPacket))
+				if err != nil {
+					log.Print("identify_fmle_publish_client reeturn")
+					return typ, nil
+				}
+			}
+			// case SrsPlayPacket:{
+			// 	log.Print("SrsPlayPacket")
+			// }
 		}
-		// case SrsPlayPacket:{
-		// 	log.Print("SrsPlayPacket")
-		// }
-		}
-		return nil
+		return typ, nil
 	}
-	return nil
+	_ = typ
+	return typ, nil
+}
+
+func (this *SrsRtmpServer) identify_fmle_publish_client(req *protocol.SrsFMLEStartPacket) (protocol.SrsRtmpConnType, error) {
+	typ := protocol.SrsRtmpConnType(protocol.SrsRtmpConnFMLEPublish)
+	pkt := protocol.NewSrsFMLEStartResPacket(req.Transaction_id)
+	err := this.Protocol.SendPacket(pkt, 0)
+	if err != nil {
+		return typ, err
+	}
+	return typ, nil
 }
 
 func (this *SrsRtmpServer) connect_app() error {

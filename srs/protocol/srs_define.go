@@ -136,6 +136,19 @@ const (
 )
 
 /**
+ * the rtmp client type.
+ */
+type SrsRtmpConnType int
+
+const (
+	_                           SrsRtmpConnType = iota
+	SrsRtmpConnPlay                             = 0
+	SrsRtmpConnFMLEPublish                      = 1
+	SrsRtmpConnFlashPublish                     = 2
+	SrsRtmpConnHaivisionPublish                 = 3
+)
+
+/**
  * 6.1. Chunk Format
  * Extended timestamp: 0 or 4 bytes
  * This field MUST be sent when the normal timsestamp is set to

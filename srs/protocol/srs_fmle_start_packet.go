@@ -7,7 +7,7 @@ import (
 
 type SrsFMLEStartPacket struct {
 	command_name   string
-	transaction_id float64
+	Transaction_id float64
 	Stream_name    string
 }
 
@@ -34,7 +34,7 @@ func (this *SrsFMLEStartPacket) decode(stream *SrsStream) error {
 		return errors.New("amf0 decode FMLE start command_name failed.")
 	}
 
-	this.transaction_id, err = srs_amf0_read_number(stream)
+	this.Transaction_id, err = srs_amf0_read_number(stream)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (s *SrsFMLEStartPacket) encode() ([]byte, error) {
 		return nil, err
 	}
 
-	err = srs_amf0_write_number(stream, s.transaction_id)
+	err = srs_amf0_write_number(stream, s.Transaction_id)
 	if err != nil {
 		return nil, err
 	}
