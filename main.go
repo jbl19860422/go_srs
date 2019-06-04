@@ -3,8 +3,13 @@ package main
 import(
 	"time"
 	"os"
+	"flag"
 	log "github.com/sirupsen/logrus"
 	"go_srs/srs"
+)
+
+var (
+	port = flag.Int("p", 1935, "set port `port`")
 )
 
 func init() {
@@ -13,10 +18,11 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
 	//init server
 	l := &srs.SrsStreamListener{}
 	server := &srs.SrsServer{Listener:l}
 	l.Svr = server
-	server.StartProcess()
+	server.StartProcess(*port)
 	time.Sleep(1*time.Second)
 }

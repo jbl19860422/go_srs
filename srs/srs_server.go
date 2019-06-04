@@ -2,12 +2,8 @@ package srs
 
 import (
 	log "github.com/sirupsen/logrus"
-	"go_srs/srs/protocol"
+	// "go_srs/srs/protocol"
 	// "fmt"
-)
-
-const (
-	RTMP_PORT = 1935
 )
 
 type SrsServer struct {
@@ -16,15 +12,12 @@ type SrsServer struct {
 	Listener *SrsStreamListener
 }
 
-func (this *SrsServer) StartProcess() {
-	this.Listener.ListenAndAccept()
+func (this *SrsServer) StartProcess(port int) {
+	this.Listener.ListenAndAccept(port)
 }
 
 func (this *SrsServer) AcceptConnection(c *SrsRtmpConn) {
-	rtmpServer := &SrsRtmpServer{
-		Conn:c,
-		HandShaker:protocol.SrsHandshakeBytes{},
-	}
+	rtmpServer := NewSrsRtmpServer(c)
 	this.srsServers = append(this.srsServers, rtmpServer)
 	log.Info("star a new server")
 	go rtmpServer.Start()

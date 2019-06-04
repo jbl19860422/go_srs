@@ -1,7 +1,7 @@
 package protocol
 
 //message header
-type SrsMessageHeader {
+type SrsMessageHeader struct {
 	/**
      * 3bytes.
      * Three-byte field that contains a timestamp delta of the message.
@@ -43,49 +43,49 @@ type SrsMessageHeader {
 }
 
 func (s *SrsMessageHeader) IsAudio() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsVideo() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsAmf0Command() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsAmf0Data() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsAmf3Command() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsAmf3Data() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsWindowAckledgementSize() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsAckledgement() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsSetChunkSize() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsUserControlMessage() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsSetPeerBandwidth() bool {
-
+	return false
 }
 
 func (s *SrsMessageHeader) IsAggregate() bool {
-	
+	return false
 }

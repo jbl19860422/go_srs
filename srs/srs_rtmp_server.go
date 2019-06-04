@@ -9,7 +9,12 @@ import (
 
 type SrsRtmpServer struct {
 	Conn *SrsRtmpConn
+	Protocol *protocol.SrsProtocol
 	HandShaker protocol.SrsHandshakeBytes
+}
+
+func NewSrsRtmpServer(conn *SrsRtmpConn) *SrsRtmpServer {
+	return &SrsRtmpServer{Conn:conn, Protocol:&protocol.SrsProtocol{}, HandShaker:protocol.SrsHandshakeBytes{}}
 }
 
 func (this *SrsRtmpServer) HandShake() int {
@@ -58,6 +63,8 @@ func (this *SrsRtmpServer) Start() int {
 		return -1
 	}
 
-	
+	ret = this.Protocol.RecvInterlacedMessage(&(this.Conn.Conn))
+
+
 	return 0
 }

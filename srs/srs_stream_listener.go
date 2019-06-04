@@ -11,8 +11,8 @@ type SrsStreamListener struct {
 	Svr *SrsServer
 }
 
-func (s *SrsStreamListener) ListenAndAccept() error {
-	ln, err := net.Listen("tcp", ":" + strconv.Itoa(RTMP_PORT))
+func (s *SrsStreamListener) ListenAndAccept(port int) error {
+	ln, err := net.Listen("tcp", ":" + strconv.Itoa(port))
 	if err != nil {
 		return errors.New("list rtmp port 1935 failed")
 	}

@@ -24,7 +24,7 @@ func (this *SrsHandshakeBytes) ReadC0C1(c *net.Conn) int {
 	}
 
 	this.C0C1 = make([]byte, 1537, 1537)
-	(*c).SetReadDeadline(time.Now().Add(1000*time.Millisecond))
+	// (*c).SetReadDeadline(time.Now().Add(1000*time.Millisecond))
 	reader := bufio.NewReader(*c)
 	left := 1537
 	for {
@@ -65,7 +65,7 @@ func (this *SrsHandshakeBytes) ReadC2(c *net.Conn) int {
 	}
 
 	this.C2 = make([]byte, 1536)
-	(*c).SetReadDeadline(time.Now().Add(1000*time.Millisecond))
+	// (*c).SetReadDeadline(time.Now().Add(1000*time.Millisecond))
 	reader := bufio.NewReader(*c)
 	left := 1536
 	for {
