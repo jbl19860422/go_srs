@@ -2,7 +2,7 @@ package srs
 
 import (
 	// "fmt"
-	"context"
+	_ "context"
 	"go_srs/srs/protocol"
 	"log"
 	"time"
@@ -65,14 +65,16 @@ func (this *SrsRtmpServer) Start() int {
 		return -1
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go this.Protocol.LoopMessage(ctx, &(this.Conn.Conn))
-
+	// ctx, cancel := context.WithCancel(context.Background())
+	// go this.Protocol.LoopMessage(ctx, &(this.Conn.Conn))
+	connPacket := protocol.NewSrsConnectAppPacket()
+	this.Protocol.ExpectMessage(&(this.Conn.Conn), connPacket)
 	for {
 		time.Sleep(10*time.Second)
 	}
 
-	_ = cancel
+	// _ = cancel
+	
 	// msg, err := this.Protocol.RecvInterlacedMessage(&(this.Conn.Conn))
 	// if err != nil {
 	// 	log.Print("RecvInterlacedMessage err=", err)

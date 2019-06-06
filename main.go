@@ -6,6 +6,7 @@ import (
 	"flag"
 	// log "github.com/sirupsen/logrus"
 	"go_srs/srs"
+	// "log"
 )
 
 var (
@@ -18,6 +19,10 @@ var (
 // }
 
 func main() {
+	// p := []byte{1,2,3,4,5}
+	// q := p[:4]
+	// log.Print(len(q))
+	// return
 	flag.Parse()
 	//init server
 	l := &srs.SrsStreamListener{}

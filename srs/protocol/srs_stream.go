@@ -14,6 +14,8 @@ type SrsStream struct {
 	bytes []byte
 	// the total number of bytes.
 	n_bytes int32
+	// current position
+	pos int32
 }
 
 func NewSrsStream(data []byte, len int32) *SrsStream {
@@ -21,6 +23,7 @@ func NewSrsStream(data []byte, len int32) *SrsStream {
 		p:       data,
 		bytes:   data,
 		n_bytes: len,
+		pos:	 0,
 	}
 }
 
@@ -41,7 +44,8 @@ func (s *SrsStream) require(required_size int32) bool {
 }
 
 func (s *SrsStream) skip(size int32) {
-	s.p = s.p[size:]
+	s.pos += size
+	s.p = s.bytes[s.pos:]
 }
 
 func (s *SrsStream) read_nbytes(n int32) (b []byte, err error) {
@@ -61,7 +65,17 @@ func (s *SrsStream) read_int8() (v int8, err error) {
 		return
 	}
 	bin_buf := bytes.NewBuffer(b)
-	binary.Read(bin_buf, binary.LittleEndian, &v)
+	binary.Read(bin_buf, binary.BigEndian, &v)
+	return
+}
+
+func (s *SrsStream) read_bool() (v bool, err error) {
+	b, err := s.read_nbytes(1)
+	if err != nil {
+		return
+	}
+	bin_buf := bytes.NewBuffer(b)
+	binary.Read(bin_buf, binary.BigEndian, &v)
 	return
 }
 
@@ -72,7 +86,8 @@ func (s *SrsStream) read_int16() (v int16, err error) {
 	}
 
 	bin_buf := bytes.NewBuffer(b)
-	binary.Read(bin_buf, binary.LittleEndian, &v)
+	log.Printf("read int16 %x %x", b[0], b[1])
+	binary.Read(bin_buf, binary.BigEndian, &v)
 	return
 }
 
@@ -83,10 +98,32 @@ func (s *SrsStream) read_int32() (v int32, err error) {
 	}
 
 	bin_buf := bytes.NewBuffer(b)
-	log.Printf("********************%x %x %x %x", b[0], b[1], b[2], b[3])
 	binary.Read(bin_buf, binary.BigEndian, &v)
 	return
 }
+
+func (s *SrsStream) read_int64() (v int64, err error) {
+	b, err := s.read_nbytes(8)
+	if err != nil {
+		return
+	}
+
+	bin_buf := bytes.NewBuffer(b)
+	binary.Read(bin_buf, binary.BigEndian, &v)
+	return
+}
+
+func (s *SrsStream) read_float64() (v float64, err error) {
+	b, err := s.read_nbytes(8)
+	if err != nil {
+		return
+	}
+
+	bin_buf := bytes.NewBuffer(b)
+	binary.Read(bin_buf, binary.BigEndian, &v)
+	return
+}
+
 
 func (s *SrsStream) read_string(len int32) (str string, err error) {
 	if !s.require(len) {
@@ -94,7 +131,8 @@ func (s *SrsStream) read_string(len int32) (str string, err error) {
 		return
 	}
 
-	str = string(s.p[:len+1])
+	str = string(s.p[:len])
+	s.skip(len)
 	err = nil
 	return
 }

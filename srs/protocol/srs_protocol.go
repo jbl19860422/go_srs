@@ -7,7 +7,7 @@ import (
 	"log"
 	"net"
 	"context"
-	// "reflect"
+	"reflect"
 )
 
 const SRS_PERF_CHUNK_STREAM_CACHE = 16
@@ -394,7 +394,7 @@ func (s *SrsProtocol) RecvMessagePayload(conn *net.Conn, chunk *SrsChunkStream) 
 	return nil, nil
 }
 
-func (s *SrsProtocol) RecvMessage(conn *net.Conn) (*SrsRtmpMessage, error) {
+func (s *SrsProtocol) recv_message(conn *net.Conn) (*SrsRtmpMessage, error) {
 	for {
 		rtmp_msg, err := s.RecvInterlacedMessage(conn)
 		if err != nil {
@@ -411,7 +411,7 @@ func (s *SrsProtocol) RecvMessage(conn *net.Conn) (*SrsRtmpMessage, error) {
 			continue
 		}
 
-		if err = s.onRecvMessage(rtmp_msg); err != nil {
+		if err = s.on_recv_message(rtmp_msg); err != nil {
 			return nil, err
 		}
 
@@ -437,7 +437,15 @@ func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) 
 		}
 
 		log.Print("srs_amf0_read_string command=", command)
-		_ = command
+		// decode command object.
+        if command == RTMP_AMF0_COMMAND_CONNECT {
+            // srs_info("decode the AMF0/AMF3 command(connect vhost/app message).");
+			p := NewSrsConnectAppPacket()
+			err = p.decode(stream)
+			packet = p
+			return
+        }
+
 	} else if(msg.header.IsSetChunkSize()) {
 		p := NewSrsSetChunkSizePacket();
 		err = p.decode(stream)
@@ -455,7 +463,7 @@ func (s *SrsProtocol) decode_message(msg *SrsRtmpMessage) (packet SrsPacket, err
 		err = errors.New("newsrsstream failed")
 		return
 	}
-
+	log.Print("NewSrsStream size=", msg.size)
 	packet, err = s.do_decode_message(msg, stream)
 	if err != nil {
 		return
@@ -464,7 +472,7 @@ func (s *SrsProtocol) decode_message(msg *SrsRtmpMessage) (packet SrsPacket, err
 	return
 }
 
-func (s *SrsProtocol) onRecvMessage(msg *SrsRtmpMessage) error {
+func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 	var packet SrsPacket
 	log.Print("message.type=", msg.header.message_type)
 	if msg.header.message_type == RTMP_MSG_SetChunkSize || msg.header.message_type == RTMP_MSG_UserControlMessage || msg.header.message_type == RTMP_MSG_WindowAcknowledgementSize {
@@ -488,7 +496,7 @@ func (s *SrsProtocol) onRecvMessage(msg *SrsRtmpMessage) error {
 
 func (s *SrsProtocol) LoopMessage(ctx context.Context, conn *net.Conn) {
 	for {
-		msg, err := s.RecvMessage(conn)
+		msg, err := s.recv_message(conn)
 		if err != nil {
 			continue
 		}
@@ -497,7 +505,7 @@ func (s *SrsProtocol) LoopMessage(ctx context.Context, conn *net.Conn) {
 			continue
 		}
 
-		if err = s.onRecvMessage(msg); err != nil {
+		if err = s.on_recv_message(msg); err != nil {
 			continue
 		}
 		select {
@@ -508,5 +516,37 @@ func (s *SrsProtocol) LoopMessage(ctx context.Context, conn *net.Conn) {
 
 		}
 		}
+	}
+}
+
+func (s *SrsProtocol) ExpectMessage(conn *net.Conn, packet SrsPacket) {
+	for {
+		msg, err := s.recv_message(conn)
+		if err != nil {
+			log.Print("start to decode_message 111111")
+			continue
+		}
+
+		if msg == nil {
+			log.Print("start to decode_message 22222222")
+			continue
+		}
+
+		log.Print("start to decode_message 333333")
+		p, err := s.decode_message(msg)
+		if err != nil {
+			log.Print("decode message failed, err=", err)
+			continue
+		}
+
+		t1 := reflect.TypeOf(packet)
+		t2 := reflect.TypeOf(p)
+		log.Print("t1=", t1, "&t2=", t2)
+		if t1 == t2 {
+			log.Print("equal ")
+		} else {
+			log.Print("not equal")
+		}
+
 	}
 }
