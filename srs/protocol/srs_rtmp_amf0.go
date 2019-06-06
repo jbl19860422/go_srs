@@ -131,7 +131,7 @@ func srs_amf0_read_undefined(SrsStream* stream) (err error) {
 
 func srs_amf0_is_object_eof(s *SrsStream) bool {
 	// detect the object-eof specially
-	if (stream->require(3)) {
+	if (stream->require(3)) {//marker = 9（RTMP_AMF0_ObjectEnd），后面带两个0表示结束
 		flag_buf := stream->read_nbytes(3);
 		stream->skip(-3);
 		bin_buf := bytes.NewBuffer(flag_buf)
@@ -141,6 +141,22 @@ func srs_amf0_is_object_eof(s *SrsStream) bool {
 	}
 	
 	return false;
+}
+
+func srs_amf0_read_any(SrsStream* stream, SrsAmf0Any** ppvalue) (err error)
+{
+    if ((ret = SrsAmf0Any::discovery(stream, ppvalue)) != ERROR_SUCCESS) {
+        srs_error("amf0 discovery any elem failed. ret=%d", ret);
+        return ret;
+    }
+
+    if ((ret = (*ppvalue)->read(stream)) != ERROR_SUCCESS) {
+        srs_error("amf0 parse elem failed. ret=%d", ret);
+        srs_freep(*ppvalue);
+        return ret;
+    }
+    
+    return ret;
 }
 
 type SrsAmf0AnyInterface interface {
@@ -214,16 +230,6 @@ func (s *SrsAmf0Any) is_date() bool {
 
 func (s *SrsAmf0Any) is_complex_object() bool {
 	return s.is_object() || s.is_object_eof() || s.is_ecma_array() || s.is_strict_array()
-}
-
-
-/**
-* 2.5 Object Type
-* anonymous-object-type = object-marker *(object-property)
-* object-property = (UTF-8 value-type) | (UTF-8-empty object-end-marker)
-*/
-type SrsAmf0Object struct {
-
 }
 
 
