@@ -1,11 +1,10 @@
-package protocol
+package utils
 
 import (
 	"bytes"
 	"encoding/binary"
-	"net/url"
-	"strings"
-	"math"
+	_ "net/url"
+	_ "strings"
 )
 
 func numberToBytes(data interface{}, order binary.ByteOrder) []byte {
@@ -24,35 +23,35 @@ func bytesToNumber(data []byte, order binary.ByteOrder, v interface{}) error {
 }
 
 func UInt16ToBytes(data uint16, order binary.ByteOrder) []byte {
-	return numberToBytes(data)
+	return numberToBytes(data, order)
 }
 
 func UInt32ToBytes(data uint32, order binary.ByteOrder) []byte {
-	return numberToBytes(data)
+	return numberToBytes(data, order)
 }
 
 func UInt64ToBytes(data uint64, order binary.ByteOrder) []byte {
-	return numberToBytes(data)
+	return numberToBytes(data, order)
 }
 
 func Int16ToBytes(data int16, order binary.ByteOrder) []byte {
-	return numberToBytes(data)
+	return numberToBytes(data, order)
 }
 
 func Int32ToBytes(data int32, order binary.ByteOrder) []byte {
-	return numberToBytes(data)
+	return numberToBytes(data, order)
 }
 
 func Int64ToBytes(data int64, order binary.ByteOrder) []byte {
-	return numberToBytes(data)
+	return numberToBytes(data, order)
 }
 
 func Float32ToBytes(data float32, order binary.ByteOrder) []byte {
-	return numberToBytes(data)
+	return numberToBytes(data, order)
 }
 
 func Float64ToBytes(data float64, order binary.ByteOrder) []byte {
-	return numberToBytes(data)
+	return numberToBytes(data, order)
 }
 
 func BytesToUInt16(data []byte, order binary.ByteOrder) (uint16, error) {
@@ -104,37 +103,37 @@ func BytesToFloat64(data []byte, order binary.ByteOrder) (float64, error) {
 }
 
 
-func Srs_discovery_tc_url(tcUrl string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
-	var err1 error
-	u, err1 := url.Parse(tcUrl)
-	if err1 != nil {
-		err = err1
-		return
-	}
+// func Srs_discovery_tc_url(tcUrl string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
+// 	var err1 error
+// 	u, err1 := url.Parse(tcUrl)
+// 	if err1 != nil {
+// 		err = err1
+// 		return
+// 	}
 
-	schema = u.Scheme
-	host = u.Host
-	port = SRS_CONSTS_RTMP_DEFAULT_PORT
-	if len(u.Port()) >= 0 {
-		port = u.Port()
-	}
+// 	schema = u.Scheme
+// 	host = u.Host
+// 	port = SRS_CONSTS_RTMP_DEFAULT_PORT
+// 	if len(u.Port()) >= 0 {
+// 		port = u.Port()
+// 	}
 
-	m, _ := url.ParseQuery(u.RawQuery)
-	vhost_params, ok := m["vhost"]
-	if ok {
-		vhost = vhost_params[0]
-	}
+// 	m, _ := url.ParseQuery(u.RawQuery)
+// 	vhost_params, ok := m["vhost"]
+// 	if ok {
+// 		vhost = vhost_params[0]
+// 	}
 
-	p := strings.Split(u.Path, "/")
-	if len(p) >= 2 {
-		app = p[1]
-	}
+// 	p := strings.Split(u.Path, "/")
+// 	if len(p) >= 2 {
+// 		app = p[1]
+// 	}
 
-	if len(p) >= 3 {
-		stream = p[2]
-	}
+// 	if len(p) >= 3 {
+// 		stream = p[2]
+// 	}
 
-	param = u.RawQuery
-	err = nil
-	return
-}
+// 	param = u.RawQuery
+// 	err = nil
+// 	return
+// }
