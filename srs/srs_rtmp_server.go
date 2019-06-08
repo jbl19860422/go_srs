@@ -112,13 +112,43 @@ func (this *SrsRtmpServer) service_cycle() int {
 }
 
 func (this *SrsRtmpServer) stream_service_cycle() {
-
+	_ = this.identify_client()
+	for {
+		time.Sleep(time.Second*1)
+	}
 }
 
 func (this *SrsRtmpServer) identify_client() error {
 	for {
-		msg, err := this.Protocol.RecvMessage()
+		msg, err := this.Protocol.RecvMessage(&(this.Conn.Conn))
+		if err != nil {
+			log.Print("identify_client err, msg=", err)
+			continue
+		}
+		header := msg.GetHeader()
+		if header.IsAckledgement() || header.IsSetChunkSize() || header.IsWindowAckledgementSize() || header.IsUserControlMessage() {
+			continue
+		}
+
+		if !header.IsAmf0Command() || !header.IsAmf3Command() {
+			continue
+		}
+
+		pkt, err := this.Protocol.DecodeMessage(msg)
+		switch pkt.(type) {
+		// case SrsCreateStreamPacket: {
+		// 	log.Print("SrsCreateStreamPacket")
+		// }
+		case (*protocol.SrsFMLEStartPacket):{
+			log.Print("SrsFMLEStartPacket")
+		}
+		// case SrsPlayPacket:{
+		// 	log.Print("SrsPlayPacket")
+		// }
+		}
+		return nil
 	}
+	return nil
 }
 
 func (this *SrsRtmpServer) connect_app() error {

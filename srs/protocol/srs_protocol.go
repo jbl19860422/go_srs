@@ -470,7 +470,7 @@ func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) 
 	return
 }
 
-func (s *SrsProtocol) decode_message(msg *SrsRtmpMessage) (packet SrsPacket, err error) {
+func (s *SrsProtocol) DecodeMessage(msg *SrsRtmpMessage) (packet SrsPacket, err error) {
 	stream := NewSrsStream(msg.payload, msg.size)
 	if stream == nil {
 		err = errors.New("newsrsstream failed")
@@ -490,7 +490,7 @@ func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 	log.Print("message.type=", msg.header.message_type)
 	if msg.header.message_type == RTMP_MSG_SetChunkSize || msg.header.message_type == RTMP_MSG_UserControlMessage || msg.header.message_type == RTMP_MSG_WindowAcknowledgementSize {
 		var err error
-		packet, err = s.decode_message(msg)
+		packet, err = s.DecodeMessage(msg)
 		if err != nil {
 			log.Print("decode packet from message payload failed. ")
 			return errors.New("decode packet from message payload failed.")
@@ -518,7 +518,7 @@ func (s *SrsProtocol) ExpectMessage(conn *net.Conn, packet SrsPacket) (SrsPacket
 			continue
 		}
 
-		p, err1 := s.decode_message(msg)
+		p, err1 := s.DecodeMessage(msg)
 		if err1 != nil {
 			log.Print("decode message failed, err=", err1)
 			continue

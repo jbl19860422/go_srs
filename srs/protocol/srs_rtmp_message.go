@@ -22,3 +22,7 @@ type SrsRtmpMessage struct {
 func NewSrsRtmpMessage() *SrsRtmpMessage {
 	return &SrsRtmpMessage{}
 }
+
+func (this *SrsRtmpMessage) GetHeader() *SrsMessageHeader {
+	return &(this.header)
+}
