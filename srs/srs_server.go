@@ -4,7 +4,7 @@ import (
 	// log "github.com/sirupsen/logrus"
 	// "go_srs/srs/protocol"
 	// "fmt"
-	"log"
+	_ "log"
 )
 
 type SrsServer struct {
@@ -19,6 +19,5 @@ func (this *SrsServer) StartProcess(port int) {
 func (this *SrsServer) AcceptConnection(c *SrsRtmpConn) {
 	rtmpServer := NewSrsRtmpServer(c)
 	this.srsServers = append(this.srsServers, rtmpServer)
-	log.Printf("star a new server")
-	go rtmpServer.Start()
+	rtmpServer.Start()
 }

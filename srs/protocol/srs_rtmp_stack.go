@@ -8,6 +8,7 @@ import (
 	// log "github.com/sirupsen/logrus"
 	"math/rand"
 	"encoding/binary"
+	"log"
 	// "fmt"
 )
 
@@ -73,7 +74,7 @@ func (this *SrsHandshakeBytes) ReadC2(c *net.Conn) int {
 		if err != nil {
 			return -1
 		}
-		
+		log.Print("read n=", n)
 		left = left - n
 		if left <= 0 {
 			return 0

@@ -98,7 +98,7 @@ func (this *SrsRtmpServer) service_cycle() int {
 	}
 
 	this.request.ip = this.Conn.Conn.RemoteAddr().String()
-	log.Print("start respone connect_app")
+
 	time.Sleep(10 * time.Millisecond)
 	err = this.set_chunk_size(60000)
 	if err != nil {
@@ -148,7 +148,7 @@ func (this *SrsRtmpServer) identify_client() (protocol.SrsRtmpConnType, string, 
 	var typ protocol.SrsRtmpConnType
 	var streamname string
 	for {
-		msg, err := this.Protocol.RecvMessage(&(this.Conn.Conn))
+		msg, err := this.Protocol.RecvMessage()
 		if err != nil {
 			log.Print("identify_client err, msg=", err)
 			continue
@@ -200,9 +200,8 @@ func (this *SrsRtmpServer) identify_fmle_publish_client(req *protocol.SrsFMLESta
 
 func (this *SrsRtmpServer) connect_app() error {
 	// ctx, cancel := context.WithCancel(context.Background())
-	// go this.Protocol.LoopMessage(ctx, &(this.Conn.Conn))
 	connPacket := protocol.NewSrsConnectAppPacket()
-	packet := this.Protocol.ExpectMessage(&(this.Conn.Conn), connPacket)
+	packet := this.Protocol.ExpectMessage(connPacket)
 	var err error
 	this.request.tcUrl, err = packet.(*protocol.SrsConnectAppPacket).CommandObj.GetStringProperty("tcUrl")
 	if err != nil {

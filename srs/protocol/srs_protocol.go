@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"reflect"
+	_ "bufio"
 )
 
 const SRS_PERF_CHUNK_STREAM_CACHE = 16
@@ -48,11 +49,11 @@ func NewSrsProtocol(c *net.Conn) *SrsProtocol {
 
 var mh_sizes = [4]int{11, 7, 3, 0}
 
-func (s *SrsProtocol) ReadBasicHeader(conn *net.Conn) (fmt byte, cid int32, err error) {
+func (s *SrsProtocol) ReadBasicHeader() (fmt byte, cid int32, err error) {
 	var buffer1 []byte
 	var buffer2 []byte
 	var buffer3 []byte
-	if buffer1, err = s.ReadNByte(conn, 1); err != nil {
+	if buffer1, err = s.ReadNByte(1); err != nil {
 		return
 	}
 
@@ -64,14 +65,14 @@ func (s *SrsProtocol) ReadBasicHeader(conn *net.Conn) (fmt byte, cid int32, err 
 	}
 	// 64-319, 2B chunk header
 	if cid == 0 {
-		if buffer2, err = s.ReadNByte(conn, 1); err != nil {
+		if buffer2, err = s.ReadNByte(1); err != nil {
 			return
 		}
 
 		cid = 64
 		cid += (int32)(buffer2[0])
 	} else if cid == 1 { // 64-65599, 3B chunk header
-		if buffer3, err = s.ReadNByte(conn, 2); err != nil {
+		if buffer3, err = s.ReadNByte(2); err != nil {
 			return
 		}
 
@@ -83,13 +84,15 @@ func (s *SrsProtocol) ReadBasicHeader(conn *net.Conn) (fmt byte, cid int32, err 
 	return
 }
 
-func (s *SrsProtocol) ReadNByte(conn *net.Conn, count int) (b []byte, err error) {
+func (s *SrsProtocol) ReadNByte(count int) (b []byte, err error) {
+	// reader := bufio.NewReader(*conn)
 	b = make([]byte, count)
-	_, err = (*conn).Read(b)
+	_, err = (*s.conn).Read(b)
+	log.Print("end read ", count, " bytes")
 	return
 }
 
-func (s *SrsProtocol) ReadMessageHeader(conn *net.Conn, chunk *SrsChunkStream, fmt byte) (err error) {
+func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, fmt byte) (err error) {
 	/**
 	 * we should not assert anything about fmt, for the first packet.
 	 * (when first packet, the chunk->msg is NULL).
@@ -141,7 +144,7 @@ func (s *SrsProtocol) ReadMessageHeader(conn *net.Conn, chunk *SrsChunkStream, f
 	var buf1 []byte
 	var mh_size = mh_sizes[fmt]
 	if mh_size > 0 {
-		if buf1, err = s.ReadNByte(conn, mh_size); err != nil {
+		if buf1, err = s.ReadNByte(mh_size); err != nil {
 			return
 		}
 	}
@@ -237,7 +240,7 @@ func (s *SrsProtocol) ReadMessageHeader(conn *net.Conn, chunk *SrsChunkStream, f
 	if chunk.extendedTimestamp {
 		mh_size += 4
 		var buf2 []byte
-		if buf2, err = s.ReadNByte(conn, 4); err != nil {
+		if buf2, err = s.ReadNByte(4); err != nil {
 			return
 		}
 
@@ -319,13 +322,14 @@ func (s *SrsProtocol) ReadMessageHeader(conn *net.Conn, chunk *SrsChunkStream, f
 	return
 }
 
-func (s *SrsProtocol) RecvInterlacedMessage(conn *net.Conn) (*SrsRtmpMessage, error) {
-	fmt, cid, err := s.ReadBasicHeader(conn)
+func (s *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
+	log.Print("start ReadBasicHeader")
+	fmt, cid, err := s.ReadBasicHeader()
 	if nil != err {
 		log.Print("read basic header failed, err=", err)
 		return nil, nil
 	}
-
+	log.Print("ReadBasicHeader done, fmt=", fmt, "&cid=", cid)
 	var chunk *SrsChunkStream
 
 	if cid < SRS_PERF_CHUNK_STREAM_CACHE {
@@ -341,7 +345,7 @@ func (s *SrsProtocol) RecvInterlacedMessage(conn *net.Conn) (*SrsRtmpMessage, er
 		}
 	}
 
-	err = s.ReadMessageHeader(conn, chunk, fmt)
+	err = s.ReadMessageHeader(chunk, fmt)
 	if err != nil {
 		log.Print("read message header ", err)
 		return nil, err
@@ -349,7 +353,7 @@ func (s *SrsProtocol) RecvInterlacedMessage(conn *net.Conn) (*SrsRtmpMessage, er
 
 	log.Print("read message header succeed")
 	var msg *SrsRtmpMessage = nil
-	if msg, err = s.RecvMessagePayload(conn, chunk); err != nil {
+	if msg, err = s.RecvMessagePayload(chunk); err != nil {
 		log.Print("RecvMessagePayload failed")
 		return nil, err
 	}
@@ -358,7 +362,7 @@ func (s *SrsProtocol) RecvInterlacedMessage(conn *net.Conn) (*SrsRtmpMessage, er
 	return msg, nil
 }
 
-func (s *SrsProtocol) RecvMessagePayload(conn *net.Conn, chunk *SrsChunkStream) (msg *SrsRtmpMessage, err error) {
+func (s *SrsProtocol) RecvMessagePayload(chunk *SrsChunkStream) (msg *SrsRtmpMessage, err error) {
 	if chunk.Header.payload_length <= 0 {
 		return chunk.RtmpMessage, nil
 	}
@@ -378,7 +382,7 @@ func (s *SrsProtocol) RecvMessagePayload(conn *net.Conn, chunk *SrsChunkStream) 
 
 	// read payload to buffer
 	var buffer1 []byte
-	if buffer1, err = s.ReadNByte(conn, int(chunk.Header.payload_length)); err != nil {
+	if buffer1, err = s.ReadNByte(int(chunk.Header.payload_length)); err != nil {
 		return nil, err
 	}
 
@@ -402,9 +406,9 @@ func (s *SrsProtocol) RecvMessagePayload(conn *net.Conn, chunk *SrsChunkStream) 
 	return nil, nil
 }
 
-func (s *SrsProtocol) RecvMessage(conn *net.Conn) (*SrsRtmpMessage, error) {
+func (s *SrsProtocol) RecvMessage() (*SrsRtmpMessage, error) {
 	for {
-		rtmp_msg, err := s.RecvInterlacedMessage(conn)
+		rtmp_msg, err := s.RecvInterlacedMessage()
 		if err != nil {
 			log.Print("recv a message")
 		}
@@ -454,11 +458,9 @@ func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) 
 			packet = p
 			return
 		} else if command == RTMP_AMF0_COMMAND_RELEASE_STREAM {
-			log.Print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 			p := NewSrsFMLEStartPacket(command)
 			err = p.decode(stream)
 			packet = p
-			log.Print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
 			return
 		} else if command == RTMP_AMF0_COMMAND_FC_PUBLISH {
 			p := NewSrsFMLEStartPacket(command)
@@ -540,7 +542,7 @@ func (this *SrsProtocol) Start_fmle_publish(stream_id int) error {
 	var fc_publish_tid float64 = 0
 	{
 		startPacket := NewSrsFMLEStartPacket("")
-		packet := this.ExpectMessage(this.conn, startPacket)
+		packet := this.ExpectMessage(startPacket)
 		fc_publish_tid = packet.(*SrsFMLEStartPacket).Transaction_id
 		pkt := NewSrsFMLEStartResPacket(fc_publish_tid)
 		err := this.SendPacket(pkt, 0)
@@ -553,7 +555,7 @@ func (this *SrsProtocol) Start_fmle_publish(stream_id int) error {
 	var create_stream_tid float64 = 0
 	{
 		createPacket := NewSrsCreateStreamPacket()
-		packet := this.ExpectMessage(this.conn, createPacket)
+		packet := this.ExpectMessage(createPacket)
 		create_stream_tid = packet.(*SrsCreateStreamPacket).transaction_id
 		pkt := NewSrsCreateStreamResPacket(create_stream_tid, float64(stream_id))
 		err := this.SendPacket(pkt, 0)
@@ -568,7 +570,7 @@ func (this *SrsProtocol) Start_fmle_publish(stream_id int) error {
 	// publish
 	{
 		publishPacket := NewSrsPublishPacket()
-		packet := this.ExpectMessage(this.conn, publishPacket)
+		packet := this.ExpectMessage(publishPacket)
 		log.Print("get SrsPublishPacket succeed")
 		_ = packet
 	}
@@ -607,9 +609,11 @@ func (this *SrsProtocol) Start_fmle_publish(stream_id int) error {
 	return nil
 }
 
-func (s *SrsProtocol) ExpectMessage(conn *net.Conn, packet SrsPacket) SrsPacket {
+func (s *SrsProtocol) ExpectMessage(packet SrsPacket) SrsPacket {
 	for {
-		msg, err := s.RecvMessage(conn)
+		log.Print("start RecvNewMessage")
+		msg, err := s.RecvMessage()
+		log.Print("end RecvNewMessage")
 		if err != nil {
 			continue
 		}
