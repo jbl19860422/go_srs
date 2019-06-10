@@ -102,6 +102,18 @@ func (s *SrsStream) read_int32() (v int32, err error) {
 	return
 }
 
+func (s *SrsStream) write_int32(v int32) error {
+	b := IntToBytes(int(v))
+	log.Print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  bbbb=", b)
+	d := make([]byte, 4)
+	d[0] = b[3]
+	d[1] = b[2]
+	d[2] = b[1]
+	d[3] = b[0]
+	s.write_bytes(d)
+	return nil
+}
+
 func (s *SrsStream) read_int64() (v int64, err error) {
 	b, err := s.read_nbytes(8)
 	if err != nil {

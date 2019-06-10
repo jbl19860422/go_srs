@@ -321,6 +321,11 @@ func encodeAmf0(stream *SrsStream, v interface{}) (err error) {
 			err = encodeAmf0(stream, v)
 			break
 		}
+	case *SrsAmf0EcmaArray:
+		{
+			v.(*SrsAmf0EcmaArray).write(stream)
+			break
+		}
 	case nil:
 		{
 

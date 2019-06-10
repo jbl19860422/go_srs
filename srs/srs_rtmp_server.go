@@ -100,6 +100,12 @@ func (this *SrsRtmpServer) service_cycle() int {
 	this.request.ip = this.Conn.Conn.RemoteAddr().String()
 	log.Print("start respone connect_app")
 	time.Sleep(10 * time.Millisecond)
+	err = this.set_chunk_size(60000)
+	if err != nil {
+		log.Print("set_chunk_size failed")
+		return -3
+	}
+
 	err = this.response_connect_app()
 	if err != nil {
 		log.Print("response_connect_app error")
@@ -258,6 +264,13 @@ func (this *SrsRtmpServer) set_window_ack_size(act_size int32) error {
 	return nil
 }
 
+func (this *SrsRtmpServer) set_chunk_size(chunk_size int32) error {
+	pkt := protocol.NewSrsSetChunkSizePacket()
+	pkt.Chunk_size = chunk_size
+	err := this.Protocol.SendPacket(pkt, 0)
+	return err
+}
+
 func (this *SrsRtmpServer) set_peer_bandwidth(bandwidth int, typ int8) error {
 	pkt := protocol.NewSrsSetPeerBandwidthPacket()
 	pkt.Bandwidth = int32(bandwidth)
@@ -276,6 +289,26 @@ func (this *SrsRtmpServer) response_connect_app() error {
 	pkt.Info.SetStringProperty("code", "NetConnection.Connect.Success")
 	pkt.Info.SetStringProperty("description", "Connection succeeded")
 	pkt.Info.SetNumberProperty("objectEncoding", float64(0))
+
+	data := protocol.NewSrsAmf0EcmaArray()
+	data.Set("version", protocol.RTMP_SIG_FMS_VER)
+    data.Set("srs_sig", protocol.RTMP_SIG_SRS_KEY)
+    data.Set("srs_server", protocol.RTMP_SIG_SRS_SERVER)
+    data.Set("srs_license", protocol.RTMP_SIG_SRS_LICENSE)
+    data.Set("srs_role", protocol.RTMP_SIG_SRS_ROLE)
+    data.Set("srs_url", protocol.RTMP_SIG_SRS_URL)
+    data.Set("srs_version", protocol.RTMP_SIG_SRS_VERSION)
+    data.Set("srs_site", protocol.RTMP_SIG_SRS_WEB)
+    data.Set("srs_email", protocol.RTMP_SIG_SRS_EMAIL)
+    data.Set("srs_copyright", protocol.RTMP_SIG_SRS_COPYRIGHT)
+    data.Set("srs_primary", protocol.RTMP_SIG_SRS_PRIMARY)
+	data.Set("srs_authors", protocol.RTMP_SIG_SRS_AUTHROS)
+	data.Set("srs_server_ip", "172.19.5.107")
+	data.Set("srs_pid", float64(12345));
+    data.Set("srs_id", float64(12345));
+	pkt.Info.Set("data", data)
+	
+
 	err := this.Protocol.SendPacket(pkt, 0)
 	return err
 	// pkt->props->set("fmsVer", SrsAmf0Any::str("FMS/"RTMP_SIG_FMS_VER));

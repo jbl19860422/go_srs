@@ -199,3 +199,24 @@ const (
 	StatusCodeDataStart        = "NetStream.Data.Start"
 	StatusCodeUnpublishSuccess = "NetStream.Unpublish.Success"
 )
+
+// provider info.
+const RTMP_SIG_SRS_KEY = "SRS"
+const RTMP_SIG_SRS_CODE = "ZhouGuowen"
+const RTMP_SIG_SRS_AUTHROS = "winlin,wenjie.zhao"
+// contact info.
+const RTMP_SIG_SRS_WEB = "http://ossrs.net"
+const RTMP_SIG_SRS_EMAIL = "winlin@vip.126.com"
+// debug info.
+const RTMP_SIG_SRS_ROLE = "cluster"
+const RTMP_SIG_SRS_NAME = "SRS(Simple RTMP Server)"
+const RTMP_SIG_SRS_URL_SHORT  = "github.com/ossrs/srs"
+const RTMP_SIG_SRS_URL = "https://github.com/ossrs/srs"
+const RTMP_SIG_SRS_LICENSE = "The MIT License (MIT)"
+const RTMP_SIG_SRS_COPYRIGHT = "Copyright (c) 2013-2015 SRS(ossrs)"
+const RTMP_SIG_SRS_PRIMARY = "SRS/2.0release"
+const RTMP_SIG_SRS_CONTRIBUTORS_URL = "https://github.com/ossrs/srs/blob/master/AUTHORS.txt"
+const RTMP_SIG_SRS_HANDSHAKE = "SRS(2.0.263)"
+const RTMP_SIG_SRS_RELEASE = "https://github.com/ossrs/srs/tree/2.0release"
+const RTMP_SIG_SRS_VERSION = "2.0.263"
+const RTMP_SIG_SRS_SERVER = "SRS/2.0.263(ZhouGuowen)"

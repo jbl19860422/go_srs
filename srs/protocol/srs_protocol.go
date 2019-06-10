@@ -490,7 +490,7 @@ func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) 
 	} else if msg.header.IsSetChunkSize() {
 		p := NewSrsSetChunkSizePacket()
 		err = p.decode(stream)
-		log.Print("NewSrsSetChunkSizePacket ", p.chunk_size)
+		log.Print("NewSrsSetChunkSizePacket ", p.Chunk_size)
 		//
 		packet = p
 		return
@@ -528,7 +528,7 @@ func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 
 	if msg.header.message_type == RTMP_MSG_SetChunkSize {
 		//参数检查
-		s.in_chunk_size = packet.(*SrsSetChunkSizePacket).chunk_size
+		s.in_chunk_size = packet.(*SrsSetChunkSizePacket).Chunk_size
 		log.Print("in_chunk_size=", s.in_chunk_size)
 	}
 
