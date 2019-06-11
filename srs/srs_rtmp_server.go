@@ -14,16 +14,16 @@ import (
 type SrsRtmpServer struct {
 	Conn       *SrsRtmpConn
 	Protocol   *protocol.SrsProtocol
-	HandShaker protocol.SrsHandshakeBytes
+	HandShaker *protocol.SrsHandshakeBytes
 	request    SrsRequest
 }
 
 func NewSrsRtmpServer(conn *SrsRtmpConn) *SrsRtmpServer {
-	return &SrsRtmpServer{Conn: conn, Protocol: protocol.NewSrsProtocol(&conn.Conn), HandShaker: protocol.SrsHandshakeBytes{}}
+	return &SrsRtmpServer{Conn: conn, Protocol: protocol.NewSrsProtocol(&conn.Conn), HandShaker: protocol.NewSrsHandshakeBytes(&conn.Conn)}
 }
 
 func (this *SrsRtmpServer) HandShake() int {
-	ret := this.HandShaker.ReadC0C1(&(this.Conn.Conn))
+	ret := this.HandShaker.ReadC0C1()
 	if 0 != ret {
 		log.Printf("HandShake ReadC0C1 failed")
 		return -1
@@ -45,7 +45,7 @@ func (this *SrsRtmpServer) HandShake() int {
 		log.Printf("write s0s1s2 succeed, count=", len(this.HandShaker.S0S1S2))
 	}
 
-	if 0 != this.HandShaker.ReadC2(&(this.Conn.Conn)) {
+	if 0 != this.HandShaker.ReadC2() {
 		log.Printf("HandShake ReadC2 failed")
 		return -3
 	}
@@ -240,7 +240,6 @@ func (this *SrsRtmpServer) connect_app() error {
 	if ok {
 		this.request.vhost = vhost[0]
 	}
-	log.Print("****************************", this.request.vhost)
 	// srs_discovery_tc_url(req->tcUrl,
 	//     req->schema, req->host, req->vhost, req->app, req->stream, req->port,
 	//     req->param);

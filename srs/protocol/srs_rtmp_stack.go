@@ -16,9 +16,16 @@ type SrsHandshakeBytes struct {
 	C0C1 []byte
 	S0S1S2 []byte
 	C2 []byte
+	conn *net.Conn
 }
 
-func (this *SrsHandshakeBytes) ReadC0C1(c *net.Conn) int {
+func NewSrsHandshakeBytes(c *net.Conn) *SrsHandshakeBytes {
+	return &SrsHandshakeBytes{
+		conn:c,
+	}
+}
+
+func (this *SrsHandshakeBytes) ReadC0C1() int {
 	var ret int = 0
 	if len(this.C0C1) > 0 {
 		return ret
@@ -26,7 +33,7 @@ func (this *SrsHandshakeBytes) ReadC0C1(c *net.Conn) int {
 
 	this.C0C1 = make([]byte, 1537, 1537)
 	// (*c).SetReadDeadline(time.Now().Add(1000*time.Millisecond))
-	reader := bufio.NewReader(*c)
+	reader := bufio.NewReader(*this.conn)
 	left := 1537
 	for {
 		n, err := reader.Read(this.C0C1[1537-left:1537])
@@ -60,14 +67,14 @@ func (this *SrsHandshakeBytes) CreateS0S1S2() int {
 	return 0
 }
 
-func (this *SrsHandshakeBytes) ReadC2(c *net.Conn) int {
+func (this *SrsHandshakeBytes) ReadC2() int {
 	if len(this.C2) > 0 {
 		return -1
 	}
 
 	this.C2 = make([]byte, 1536)
 	// (*c).SetReadDeadline(time.Now().Add(1000*time.Millisecond))
-	reader := bufio.NewReader(*c)
+	reader := bufio.NewReader(*this.conn)
 	left := 1536
 	for {
 		n, err := reader.Read(this.C2[1536-left:1536])

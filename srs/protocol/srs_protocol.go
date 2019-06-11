@@ -87,6 +87,7 @@ func (s *SrsProtocol) ReadBasicHeader() (fmt byte, cid int32, err error) {
 func (s *SrsProtocol) ReadNByte(count int) (b []byte, err error) {
 	// reader := bufio.NewReader(*conn)
 	b = make([]byte, count)
+	log.Print("start read ", count, " bytes")
 	_, err = (*s.conn).Read(b)
 	log.Print("end read ", count, " bytes")
 	return
@@ -769,28 +770,3 @@ func srs_chunk_header_c0(perfer_cid int32, timestamp int32, payload_length int32
 	log.Print("***************len=", len, "***************")
 	return data[:len], nil
 }
-
-// func (s *SrsProtocol) LoopMessage(ctx context.Context, conn *net.Conn) {
-// 	for {
-// 		msg, err := s.recv_message(conn)
-// 		if err != nil {
-// 			continue
-// 		}
-
-// 		if msg == nil {
-// 			continue
-// 		}
-
-// 		if err = s.on_recv_message(msg); err != nil {
-// 			continue
-// 		}
-// 		select {
-// 		case <-ctx.Done() : {//结束
-
-// 		}
-// 		default : {
-
-// 		}
-// 		}
-// 	}
-// }

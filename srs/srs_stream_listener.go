@@ -4,6 +4,7 @@ import (
 	"net"
 	"strconv"
 	"errors"
+	"log"
 	// log "github.com/sirupsen/logrus"
 )
 
@@ -18,7 +19,9 @@ func (s *SrsStreamListener) ListenAndAccept(port int) error {
 	}
 
 	for {
+		log.Print("^^^^^^^^^^^^^start accept^^^^^^^^^^^^^^^^^^^")
 		conn, _ := ln.Accept()
+		log.Print("^^^^^^^^^^^^^^^^^^^^^^^^^get a new connection^^^^^^^^^^^^^^^^^^^^^")
 		go s.HandleConnection(conn)
 	}
 }
