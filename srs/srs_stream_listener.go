@@ -22,11 +22,11 @@ func (s *SrsStreamListener) ListenAndAccept(port int) error {
 		log.Print("^^^^^^^^^^^^^start accept^^^^^^^^^^^^^^^^^^^")
 		conn, _ := ln.Accept()
 		log.Print("^^^^^^^^^^^^^^^^^^^^^^^^^get a new connection^^^^^^^^^^^^^^^^^^^^^")
-		go s.HandleConnection(conn)
+		go HandleConnection(s, conn)
 	}
 }
 
-func (s *SrsStreamListener) HandleConnection(conn net.Conn) {
+func HandleConnection(s *SrsStreamListener, conn net.Conn) {
 	c := &SrsRtmpConn{Svr:s.Svr, Conn:conn}
 	s.Svr.AcceptConnection(c)
 }

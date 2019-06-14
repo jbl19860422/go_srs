@@ -68,6 +68,7 @@ func (this *SrsRtmpServer) Start() int {
 		return -1
 	}
 
+	// time.Sleep(time.Millisecond*100)
 	err := this.connect_app()
 	if err != nil {
 		log.Print("connect app failed")

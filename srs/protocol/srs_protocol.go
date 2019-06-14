@@ -85,11 +85,8 @@ func (s *SrsProtocol) ReadBasicHeader() (fmt byte, cid int32, err error) {
 }
 
 func (s *SrsProtocol) ReadNByte(count int) (b []byte, err error) {
-	// reader := bufio.NewReader(*conn)
 	b = make([]byte, count)
-	log.Print("start read ", count, " bytes")
 	_, err = (*s.conn).Read(b)
-	log.Print("end read ", count, " bytes")
 	return
 }
 

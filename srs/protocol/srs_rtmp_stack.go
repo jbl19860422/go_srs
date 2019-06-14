@@ -1,7 +1,7 @@
 package protocol
 
 import (
-	"bufio"
+	_ "bufio"
 	"time"
 	"net"
 	"bytes"
@@ -32,11 +32,9 @@ func (this *SrsHandshakeBytes) ReadC0C1() int {
 	}
 
 	this.C0C1 = make([]byte, 1537, 1537)
-	// (*c).SetReadDeadline(time.Now().Add(1000*time.Millisecond))
-	reader := bufio.NewReader(*this.conn)
 	left := 1537
 	for {
-		n, err := reader.Read(this.C0C1[1537-left:1537])
+		n, err := (*this.conn).Read(this.C0C1[1537-left:1537])
 		if err != nil {
 			return -1
 		}
@@ -73,11 +71,9 @@ func (this *SrsHandshakeBytes) ReadC2() int {
 	}
 
 	this.C2 = make([]byte, 1536)
-	// (*c).SetReadDeadline(time.Now().Add(1000*time.Millisecond))
-	reader := bufio.NewReader(*this.conn)
 	left := 1536
 	for {
-		n, err := reader.Read(this.C2[1536-left:1536])
+		n, err := (*this.conn).Read(this.C2[1536-left:1536])
 		if err != nil {
 			return -1
 		}
