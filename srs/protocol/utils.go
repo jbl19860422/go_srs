@@ -8,72 +8,101 @@ import (
 	"math"
 )
 
-func IntToBytes(n int) []byte {
-	x := int32(n)
-	bytesBuffer := bytes.NewBuffer([]byte{})
-	binary.Write(bytesBuffer, binary.LittleEndian, x)
-	return bytesBuffer.Bytes()
-}
-
-func Float64ToByte(float float64) []byte {
-	bits := math.Float64bits(float)
-	bytes := make([]byte, 8)
-	binary.BigEndian.PutUint64(bytes, bits)
-
-	return bytes
-}
-
-type SrsAmf0Size struct {
-}
-
-func (s SrsAmf0Size) utf8(value string) int {
-	return 2 + len(value)
-}
-
-func (s SrsAmf0Size) str(value string) int {
-	return 1 + s.utf8(value)
-}
-
-func (s SrsAmf0Size) number() int {
-	return 1 + 8
-}
-
-func (s SrsAmf0Size) date() int {
-	return 1 + 8 + 2
-}
-
-func (s SrsAmf0Size) null() int {
-	return 1
-}
-
-func (s SrsAmf0Size) undefined() int {
-	return 1
-}
-
-func (s SrsAmf0Size) boolean() int {
-	return 1 + 1
-}
-
-func (s SrsAmf0Size) object(obj *SrsAmf0Object) int {
-	if obj == nil {
-		return 0
+func numberToBytes(data interface{}, order binary.ByteOrder) []byte {
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, order, data)
+	if err != nil {
+		return nil
 	}
-
-	return obj.total_size()
+	return buf.Bytes()
 }
 
-func (s SrsAmf0Size) object_eof() int {
-	return 2 + 1
+func bytesToNumber(data []byte, order binary.ByteOrder, v interface{}) error {
+	buf := bytes.NewReader(data)
+	err := binary.Read(buf, order, v)
+	return err
 }
 
-func (s SrsAmf0Size) any(v interface{}) int {
-	var size int = 1
-	switch v.(type) {
-	case string:
-
-	}
-	return size
+func UInt16ToBytes(data uint16, order binary.ByteOrder) []byte {
+	return numberToBytes(data)
 }
+
+func UInt32ToBytes(data uint32, order binary.ByteOrder) []byte {
+	return numberToBytes(data)
+}
+
+func UInt64ToBytes(data uint64, order binary.ByteOrder) []byte {
+	return numberToBytes(data)
+}
+
+func Int16ToBytes(data int16, order binary.ByteOrder) []byte {
+	return numberToBytes(data)
+}
+
+func Int32ToBytes(data int32, order binary.ByteOrder) []byte {
+	return numberToBytes(data)
+}
+
+func Int64ToBytes(data int64, order binary.ByteOrder) []byte {
+	return numberToBytes(data)
+}
+
+func Float32ToBytes(data float32, order binary.ByteOrder) []byte {
+	return numberToBytes(data)
+}
+
+func Float64ToBytes(data float64, order binary.ByteOrder) []byte {
+	return numberToBytes(data)
+}
+
+func BytesToUInt16(data []byte, order binary.ByteOrder) (uint16, error) {
+	var  v uint16 = 0
+	err := bytesToNumber(data, order, &v)
+	return v, err
+}
+
+func BytesToUInt32(data []byte, order binary.ByteOrder) (uint32, error) {
+	var  v uint32 = 0
+	err := bytesToNumber(data, order, &v)
+	return v, err
+}
+
+func BytesToUInt64(data []byte, order binary.ByteOrder) (uint64, error) {
+	var  v uint64 = 0
+	err := bytesToNumber(data, order, &v)
+	return v, err
+}
+
+func BytesToInt16(data []byte, order binary.ByteOrder) (int16, error) {
+	var  v int16 = 0
+	err := bytesToNumber(data, order, &v)
+	return v, err
+}
+
+func BytesToInt32(data []byte, order binary.ByteOrder) (int32, error) {
+	var  v int32 = 0
+	err := bytesToNumber(data, order, &v)
+	return v, err
+}
+
+func BytesToInt64(data []byte, order binary.ByteOrder) (int64, error) {
+	var  v int64 = 0
+	err := bytesToNumber(data, order, &v)
+	return v, err
+}
+
+func BytesToFloat32(data []byte, order binary.ByteOrder) (float32, error) {
+	var  v float32 = 0
+	err := bytesToNumber(data, order, &v)
+	return v, err
+}
+
+func BytesToFloat64(data []byte, order binary.ByteOrder) (float64, error) {
+	var  v float64 = 0
+	err := bytesToNumber(data, order, &v)
+	return v, err
+}
+
 
 func Srs_discovery_tc_url(tcUrl string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
 	var err1 error

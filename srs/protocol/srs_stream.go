@@ -12,41 +12,101 @@ type SrsStream struct {
 	p []byte
 	// the bytes data for stream to read or write.
 	bytes []byte
-	// the total number of bytes.
-	n_bytes int32
 	// current position
-	pos int32
+	pos uint32
 }
 
-func NewSrsStream(data []byte, len int32) *SrsStream {
+func NewSrsStream(data []byte) *SrsStream {
 	return &SrsStream{
 		p:       data,
 		bytes:   data,
-		n_bytes: len,
 		pos:     0,
 	}
 }
 
-func (s *SrsStream) data() []byte {
-	return s.bytes
+func (this *SrsStream) Data() []byte {
+	return this.bytes
 }
 
-func (s *SrsStream) size() int32 {
-	return s.n_bytes
+func (this *SrsStream) Size() uint32 {
+	return len(this.bytes)
 }
 
-func (s *SrsStream) empty() bool {
-	return s.bytes == nil || len(s.p) <= 0
+func (this *SrsStream) Empty() bool {
+	return this.bytes == nil || len(this.p) <= 0
 }
 
-func (s *SrsStream) require(required_size int32) bool {
-	return int(required_size) <= len(s.p)
+func (this *SrsStream) Require(required_size uint32) bool {
+	return required_size <= len(this.p)
 }
 
-func (s *SrsStream) skip(size int32) {
+func (s *SrsStream) Skip(size uint32) {
 	s.pos += size
 	s.p = s.bytes[s.pos:]
 }
+
+func (this *SrsStream) ReadByte() (byte, error) {
+	if !this.Require(1) {
+		err := errors.New("SrsStream not have enough data")
+		return nil, err
+	}
+
+	b = this.p[0]
+	this.Skip(1)
+	return b, nil
+}
+
+func (this *SrsStream) WriteByte(data byte) {
+	this.p = append(this.p, data)
+}
+
+func (this *SrsStream) ReadBytes(count uint32) ([]byte, error) {
+	if !this.Require(count) {
+		err := errors.New("SrsStream not have enough data")
+		return nil, err
+	}
+
+	b := this.p[0:n]
+	this.Skip(count)
+	return b, nil
+}
+
+func (this *SrsStream) WriteBytes(data []byte) {
+	this.p = append(this.p, data...)
+}
+
+func (this *SrsStream) ReadInt16(order binary.ByteOrder) (int16, error) {
+	b, err := this.ReadBytes(2)
+	if err != nil {
+		return err
+	}
+
+	v, err := utils.BytesToInt16(b, order)
+	return v, err
+}
+
+func (this *SrsStream) WriteInt16(data int16, order binary.ByteOrder) {
+	b := utils.Int16ToBytes(data, order)
+	this.WriteBytes(b)
+}
+
+func (this *SrsStream) ReadInt32(order binary.ByteOrder) (int16, error) {
+	b, err := this.ReadBytes(4)
+	if err != nil {
+		return err
+	}
+
+	v, err := utils.BytesToInt32(b, order)
+	return v, err
+}
+
+func (this *SrsStream) WriteInt32(data int32, order binary.ByteOrder) {
+	b := utils.Int32ToBytes(data, order)
+	this.WriteBytes(b)
+}
+
+
+
 
 func (s *SrsStream) read_nbytes(n int32) (b []byte, err error) {
 	if !s.require(n) {
@@ -104,7 +164,6 @@ func (s *SrsStream) read_int32() (v int32, err error) {
 
 func (s *SrsStream) write_int32(v int32) error {
 	b := IntToBytes(int(v))
-	log.Print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  bbbb=", b)
 	d := make([]byte, 4)
 	d[0] = b[3]
 	d[1] = b[2]
@@ -138,7 +197,6 @@ func (s *SrsStream) read_float64() (v float64, err error) {
 
 func (s *SrsStream) write_float64(v float64) (err error) {
 	bin_buf := Float64ToByte(v)
-	log.Print("...................len=", len(bin_buf), "...................")
 	s.write_bytes(bin_buf)
 	return nil
 }

@@ -450,7 +450,6 @@ func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) 
 		log.Print("srs_amf0_read_string command=", command)
 		// decode command object.
 		if command == RTMP_AMF0_COMMAND_CONNECT {
-			// srs_info("decode the AMF0/AMF3 command(connect vhost/app message).");
 			p := NewSrsConnectAppPacket()
 			err = p.decode(stream)
 			packet = p
