@@ -7,12 +7,12 @@ import (
 )
 
 type SrsAmf0String struct {
-	value SrsAmf0Utf8
+	Value SrsAmf0Utf8
 }
 
 func NewSrsAmf0String(str string) *SrsAmf0String {
 	return &SrsAmf0String{
-		value:SrsAmf0Utf8{value:str}
+		Value:SrsAmf0Utf8{Value:str}
 	}
 }
 
@@ -27,13 +27,13 @@ func (this *SrsAmf0String) Decode(stream *utils.SrsStream) error {
 		return err
 	}
 
-	err := this.value.Decode(stream)
+	err := this.Value.Decode(stream)
 	return err
 }
 
 func (this *SrsAmf0String) Encode(stream *utils.SrsStream) error {
 	stream.WriteByte(RTMP_AMF0_String)
-	this.value.Encode(stream)
+	this.Value.Encode(stream)
 	return nil
 }
 

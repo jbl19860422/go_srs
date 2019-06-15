@@ -27,6 +27,6 @@ const (
 )
 
 type SrsValuePair struct {
-	name string
+	name SrsAmf0Utf8
 	value SrsAmf0Any
 }

@@ -1,11 +1,11 @@
 package amf0
 type SrsAmf0Number struct {
-	value float64
+	Value float64
 }
 
 func NewSrsAmf0Number(data float64) *SrsAmf0Number {
 	return &SrsAmf0Number{
-		value:data
+		Value:data
 	}
 }
 
@@ -20,7 +20,7 @@ func (this *SrsAmf0Number) Decode(stream *utils.SrsStream) error {
 		return err
 	}
 
-	this.value, err := stream.ReadFloat64(binary.BigEndian)
+	this.Value, err := stream.ReadFloat64(binary.BigEndian)
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (this *SrsAmf0Number) Decode(stream *utils.SrsStream) error {
 
 func (this *SrsAmf0Number) Encode(stream *utils.SrsStream) error {
 	stream.WriteByte(RTMP_AMF0_Number)
-	stream.WriteFloat64(this.value)
+	stream.WriteFloat64(this.Value, binary.BigEndian)
 	return nil
 }
 

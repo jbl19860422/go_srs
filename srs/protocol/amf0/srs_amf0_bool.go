@@ -1,11 +1,11 @@
 package amf0
 type SrsAmf0Boolean struct {
-	value bool
+	Value bool
 }
 
 func NewSrsAmf0Boolean(data bool) *SrsAmf0Boolean {
 	return &SrsAmf0Boolean{
-		value:data
+		Value:data
 	}
 }
 
@@ -20,7 +20,7 @@ func (this *SrsAmf0Boolean) Decode(stream *utils.SrsStream) error {
 		return err
 	}
 
-	this.value, err = stream.ReadBool()
+	this.Value, err = stream.ReadBool()
 	if err != nil {
 		return err
 	}
@@ -29,7 +29,7 @@ func (this *SrsAmf0Boolean) Decode(stream *utils.SrsStream) error {
 
 func (this *SrsAmf0Boolean) Encode(stream *utils.SrsStream) error {
 	stream.WriteByte(RTMP_AMF0_Boolean)
-	stream.WriteByte(byte(this.value))
+	stream.WriteByte(byte(this.Value))
 	return nil
 }
 
