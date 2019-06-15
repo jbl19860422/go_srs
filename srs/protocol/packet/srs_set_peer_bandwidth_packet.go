@@ -11,32 +11,31 @@ const (
 )
 
 type SrsSetPeerBandwidthPacket struct {
-	Bandwidth int32
-	Typ       int8
+	Bandwidth 	int32
+	Type       	int8
 }
 
 func NewSrsSetPeerBandwidthPacket() *SrsSetPeerBandwidthPacket {
 	return &SrsSetPeerBandwidthPacket{
-		Bandwidth: 0,
-		Typ:       SrsPeerBandwidthDynamic,
+		Bandwidth: 	0,
+		Type:       SrsPeerBandwidthDynamic,
 	}
 }
 
-func (s *SrsSetPeerBandwidthPacket) get_message_type() int8 {
+func (this *SrsSetPeerBandwidthPacket) GetMessageType() int8 {
 	return RTMP_MSG_SetPeerBandwidth
 }
 
-func (s *SrsSetPeerBandwidthPacket) get_prefer_cid() int32 {
+func (this *SrsSetPeerBandwidthPacket) GetPreferCid() int32 {
 	return RTMP_CID_ProtocolControl
 }
 
-func (p *SrsSetPeerBandwidthPacket) decode(s *SrsStream) error {
-	var err error
-	return err
+func (this *SrsSetPeerBandwidthPacket) Decode(stream *SrsStream) error {
+	return nil
 }
 
-func (s *SrsSetPeerBandwidthPacket) encode() ([]byte, error) {
-	b := IntToBytes(int(s.Bandwidth))
-	b = append(b, byte(s.Typ))
-	return b, nil
+func (this *SrsSetPeerBandwidthPacket) Encode(stream *SrsStream) error {
+	stream.WriteInt32(this.Bandwidth, binary.LittleEndian)
+	stream.WriteByte(this.Type)
+	return nil
 }

@@ -19,7 +19,11 @@ type SrsRtmpServer struct {
 }
 
 func NewSrsRtmpServer(conn *SrsRtmpConn) *SrsRtmpServer {
-	return &SrsRtmpServer{Conn: conn, Protocol: protocol.NewSrsProtocol(&conn.Conn), HandShaker: protocol.NewSrsHandshakeBytes(&conn.Conn)}
+	return &SrsRtmpServer{
+		Conn: conn, 
+		Protocol: protocol.NewSrsProtocol(&conn.Conn), 
+		HandShaker: protocol.NewSrsHandshakeBytes(&conn.Conn)
+	}
 }
 
 func (this *SrsRtmpServer) HandShake() int {

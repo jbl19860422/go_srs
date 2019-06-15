@@ -1,4 +1,4 @@
-package protocol
+package packet
 
 import (
 	"errors"
@@ -30,10 +30,10 @@ type SrsConnectAppPacket struct {
 
 func NewSrsConnectAppPacket() *SrsConnectAppPacket {
 	return &SrsConnectAppPacket{
-		CommandName: SrsAmf0String{value:"connect"},
+		CommandName: SrsAmf0String{value:RTMP_AMF0_COMMAND_CONNECT},
 		TransactionId: SrsAmf0Number{value:1},
 		CommandObj: NewSrsAmf0Object(),
-		Args: NewSrsAmf0Object(),
+		Args: nil,
 	}
 }
 
@@ -66,7 +66,13 @@ func (this *SrsConnectAppPacket) Decode(stream *SrsStream) error {
 		log.Print("command_obj read succeed")
 	}
 
-	log.Print("properties len = ", len(this.CommandObj.Properties))
+	if !stream.Empty() {
+		err = this.Args.Decode(stream)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

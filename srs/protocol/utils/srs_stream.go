@@ -101,6 +101,19 @@ func (this *SrsStream) WriteBool(data bool) {
 	this.WriteByte(byte(data))
 }
 
+func (this *SrsStream) ReadInt8() (int8, error) {
+	if b, err := this.ReadByte(); err != nil {
+		return 0, err
+	}
+
+	return int8(b), nil
+}
+
+func (this *SrsStream) WriteInt8(d int8) error {
+	this.WriteByte(byte(d))
+	return nil
+}
+
 func (this *SrsStream) ReadInt16(order binary.ByteOrder) (int16, error) {
 	b, err := this.ReadBytes(2)
 	if err != nil {

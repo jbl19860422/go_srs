@@ -12,7 +12,7 @@ import (
 )
 
 const SRS_PERF_CHUNK_STREAM_CACHE = 16
-const SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE = 128
+
 
 type SrsProtocol struct {
 	conn       *net.Conn
@@ -431,7 +431,6 @@ func (s *SrsProtocol) RecvMessage() (*SrsRtmpMessage, error) {
 }
 
 func (s *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *SrsStream) (packet SrsPacket, err error) {
-	log.Print("***************do_decode_message start*****************")
 	if msg.header.IsAmf0Command() || msg.header.IsAmf3Command() || msg.header.IsAmf0Data() || msg.header.IsAmf3Data() {
 		// skip 1bytes to decode the amf3 command.
 		if msg.header.IsAmf3Command() && stream.require(1) {

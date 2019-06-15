@@ -1,4 +1,4 @@
-package protocol
+package packet
 
 import "log"
 
@@ -111,50 +111,65 @@ type SrsUserControlPacket struct {
 	 * Event type is followed by Event data.
 	 * @see: SrcPCUCEventType
 	 */
-	event_type int16
+	EventType int16
 
 	/**
 	 * the event data generally in 4bytes.
 	 * @remark for event type is 0x001a, only 1bytes.
 	 * @see SrsPCUCFmsEvent0
 	 */
-	event_data int32
+	EventData int32
 
 	/**
 	 * 4bytes if event_type is SetBufferLength; otherwise 0.
 	 */
-	extra_data int32
+	ExtraData int32
 }
 
 func NewSrsUserControlPacket() *SrsUserControlPacket {
 	return &SrsUserControlPacket{}
 }
 
-func (p *SrsUserControlPacket) decode(s *SrsStream) (err error) {
-	p.event_type, err = s.read_int16()
-	if err != nil {
-		return err
+func (this *SrsUserControlPacket) Decode(stream *SrsStream) (err error) {
+	if this.EventType, err = stream.ReadInt16(stream, binary.BigEndian); err != nil {
+		return
 	}
-
-	if p.event_type == SrsPCUCFmsEvent0 {
+	
+	if this.EventType == SrsPCUCFmsEvent0 {
 		var d int8
-		d, err = s.read_int8()
+		d, err = stream.ReadInt8()
 		if err != nil {
 			return
 		}
-		p.event_data = int32(d)
+		this.EventData = int32(d)
 	} else {
-		if p.event_data, err = s.read_int32(); err != nil {
+		if this.EventData, err = stream.ReadInt32(binary.BigEndian); err != nil {
 			return
 		}
 	}
 
-	if p.event_type == SrcPCUCSetBufferLength {
-		if p.extra_data, err = s.read_int32(); err != nil {
-			log.Print("decode user control packet failed")
+	if this.EventType == SrcPCUCSetBufferLength {
+		if this.ExtraData, err = stream.ReadInt32(binary.BigEndian); err != nil {
 			return err
 		}
 	}
 	err = nil
 	return
+}
+
+func (this *SrsUserControlPacket) Encode(stream *SrsStream) error {
+	if err := stream.WriteInt16(this.EventType, binary.BigEndian); err != nil {
+		return err
+	}
+
+	if this.EventType == SrsPCUCFmsEvent0 {
+		_ = stream.WriteByte(byte(this.EventData))
+	} else {
+		_ = stream.WriteInt32(this.EventData)
+	}
+
+	if this.EventType == SrcPCUCSetBufferLength {
+		_ = stream.WriteInt32(this.ExtraData)
+	}
+	return nil
 }
