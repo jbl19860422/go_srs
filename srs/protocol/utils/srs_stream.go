@@ -38,9 +38,25 @@ func (this *SrsStream) Require(required_size uint32) bool {
 	return required_size <= uint32(len(this.p))
 }
 
-func (s *SrsStream) Skip(size uint32) {
-	s.pos += size
-	s.p = s.bytes[s.pos:]
+func (this *SrsStream) Skip(size uint32) {
+	this.pos += size
+	this.p = this.bytes[s.pos:]
+}
+
+func (this *SrsStream) PeekByte() (byte, error) {
+	if !this.Require(1) {
+		err := errors.New("SrsStream not have enough data")
+		return 0, err
+	}
+	return this.p[0], nil
+}
+
+func (this *SrsStream) PeekBytes(count uint32) ([]byte, error) {
+	if !this.Require(count) {
+		err := errors.New("SrsStream not have enough data")
+		return 0, err
+	}
+	return this.p[:count], nil
 }
 
 func (this *SrsStream) ReadByte() (byte, error) {
@@ -71,6 +87,18 @@ func (this *SrsStream) ReadBytes(count uint32) ([]byte, error) {
 
 func (this *SrsStream) WriteBytes(data []byte) {
 	this.p = append(this.p, data...)
+}
+
+func (this *SrsStream) ReadBool() (bool, error) {
+	b, err := this.ReadByte()
+	if err != nil {
+		return false, err
+	}
+	return b, err
+}
+
+func (this *SrsStream) WriteBool(data bool) {
+	this.WriteByte(byte(data))
 }
 
 func (this *SrsStream) ReadInt16(order binary.ByteOrder) (int16, error) {

@@ -7,7 +7,13 @@ import (
 )
 
 type SrsAmf0String struct {
-	value string
+	value SrsAmf0Utf8
+}
+
+func NewSrsAmf0String(str string) *SrsAmf0String {
+	return &SrsAmf0String{
+		value:SrsAmf0Utf8{value:str}
+	}
 }
 
 func (this *SrsAmf0String) Decode(stream *utils.SrsStream) error {
@@ -21,22 +27,24 @@ func (this *SrsAmf0String) Decode(stream *utils.SrsStream) error {
 		return err
 	}
 
-	len, err := stream.ReadUInt16(binary.BigEndian)
-	if err != nil {
-		return err
-	}
-
-	if len <= 0 {
-		err = errors.New("amf0 read empty string.")
-		return err
-	}
-
-	this.value, err = stream.ReadString(len)
+	err := this.value.Decode(stream)
 	return err
 }
 
 func (this *SrsAmf0String) Encode(stream *utils.SrsStream) error {
 	stream.WriteByte(RTMP_AMF0_String)
-	stream.WriteUInt16(uint16(len(this.value)))
-	stream.WriteString(this.value)
+	this.value.Encode(stream)
+	return nil
+}
+
+func (this *SrsAmf0String) IsMyType(stream *utils.SrsStream) (bool, error) {
+	marker, err := stream.PeekByte()
+	if err != nil {
+		return err
+	}
+
+	if marker != RTMP_AMF0_String {
+		return false, nil
+	}
+	return true, nil
 }

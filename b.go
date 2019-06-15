@@ -6,18 +6,9 @@ import(
 	"encoding/binary"
 )
 
-func UInt16ToBytes(data uint16, order binary.ByteOrder) []byte {
+func BoolToBytes(data bool) []byte {
 	buf := new(bytes.Buffer)
-	err := binary.Write(buf, order, data)
-	if err != nil {
-		return nil
-	}
-	return buf.Bytes()
-}
-
-func NumberToBytes(data interface{}, order binary.ByteOrder) []byte {
-	buf := new(bytes.Buffer)
-	err := binary.Write(buf, order, data)
+	err := binary.Write(buf, binary.BigEndian, data)
 	if err != nil {
 		return nil
 	}
@@ -25,7 +16,6 @@ func NumberToBytes(data interface{}, order binary.ByteOrder) []byte {
 }
 
 func main() {
-	var d int16 = 18
-	b := NumberToBytes(d, binary.LittleEndian)
+	b := BoolToBytes(false)
 	fmt.Println(b)
 }

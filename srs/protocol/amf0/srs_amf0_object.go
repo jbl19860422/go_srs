@@ -1,36 +1,62 @@
-package protocol
+package amf0
 
 import (
 	"errors"
 	"log"
 )
 
-/**
-* 2.5 Object Type
-* anonymous-object-type = object-marker *(object-property)
-* object-property = (UTF-8 value-type) | (UTF-8-empty object-end-marker)
- */
-
 type SrsAmf0Object struct {
-	// properties map[string]interface{}
 	properties []SrsValuePair
 	eof        *SrsAmf0ObjectEOF
 }
 
-func (this *SrsAmf0Object) GetStringProperty(key string) (s string, err error) {
-	// v, ok := this.properties[key]
-	// if !ok {
-	// 	log.Print("no property ", key)
-	// 	err = errors.New("property " + key + " not exist")
-	// 	return
-	// }
+func (this *SrsAmf0Object) Decode(stream *utils.SrsStream) error {
+	marker, err := stream.ReadByte();
+	if err != nil {
+		return err
+	}
 
-	// s, ok1 := v.(string)
-	// if !ok1 {
-	// 	err = errors.New("not string type")
-	// 	return
-	// }
-	// return
+	if marker != RTMP_AMF0_Object {
+		err = errors.New("amf0 check object marker failed. ")
+		return err
+	}
+
+	for {
+		if is_eof, err := this.eof.IsMyType(stream); err != nil {
+			return err
+		}
+
+		if is_eof {
+			this.eof.Decode(stream)
+			return nil
+		}
+		//读取属性名称
+		var pname SrsAmf0Utf8
+		err = pname.Decode(stream)
+		if err != nil {
+			return err
+		}
+		
+		marker, err := stream.PeekByte(1)
+		if err != nil {
+			return err
+		}
+
+		var v SrsAmf0Any
+		switch marker {
+		case RTMP_AMF0_Number:{
+			v := SrsAmf0Number{}
+			v.Decode(stream)
+		}
+		case RTMP_AMF0_Boolean:{
+			
+		}
+		}
+
+	}
+}
+
+func (this *SrsAmf0Object) GetStringProperty(key string) (s string, err error) {
 	for i := 0; i < len(this.properties); i++ {
 		if this.properties[i].name == key {
 			s = this.properties[i].val.(string)
@@ -40,19 +66,6 @@ func (this *SrsAmf0Object) GetStringProperty(key string) (s string, err error) {
 }
 
 func (this *SrsAmf0Object) GetNumberProperty(key string) (s float64, err error) {
-	// v, ok := this.properties[key]
-	// if !ok {
-	// 	log.Print("no property ", key)
-	// 	err = errors.New("property " + key + " not exist")
-	// 	return
-	// }
-
-	// s, ok1 := v.(float64)
-	// if !ok1 {
-	// 	err = errors.New("not string type")
-	// 	return
-	// }
-	// return
 	for i := 0; i < len(this.properties); i++ {
 		if this.properties[i].name == key {
 			s = this.properties[i].val.(float64)
@@ -85,7 +98,6 @@ func (this *SrsAmf0Object) SetNumberProperty(key string, v float64) {
 		val:v,
 	}
 	this.properties = append(this.properties, p)
-	// this.properties[key] = v
 	return
 }
 

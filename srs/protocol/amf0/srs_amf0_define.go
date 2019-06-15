@@ -25,3 +25,8 @@ const (
 	// User defined
 	RTMP_AMF0_Invalid = 0x3F
 )
+
+type SrsValuePair struct {
+	name string
+	value SrsAmf0Any
+}

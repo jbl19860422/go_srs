@@ -4,11 +4,6 @@ import (
 	_ "log"
 )
 
-type SrsValuePair struct {
-	name string
-	val interface{}
-}
-
 type SrsAmf0EcmaArray struct {
 	properties []SrsValuePair
 	eof        *SrsAmf0ObjectEOF
