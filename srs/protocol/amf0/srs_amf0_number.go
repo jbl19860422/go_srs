@@ -51,3 +51,7 @@ func (this *SrsAmf0Number) IsMyType(stream *utils.SrsStream) (bool, error) {
 	}
 	return true, nil
 }
+
+func (this *SrsAmf0Number) GetValue() interface{} {
+	return this.Value
+}

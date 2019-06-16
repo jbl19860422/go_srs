@@ -41,7 +41,7 @@ func (this *SrsSetPeerBandwidthPacket) Decode(stream *utils.SrsStream) error {
 }
 
 func (this *SrsSetPeerBandwidthPacket) Encode(stream *utils.SrsStream) error {
-	stream.WriteInt32(this.Bandwidth, binary.LittleEndian)
+	stream.WriteInt32(this.Bandwidth, binary.BigEndian)
 	stream.WriteByte(byte(this.Type))
 	return nil
 }

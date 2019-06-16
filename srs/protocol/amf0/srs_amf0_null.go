@@ -42,3 +42,7 @@ func (this *SrsAmf0Null) IsMyType(stream *utils.SrsStream) (bool, error) {
 	}
 	return true, nil
 }
+
+func (this *SrsAmf0Null) GetValue() interface{} {
+	return nil
+}

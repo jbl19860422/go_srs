@@ -13,6 +13,8 @@ import (
 	"log"
 	"reflect"
 	_ "bufio"
+	"fmt"
+	_ "time"
 )
 
 const SRS_PERF_CHUNK_STREAM_CACHE = 16
@@ -525,10 +527,10 @@ func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 	return nil
 }
 
-func (s *SrsProtocol) ExpectMessage(packet packet.SrsPacket) packet.SrsPacket {
+func (this *SrsProtocol) ExpectMessage(packet packet.SrsPacket) packet.SrsPacket {
 	for {
 		log.Print("start RecvNewMessage")
-		msg, err := s.RecvMessage()
+		msg, err := this.RecvMessage()
 		log.Print("end RecvNewMessage")
 		if err != nil {
 			continue
@@ -538,7 +540,7 @@ func (s *SrsProtocol) ExpectMessage(packet packet.SrsPacket) packet.SrsPacket {
 			continue
 		}
 
-		p, err1 := s.DecodeMessage(msg)
+		p, err1 := this.DecodeMessage(msg)
 		if err1 != nil {
 			log.Print("decode message failed, err=", err1)
 			continue
@@ -569,7 +571,6 @@ func (s *SrsProtocol) do_send_packet(pkt packet.SrsPacket, stream_id int32) erro
 	if len(payload) <= 0 {
 		return errors.New("packet is empty, ignore empty message.")
 	}
-
 	var header SrsMessageHeader
 	header.payload_length = int32(len(payload))
 	header.message_type = pkt.GetMessageType()
@@ -586,7 +587,7 @@ func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) er
 	var err error
 	for sended_count < len(payload) {
 		if sended_count == 0 {
-			log.Print("cid=", mh.perfer_cid, ",timestamp=", mh.timestamp, ",payload_length=", mh.payload_length, ",type=", mh.message_type, ",stream_id=", mh.stream_id)
+			// log.Print("cid=", mh.perfer_cid, ",timestamp=", mh.timestamp, ",payload_length=", mh.payload_length, ",type=", mh.message_type, ",stream_id=", mh.stream_id)
 			d, err = srs_chunk_header_c0(mh.perfer_cid, int32(mh.timestamp), mh.payload_length, mh.message_type, mh.stream_id)
 			if err != nil {
 				return err
@@ -594,24 +595,24 @@ func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) er
 		} else {
 			//srs_chunk_header_c3
 		}
-		log.Print("write len==", len(d))
-		for i := 0; i < len(d); i++ {
-			log.Printf("%x ", d[i])
-		}
-		// n1 , err1 := (*s.conn).Write(d)
-		// if err1 != nil {
-		// 	return err1
-		// }
+		//fmt.Println(d)
 
 		d = append(d, payload...)
-		// log.Print("write succeed len=", n1)
-		// log.Print("write body len==", len(payload))
 		n2, err2 := this.io.Write(d)
 		if err2 != nil {
 			return err2
 		}
+
+		
 		sended_count += n2
 		log.Print("sended_count=", sended_count)
+		fmt.Println(d)
+		// if sended_count == 17 {
+			
+		// 	for {
+		// 		time.Sleep(1*time.Second)
+		// 	}
+		// }
 	}
 	return nil
 }
@@ -628,7 +629,7 @@ func srs_chunk_header_c0(perfer_cid int32, timestamp int32, payload_length int32
 	// chunk message header, 11 bytes
 	// timestamp, 3bytes, big-endian
 	if timestamp < global.RTMP_EXTENDED_TIMESTAMP {
-		b := utils.Int32ToBytes(timestamp, binary.BigEndian)
+		b := utils.Int32ToBytes(timestamp, binary.LittleEndian)
 		data[1] = b[2]
 		data[2] = b[1]
 		data[3] = b[0]
@@ -640,9 +641,7 @@ func srs_chunk_header_c0(perfer_cid int32, timestamp int32, payload_length int32
 	len += 3
 
 	// message_length, 3bytes, big-endian
-	log.Print("payload_length=", payload_length)
-	b := utils.Int32ToBytes(payload_length, binary.BigEndian)
-	log.Printf("%x %x %x", b[0], b[1], b[2])
+	b := utils.Int32ToBytes(payload_length, binary.LittleEndian)
 	data[4] = b[2]
 	data[5] = b[1]
 	data[6] = b[0]
@@ -652,7 +651,7 @@ func srs_chunk_header_c0(perfer_cid int32, timestamp int32, payload_length int32
 	// log.Print("data[7]=", data[7])
 	len += 1
 	// stream_id, 4bytes, little-endian
-	b = utils.Int32ToBytes(stream_id, binary.BigEndian)
+	b = utils.Int32ToBytes(stream_id, binary.LittleEndian)
 	data[8] = b[0]
 	data[9] = b[1]
 	data[10] = b[2]
@@ -684,6 +683,5 @@ func srs_chunk_header_c0(perfer_cid int32, timestamp int32, payload_length int32
 		data[15] = b[0]
 		len += 4
 	}
-	log.Print("***************len=", len, "***************")
 	return data[:len], nil
 }

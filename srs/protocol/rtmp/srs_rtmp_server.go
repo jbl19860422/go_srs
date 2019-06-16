@@ -10,6 +10,7 @@ import (
 	"go_srs/srs/protocol/packet"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/global"
+	"fmt"
 )
 
 type SrsRtmpServer struct {
@@ -34,6 +35,10 @@ func (this *SrsRtmpServer) HandShake() error {
 func (this *SrsRtmpServer) ConnectApp() (packet.SrsPacket, error) {
 	connPacket := packet.NewSrsConnectAppPacket()
 	pkt := this.Protocol.ExpectMessage(connPacket)
+	fmt.Println("aaaaaa=", pkt)
+	if pkt == nil {
+		fmt.Println("nilnilnilnil")
+	}
 	// srs_discovery_tc_url(req->tcUrl,
 	//     req->schema, req->host, req->vhost, req->app, req->stream, req->port,
 	//     req->param);

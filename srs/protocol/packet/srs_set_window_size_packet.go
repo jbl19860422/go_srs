@@ -28,6 +28,6 @@ func (this *SrsSetWindowAckSizePacket) Decode(stream *utils.SrsStream) error {
 }
 
 func (this *SrsSetWindowAckSizePacket) Encode(stream *utils.SrsStream) error {
-	stream.WriteInt32(this.AckowledgementWindowSize, binary.LittleEndian)
+	stream.WriteInt32(this.AckowledgementWindowSize, binary.BigEndian)
 	return nil
 }

@@ -40,3 +40,7 @@ func (this *SrsAmf0Utf8) Encode(stream *utils.SrsStream) error {
 func (this *SrsAmf0Utf8) IsMyType(stream *utils.SrsStream) (bool, error) {
 	return true, nil
 }
+
+func (this *SrsAmf0Utf8) GetValue() interface{} {
+	return this.Value
+}

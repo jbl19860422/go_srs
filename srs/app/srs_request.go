@@ -3,6 +3,7 @@ package app
 import (
 	"go_srs/srs/protocol/rtmp"
 )
+
 type SrsRequest struct {
 	ip             string
 	typ            rtmp.SrsRtmpConnType
@@ -18,4 +19,8 @@ type SrsRequest struct {
 	stream         string
 	duration       float64
 	objectEncoding float64
+}
+
+func NewSrsRequest() *SrsRequest {
+	return &SrsRequest{}
 }

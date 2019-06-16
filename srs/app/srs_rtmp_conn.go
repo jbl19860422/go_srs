@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"log"
 	"time"
+	"fmt"
 )
 
 type SrsRtmpConn struct {
@@ -24,6 +25,7 @@ func NewSrsRtmpConn(conn net.Conn) *SrsRtmpConn {
 	return &SrsRtmpConn{
 		io: socketIO,
 		rtmp:rtmp.NewSrsRtmpServer(socketIO),
+		req:NewSrsRequest(),
 	}
 }
 
@@ -41,7 +43,8 @@ func (this *SrsRtmpConn) do_cycle() error {
 	if err != nil {
 		return err
 	}
-
+	
+	fmt.Println("pkt.(*packet.SrsConnectAppPacket).CommandObj=",pkt.(*packet.SrsConnectAppPacket).CommandObj)
 	err = pkt.(*packet.SrsConnectAppPacket).CommandObj.Get("tcUrl", &this.req.tcUrl)
 	if err != nil {
 		return err
@@ -70,15 +73,14 @@ func (this *SrsRtmpConn) do_cycle() error {
 	}
 
 	m, _ := url.ParseQuery(u.RawQuery)
-	log.Print("****************************", this.req.schema)
-	log.Print("****************************", this.req.host)
-	log.Print("****************************", this.req.app)
-	log.Print("****************************", u.RawQuery)
+	fmt.Println(this.req.tcUrl)
 	log.Print(m)
 	vhost, ok := m["vhost"]
 	if ok {
 		this.req.vhost = vhost[0]
 	}
+
+	this.service_cycle()
 	return nil
 }
 

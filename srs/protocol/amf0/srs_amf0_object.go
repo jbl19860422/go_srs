@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go_srs/srs/utils"
 	"reflect"
+	"fmt"
 )
 
 type SrsAmf0Object struct {
@@ -121,6 +122,7 @@ func (this *SrsAmf0Object) IsMyType(stream *utils.SrsStream) (bool, error) {
 
 func (this *SrsAmf0Object) Set(name string, value interface{}) {
 	var p *SrsValuePair
+	fmt.Println(reflect.TypeOf(value))
 	switch value.(type) {
 	case string:
 		p = &SrsValuePair{
@@ -137,7 +139,18 @@ func (this *SrsAmf0Object) Set(name string, value interface{}) {
 			Name:  SrsAmf0Utf8{Value: name},
 			Value: &SrsAmf0Number{Value: value.(float64)},
 		}
+	case *SrsAmf0Object:
+		p = &SrsValuePair{
+			Name:  SrsAmf0Utf8{Value: name},
+			Value: value.(*SrsAmf0Object),
+		}
+	case *SrsAmf0EcmaArray:
+		p = &SrsValuePair{
+			Name:  SrsAmf0Utf8{Value: name},
+			Value: value.(*SrsAmf0EcmaArray),
+		}
 	}
+
 	this.Properties = append(this.Properties, *p)
 }
 
@@ -145,11 +158,10 @@ func (this *SrsAmf0Object) Get(name string, pval interface{}) error {
 	if reflect.TypeOf(pval).Kind() != reflect.Ptr {
 		return errors.New("need pointer to get value")
 	}
-
 	for i := 0; i < len(this.Properties); i++ {
 		if this.Properties[i].Name.Value == name {
-			if reflect.TypeOf(pval).Elem() == reflect.TypeOf(this.Properties[i].Value) {
-				reflect.ValueOf(pval).Elem().Set(reflect.ValueOf(this.Properties[i].Value))
+			if reflect.TypeOf(pval).Elem() == reflect.TypeOf(this.Properties[i].Value.GetValue()) {
+				reflect.ValueOf(pval).Elem().Set(reflect.ValueOf(this.Properties[i].Value.GetValue()))
 				return nil
 			} else {
 				return errors.New("type not match")
@@ -158,3 +170,9 @@ func (this *SrsAmf0Object) Get(name string, pval interface{}) error {
 	}
 	return errors.New("could not find key:" + name)
 }
+
+func (this *SrsAmf0Object) GetValue() interface{} {
+	return this.Properties
+}
+
+

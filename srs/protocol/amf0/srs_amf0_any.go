@@ -8,6 +8,7 @@ type SrsAmf0Any interface {
 	Decode(stream *utils.SrsStream) error
 	Encode(stream *utils.SrsStream) error
 	IsMyType(stream *utils.SrsStream) (bool, error)
+	GetValue() interface{}
 }
 
 func GenerateSrsAmf0Any(marker byte) SrsAmf0Any {

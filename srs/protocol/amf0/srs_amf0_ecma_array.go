@@ -198,3 +198,7 @@ func (this *SrsAmf0EcmaArray) Get(name string, pval interface{}) error {
 	}
 	return errors.New("could not find key:" + name)
 }
+
+func (this *SrsAmf0EcmaArray) GetValue() interface{} {
+	return this.Properties
+}
