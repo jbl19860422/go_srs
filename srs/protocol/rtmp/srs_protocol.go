@@ -90,11 +90,12 @@ func (s *SrsProtocol) ReadBasicHeader() (fmt byte, cid int32, err error) {
 
 func (this *SrsProtocol) ReadNByte(count int) (b []byte, err error) {
 	b = make([]byte, count)
-	_, err = this.io.Read(b)
+	_, err = this.io.ReadFully(b, 1000)
 	return
 }
 
 func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err error) {
+	fmt.Println("ReadMessageHeader")
 	/**
 	 * we should not assert anything about fmt, for the first packet.
 	 * (when first packet, the chunk->msg is NULL).
@@ -377,7 +378,7 @@ func (s *SrsProtocol) RecvMessagePayload(chunk *SrsChunkStream) (msg *SrsRtmpMes
 	if s.in_chunk_size < payload_size {
 		payload_size = s.in_chunk_size
 	}
-
+	fmt.Println("chunk.RtmpMessage.size=", chunk.RtmpMessage.size, "&expect payload_size=", payload_size)
 	// create msg payload if not initialized
 	if chunk.RtmpMessage.payload == nil {
 		chunk.RtmpMessage.payload = make([]byte, 0)
@@ -385,7 +386,7 @@ func (s *SrsProtocol) RecvMessagePayload(chunk *SrsChunkStream) (msg *SrsRtmpMes
 
 	// read payload to buffer
 	var buffer1 []byte
-	if buffer1, err = s.ReadNByte(int(chunk.Header.payload_length)); err != nil {
+	if buffer1, err = s.ReadNByte(int(payload_size)); err != nil {
 		return nil, err
 	}
 
