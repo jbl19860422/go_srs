@@ -1,4 +1,4 @@
-package protocol
+package rtmp
 
 // "fmt"
 
@@ -14,12 +14,12 @@ type SrsChunkStream struct {
 	 * represents the basic header fmt,
 	 * which used to identify the variant message header type.
 	 */
-	fmt byte
+	Format byte
 	/**
 	 * represents the basic header cid,
 	 * which is the chunk stream id.
 	 */
-	cid int32
+	Cid int32
 	/**
 	 * cached message header
 	 */
@@ -27,20 +27,20 @@ type SrsChunkStream struct {
 	/**
 	 * whether the chunk message header has extended timestamp.
 	 */
-	extendedTimestamp bool
+	ExtendedTimestamp bool
 
-	msgCount int32
+	MsgCount int32
 
 	RtmpMessage *SrsRtmpMessage
 }
 
 func NewSrsChunkStream(cid_ int32) *SrsChunkStream {
 	s := &SrsChunkStream{
-		fmt:               0,
-		cid:               cid_,
-		extendedTimestamp: false,
+		Format:            0,
+		Cid:               cid_,
+		ExtendedTimestamp: false,
 		RtmpMessage:       nil,
-		msgCount:          0,
+		MsgCount:          0,
 	}
 	return s
 }

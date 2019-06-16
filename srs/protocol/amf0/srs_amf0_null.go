@@ -1,4 +1,11 @@
 package amf0
+
+import (
+	"go_srs/srs/utils"
+	"errors"
+	_ "log"
+)
+
 type SrsAmf0Null struct {
 }
 
@@ -27,7 +34,7 @@ func (this *SrsAmf0Null) Encode(stream *utils.SrsStream) error {
 func (this *SrsAmf0Null) IsMyType(stream *utils.SrsStream) (bool, error) {
 	marker, err := stream.PeekByte()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if marker != RTMP_AMF0_Null {

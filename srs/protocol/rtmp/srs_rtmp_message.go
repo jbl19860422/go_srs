@@ -1,4 +1,4 @@
-package protocol
+package rtmp
 
 type SrsRtmpMessage struct {
 	// 4.1. Message Header

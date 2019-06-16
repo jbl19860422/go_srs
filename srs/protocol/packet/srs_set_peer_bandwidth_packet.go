@@ -1,4 +1,10 @@
-package protocol
+package packet
+
+import (
+	"encoding/binary"
+	"go_srs/srs/utils"
+	"go_srs/srs/global"
+)
 
 type SrsPeerBandwidthType int
 
@@ -11,31 +17,31 @@ const (
 )
 
 type SrsSetPeerBandwidthPacket struct {
-	Bandwidth 	int32
-	Type       	int8
+	Bandwidth int32
+	Type      int8
 }
 
 func NewSrsSetPeerBandwidthPacket() *SrsSetPeerBandwidthPacket {
 	return &SrsSetPeerBandwidthPacket{
-		Bandwidth: 	0,
-		Type:       SrsPeerBandwidthDynamic,
+		Bandwidth: 0,
+		Type:      SrsPeerBandwidthDynamic,
 	}
 }
 
 func (this *SrsSetPeerBandwidthPacket) GetMessageType() int8 {
-	return RTMP_MSG_SetPeerBandwidth
+	return global.RTMP_MSG_SetPeerBandwidth
 }
 
 func (this *SrsSetPeerBandwidthPacket) GetPreferCid() int32 {
-	return RTMP_CID_ProtocolControl
+	return global.RTMP_CID_ProtocolControl
 }
 
-func (this *SrsSetPeerBandwidthPacket) Decode(stream *SrsStream) error {
+func (this *SrsSetPeerBandwidthPacket) Decode(stream *utils.SrsStream) error {
 	return nil
 }
 
-func (this *SrsSetPeerBandwidthPacket) Encode(stream *SrsStream) error {
+func (this *SrsSetPeerBandwidthPacket) Encode(stream *utils.SrsStream) error {
 	stream.WriteInt32(this.Bandwidth, binary.LittleEndian)
-	stream.WriteByte(this.Type)
+	stream.WriteByte(byte(this.Type))
 	return nil
 }

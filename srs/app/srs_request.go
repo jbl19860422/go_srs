@@ -1,10 +1,11 @@
-package srs
+package app
 
-import "go_srs/srs/protocol"
-
+import (
+	"go_srs/srs/protocol/rtmp"
+)
 type SrsRequest struct {
 	ip             string
-	typ            protocol.SrsRtmpConnType
+	typ            rtmp.SrsRtmpConnType
 	tcUrl          string
 	pageUrl        string
 	swfUrl         string

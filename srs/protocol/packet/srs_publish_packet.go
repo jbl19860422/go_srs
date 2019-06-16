@@ -1,35 +1,36 @@
 package packet
 
 import (
-	"errors"
+	"go_srs/srs/global"
+	"go_srs/srs/protocol/amf0"
+	"go_srs/srs/utils"
 )
 
 type SrsPublishPacket struct {
-	CommandName   	SrsAmf0String
-	TransactionId 	SrsAmf0Number
-	NullObj     	SrsAmf0Null
-	StreamName    	SrsAmf0String
-	Type            SrsAmf0String
+	CommandName   amf0.SrsAmf0String
+	TransactionId amf0.SrsAmf0Number
+	NullObj       amf0.SrsAmf0Null
+	StreamName    amf0.SrsAmf0String
+	Type          amf0.SrsAmf0String
 }
 
 func NewSrsPublishPacket() *SrsPublishPacket {
 	return &SrsPublishPacket{
-		CommandName:	SrsAmf0String{Value:RTMP_AMF0_COMMAND_PUBLISH},
-		TransactionId: 	SrsAmf0Number{Value:0},
-		CommandObj:     NewSrsAmf0Object(),
-		Type:           SrsAmf0String{Value:"live"},
+		CommandName:   amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_COMMAND_PUBLISH}},
+		TransactionId: amf0.SrsAmf0Number{Value: 0},
+		Type:          amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: "live"}},
 	}
 }
 
 func (s *SrsPublishPacket) GetMessageType() int8 {
-	return RTMP_MSG_AMF0CommandMessage
+	return global.RTMP_MSG_AMF0CommandMessage
 }
 
 func (s *SrsPublishPacket) GetPreferCid() int32 {
-	return RTMP_CID_OverStream
+	return global.RTMP_CID_OverStream
 }
 
-func (this *SrsPublishPacket) Decode(stream *SrsStream) error {
+func (this *SrsPublishPacket) Decode(stream *utils.SrsStream) error {
 	if err := this.TransactionId.Decode(stream); err != nil {
 		return err
 	}
@@ -37,20 +38,20 @@ func (this *SrsPublishPacket) Decode(stream *SrsStream) error {
 	if err := this.NullObj.Decode(stream); err != nil {
 		return err
 	}
-	
+
 	if err := this.StreamName.Decode(stream); err != nil {
 		return err
 	}
 
-	if !stream.empty() {
-		if err := this.Type.Deocde(stream); err != nil {
+	if !stream.Empty() {
+		if err := this.Type.Decode(stream); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *SrsPublishPacket) Encode(stream *SrsStream) error {
+func (this *SrsPublishPacket) Encode(stream *utils.SrsStream) error {
 	_ = this.CommandName.Encode(stream)
 	_ = this.TransactionId.Encode(stream)
 	_ = this.NullObj.Encode(stream)

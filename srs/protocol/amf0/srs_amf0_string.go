@@ -1,9 +1,8 @@
 package amf0
 
 import (
-	"encoding/binary"
 	"errors"
-	"utils"
+	"go_srs/srs/utils"
 )
 
 type SrsAmf0String struct {
@@ -12,7 +11,7 @@ type SrsAmf0String struct {
 
 func NewSrsAmf0String(str string) *SrsAmf0String {
 	return &SrsAmf0String{
-		Value:SrsAmf0Utf8{Value:str}
+		Value: SrsAmf0Utf8{Value: str},
 	}
 }
 
@@ -27,8 +26,7 @@ func (this *SrsAmf0String) Decode(stream *utils.SrsStream) error {
 		return err
 	}
 
-	err := this.Value.Decode(stream)
-	return err
+	return this.Value.Decode(stream)
 }
 
 func (this *SrsAmf0String) Encode(stream *utils.SrsStream) error {
@@ -40,7 +38,7 @@ func (this *SrsAmf0String) Encode(stream *utils.SrsStream) error {
 func (this *SrsAmf0String) IsMyType(stream *utils.SrsStream) (bool, error) {
 	marker, err := stream.PeekByte()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if marker != RTMP_AMF0_String {

@@ -1,3 +1,1 @@
 package packet
-
-const SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE = 128

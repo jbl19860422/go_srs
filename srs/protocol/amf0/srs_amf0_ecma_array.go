@@ -1,54 +1,58 @@
 package amf0
 
 import (
+	"encoding/binary"
+	"errors"
+	"go_srs/srs/utils"
+	"reflect"
 	_ "log"
 )
 
 type SrsAmf0EcmaArray struct {
-	properties 	[]SrsValuePair
-	eof        	*SrsAmf0ObjectEOF
-	count		int32
+	Properties []SrsValuePair
+	eof        *SrsAmf0ObjectEOF
+	count      int32
 }
 
 func NewSrsAmf0EcmaArray() *SrsAmf0EcmaArray {
-	s := &SrsAmf0EcmaArray{eof: &SrsAmf0ObjectEOF{}, count:0}
-	s.properties = make([]SrsValuePair, 0)
+	s := &SrsAmf0EcmaArray{eof: &SrsAmf0ObjectEOF{}, count: 0}
+	s.Properties = make([]SrsValuePair, 0)
 	return s
 }
 
 func (this *SrsAmf0EcmaArray) Count() int {
-	return len(this.properties)
+	return len(this.Properties)
 }
 
 func (this *SrsAmf0EcmaArray) Clear() {
-	this.properties = this.properties[0:0]
+	this.Properties = this.Properties[0:0]
 }
 
 func (this *SrsAmf0EcmaArray) KeyAt(i int) string {
-	if i < len(this.properties) {
-		return this.properties[i].name
+	if i < len(this.Properties) {
+		return this.Properties[i].Name.Value
 	}
 	return ""
 }
 
 func (this *SrsAmf0EcmaArray) ValueAt(i int) SrsAmf0Any {
-	if i < len(this.properties) {
-		return this.properties[i].value
+	if i < len(this.Properties) {
+		return this.Properties[i].Value
 	}
 	return nil
 }
 
-func (this *SrsAmf0EcmaArray) Set(key string, v SrsAmf0Any) {
-	pair := SrsValuePair{
-		name:key,
-		value:v,
-	}
-	this.properties = append(this.properties, pair)
-	return
-}
+// func (this *SrsAmf0EcmaArray) Set(key string, v SrsAmf0Any) {
+// 	pair := SrsValuePair{
+// 		Name:  SrsAmf0Utf8{Value: key},
+// 		Value: v,
+// 	}
+// 	this.Properties = append(this.Properties, pair)
+// 	return
+// }
 
 func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
-	marker, err := stream.ReadByte();
+	marker, err := stream.ReadByte()
 	if err != nil {
 		return err
 	}
@@ -58,13 +62,14 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 		return err
 	}
 
-	count, err := stream.ReadInt32()
+	this.count, err = stream.ReadInt32(binary.BigEndian)
 	if err != nil {
 		return err
 	}
 
 	for {
-		if is_eof, err := this.eof.IsMyType(stream); err != nil {
+		var is_eof bool
+		if is_eof, err = this.eof.IsMyType(stream); err != nil {
 			return err
 		}
 
@@ -78,36 +83,42 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 		if err != nil {
 			return err
 		}
-		
-		marker, err := stream.PeekByte(1)
+
+		marker, err := stream.PeekByte()
 		if err != nil {
 			return err
 		}
 
 		var v SrsAmf0Any
 		switch marker {
-			case RTMP_AMF0_Number:{
-				v = SrsAmf0Number{}
+		case RTMP_AMF0_Number:
+			{
+				v = &SrsAmf0Number{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_Boolean:{
-				v = SrsAmf0Boolean{}
+		case RTMP_AMF0_Boolean:
+			{
+				v = &SrsAmf0Boolean{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_String:{
-				v = SrsAmf0String{}
+		case RTMP_AMF0_String:
+			{
+				v = &SrsAmf0String{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_Object: {
-				v = SrsAmf0Object{}
+		case RTMP_AMF0_Object:
+			{
+				v = &SrsAmf0Object{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_Null:{
-				v = SrsAmf0Null{}
+		case RTMP_AMF0_Null:
+			{
+				v = &SrsAmf0Null{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_Undefined:{
-				v = SrsAmf0Undefined{}
+		case RTMP_AMF0_Undefined:
+			{
+				v = &SrsAmf0Undefined{}
 				err = v.Decode(stream)
 			}
 		}
@@ -117,21 +128,73 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 		}
 
 		pair := SrsValuePair{
-			name:pname,
-			value:v,
+			Name:  pname,
+			Value: v,
 		}
-		this.properties = append(this.properties, pair)
+		this.Properties = append(this.Properties, pair)
 	}
 	return nil
 }
 
 func (this *SrsAmf0EcmaArray) Encode(stream *utils.SrsStream) error {
-	stream.WriteByte(RTMP_AMF0_EcmaArray)
-	_ = stream.WriteInt32(0, binary.BigEndian)
-	for i := 0; i < len(this.properties); i++ {
-		_ = this.properties[i].name.Encode(stream)
-		_ = this.properties[i].value.Encode(stream)
+	stream.WriteByte(byte(RTMP_AMF0_EcmaArray))
+	stream.WriteInt32(0, binary.BigEndian)
+	for i := 0; i < len(this.Properties); i++ {
+		_ = this.Properties[i].Name.Encode(stream)
+		_ = this.Properties[i].Value.Encode(stream)
 	}
 	_ = this.eof.Encode(stream)
 	return nil
+}
+
+func (this *SrsAmf0EcmaArray) IsMyType(stream *utils.SrsStream) (bool, error) {
+	marker, err := stream.PeekByte()
+	if err != nil {
+		return false, err
+	}
+
+	if marker != RTMP_AMF0_EcmaArray {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (this *SrsAmf0EcmaArray) Set(name string, value interface{}) {
+	var p *SrsValuePair
+	switch value.(type) {
+	case string:
+		p = &SrsValuePair{
+			Name:  SrsAmf0Utf8{Value: name},
+			Value: &SrsAmf0String{Value: SrsAmf0Utf8{Value: value.(string)}},
+		}
+	case bool:
+		p = &SrsValuePair{
+			Name:  SrsAmf0Utf8{Value: name},
+			Value: &SrsAmf0Boolean{Value: value.(bool)},
+		}
+	case float64:
+		p = &SrsValuePair{
+			Name:  SrsAmf0Utf8{Value: name},
+			Value: &SrsAmf0Number{Value: value.(float64)},
+		}
+	}
+	this.Properties = append(this.Properties, *p)
+}
+
+func (this *SrsAmf0EcmaArray) Get(name string, pval interface{}) error {
+	if reflect.TypeOf(pval).Kind() != reflect.Ptr {
+		return errors.New("need pointer to get value")
+	}
+
+	for i := 0; i < len(this.Properties); i++ {
+		if this.Properties[i].Name.Value == name {
+			if reflect.TypeOf(pval).Elem() == reflect.TypeOf(this.Properties[i].Value) {
+				reflect.ValueOf(pval).Elem().Set(reflect.ValueOf(this.Properties[i].Value))
+				return nil
+			} else {
+				return errors.New("type not match")
+			}
+		}
+	}
+	return errors.New("could not find key:" + name)
 }

@@ -1,6 +1,11 @@
 package packet
 
-import "log"
+import "encoding/binary"
+
+// import "log"
+import (
+	"go_srs/srs/utils"
+)
 
 type SrcPCUCEventType int
 
@@ -130,11 +135,11 @@ func NewSrsUserControlPacket() *SrsUserControlPacket {
 	return &SrsUserControlPacket{}
 }
 
-func (this *SrsUserControlPacket) Decode(stream *SrsStream) (err error) {
-	if this.EventType, err = stream.ReadInt16(stream, binary.BigEndian); err != nil {
+func (this *SrsUserControlPacket) Decode(stream *utils.SrsStream) (err error) {
+	if this.EventType, err = stream.ReadInt16(binary.BigEndian); err != nil {
 		return
 	}
-	
+
 	if this.EventType == SrsPCUCFmsEvent0 {
 		var d int8
 		d, err = stream.ReadInt8()
@@ -157,19 +162,16 @@ func (this *SrsUserControlPacket) Decode(stream *SrsStream) (err error) {
 	return
 }
 
-func (this *SrsUserControlPacket) Encode(stream *SrsStream) error {
-	if err := stream.WriteInt16(this.EventType, binary.BigEndian); err != nil {
-		return err
-	}
-
+func (this *SrsUserControlPacket) Encode(stream *utils.SrsStream) error {
+	stream.WriteInt16(this.EventType, binary.BigEndian)
 	if this.EventType == SrsPCUCFmsEvent0 {
-		_ = stream.WriteByte(byte(this.EventData))
+		stream.WriteByte(byte(this.EventData))
 	} else {
-		_ = stream.WriteInt32(this.EventData)
+		stream.WriteInt32(this.EventData, binary.BigEndian)
 	}
 
 	if this.EventType == SrcPCUCSetBufferLength {
-		_ = stream.WriteInt32(this.ExtraData)
+		stream.WriteInt32(this.ExtraData, binary.BigEndian)
 	}
 	return nil
 }

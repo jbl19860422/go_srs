@@ -1,10 +1,10 @@
 package amf0
 
 import (
-	"utils"
+	"go_srs/srs/utils"
 )
 
-type SrsAmf0Any {
+type SrsAmf0Any interface {
 	Decode(stream *utils.SrsStream) error
 	Encode(stream *utils.SrsStream) error
 	IsMyType(stream *utils.SrsStream) (bool, error)

@@ -3,49 +3,36 @@ package packet
 import (
 	"errors"
 	"log"
+	"go_srs/srs/protocol/amf0"
+	"go_srs/srs/utils"
+	"go_srs/srs/global"
 )
 
 type SrsConnectAppPacket struct {
-	/**
-	 * Name of the command. Set to "connect".
-	 */
-	CommandName SrsAmf0String
-	/**
-	 * Always set to 1.
-	 */
-	TransactionId SrsAmf0Number
-	/**
-    * Command information object which has the name-value pairs.
-    * @remark: alloc in packet constructor, user can directly use it, 
-    *       user should never alloc it again which will cause memory leak.
-    * @remark, never be NULL.
-    */
-	CommandObj *SrsAmf0Object
-	/**
-    * Any optional information
-    * @remark, optional, init to and maybe NULL.
-    */
-	Args *SrsAmf0Object
+	CommandName 	amf0.SrsAmf0String
+	TransactionId 	amf0.SrsAmf0Number
+	CommandObj 		*amf0.SrsAmf0Object
+	Args 			*amf0.SrsAmf0Object
 }
 
 func NewSrsConnectAppPacket() *SrsConnectAppPacket {
 	return &SrsConnectAppPacket{
-		CommandName: SrsAmf0String{value:RTMP_AMF0_COMMAND_CONNECT},
-		TransactionId: SrsAmf0Number{value:1},
-		CommandObj: NewSrsAmf0Object(),
+		CommandName: amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:amf0.RTMP_AMF0_COMMAND_CONNECT}},
+		TransactionId: amf0.SrsAmf0Number{Value:1},
+		CommandObj: amf0.NewSrsAmf0Object(),
 		Args: nil,
 	}
 }
 
 func (s *SrsConnectAppPacket) GetMessageType() int8 {
-	return RTMP_MSG_AMF0CommandMessage
+	return global.RTMP_MSG_AMF0CommandMessage
 }
 
 func (s *SrsConnectAppPacket) GetPreferCid() int32 {
-	return RTMP_CID_OverConnection
+	return global.RTMP_CID_OverConnection
 }
 
-func (this *SrsConnectAppPacket) Decode(stream *SrsStream) error {
+func (this *SrsConnectAppPacket) Decode(stream *utils.SrsStream) error {
 	var err error
 	err = this.TransactionId.Decode(stream)
 	if err != nil {
@@ -76,7 +63,7 @@ func (this *SrsConnectAppPacket) Decode(stream *SrsStream) error {
 	return nil
 }
 
-func (s *SrsConnectAppPacket) Encode(stream *SrsStream) error {
+func (this *SrsConnectAppPacket) Encode(stream *utils.SrsStream) error {
 	_ = this.CommandName.Encode(stream)
 	_ = this.TransactionId.Encode(stream)
 	_ = this.CommandObj.Encode(stream)

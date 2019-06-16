@@ -1,5 +1,11 @@
 package amf0
-import "errors"
+
+import (
+	"encoding/binary"
+	"errors"
+	"go_srs/srs/utils"
+)
+
 type SrsAmf0ObjectEOF struct {
 }
 
@@ -8,14 +14,14 @@ func NewSrsAmf0ObjectEOF() *SrsAmf0ObjectEOF {
 }
 
 func (this *SrsAmf0ObjectEOF) Decode(stream *utils.SrsStream) error {
-	tmp, err := stream.ReadUInt16(binary.BigEndian)
+	tmp, err := stream.ReadInt16(binary.BigEndian)
 	if err != nil {
 		return err
 	}
 
 	if tmp != 0x00 {
 		err = errors.New("amf0 read object eof value check failed.")
-		return
+		return err
 	}
 
 	marker, err := stream.ReadByte()
@@ -31,7 +37,7 @@ func (this *SrsAmf0ObjectEOF) Decode(stream *utils.SrsStream) error {
 }
 
 func (this *SrsAmf0ObjectEOF) Encode(stream *utils.SrsStream) error {
-	stream.WriteUInt16(0)
+	stream.WriteInt16(0, binary.BigEndian)
 	stream.WriteByte(RTMP_AMF0_ObjectEnd)
 	return nil
 }
@@ -48,4 +54,3 @@ func (this *SrsAmf0ObjectEOF) IsMyType(stream *utils.SrsStream) (bool, error) {
 
 	return true, nil
 }
-

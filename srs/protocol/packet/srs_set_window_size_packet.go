@@ -1,5 +1,10 @@
 package packet
 
+import (
+	"encoding/binary"
+	"go_srs/srs/global"
+	"go_srs/srs/utils"
+)
 type SrsSetWindowAckSizePacket struct {
 	AckowledgementWindowSize int32
 }
@@ -9,20 +14,20 @@ func NewSrsSetWindowAckSizePacket() *SrsSetWindowAckSizePacket {
 }
 
 func (this *SrsSetWindowAckSizePacket) GetMessageType() int8 {
-	return RTMP_MSG_WindowAcknowledgementSize
+	return global.RTMP_MSG_WindowAcknowledgementSize
 }
 
 func (this *SrsSetWindowAckSizePacket) GetPreferCid() int32 {
-	return RTMP_CID_ProtocolControl
+	return global.RTMP_CID_ProtocolControl
 }
 
-func (p *SrsSetWindowAckSizePacket) Decode(stream *SrsStream) error {
+func (this *SrsSetWindowAckSizePacket) Decode(stream *utils.SrsStream) error {
 	var err error
 	this.AckowledgementWindowSize, err = stream.ReadInt32(binary.LittleEndian)
 	return err
 }
 
-func (s *SrsSetWindowAckSizePacket) Encode(stream *SrsStream) error {
+func (this *SrsSetWindowAckSizePacket) Encode(stream *utils.SrsStream) error {
 	stream.WriteInt32(this.AckowledgementWindowSize, binary.LittleEndian)
 	return nil
 }

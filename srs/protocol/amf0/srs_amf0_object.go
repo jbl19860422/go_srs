@@ -2,7 +2,8 @@ package amf0
 
 import (
 	"errors"
-	"log"
+	"go_srs/srs/utils"
+	"reflect"
 )
 
 type SrsAmf0Object struct {
@@ -17,7 +18,7 @@ func NewSrsAmf0Object() *SrsAmf0Object {
 }
 
 func (this *SrsAmf0Object) Decode(stream *utils.SrsStream) error {
-	marker, err := stream.ReadByte();
+	marker, err := stream.ReadByte()
 	if err != nil {
 		return err
 	}
@@ -28,7 +29,8 @@ func (this *SrsAmf0Object) Decode(stream *utils.SrsStream) error {
 	}
 
 	for {
-		if is_eof, err := this.eof.IsMyType(stream); err != nil {
+		var is_eof bool
+		if is_eof, err = this.eof.IsMyType(stream); err != nil {
 			return err
 		}
 
@@ -42,36 +44,42 @@ func (this *SrsAmf0Object) Decode(stream *utils.SrsStream) error {
 		if err != nil {
 			return err
 		}
-		
-		marker, err := stream.PeekByte(1)
+
+		marker, err := stream.PeekByte()
 		if err != nil {
 			return err
 		}
 
 		var v SrsAmf0Any
 		switch marker {
-			case RTMP_AMF0_Number:{
-				v = SrsAmf0Number{}
+		case RTMP_AMF0_Number:
+			{
+				v = &SrsAmf0Number{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_Boolean:{
-				v = SrsAmf0Boolean{}
+		case RTMP_AMF0_Boolean:
+			{
+				v = &SrsAmf0Boolean{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_String:{
-				v = SrsAmf0String{}
+		case RTMP_AMF0_String:
+			{
+				v = &SrsAmf0String{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_Object: {
-				v = SrsAmf0Object{}
+		case RTMP_AMF0_Object:
+			{
+				v = &SrsAmf0Object{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_Null:{
-				v = SrsAmf0Null{}
+		case RTMP_AMF0_Null:
+			{
+				v = &SrsAmf0Null{}
 				err = v.Decode(stream)
 			}
-			case RTMP_AMF0_Undefined:{
-				v = SrsAmf0Undefined{}
+		case RTMP_AMF0_Undefined:
+			{
+				v = &SrsAmf0Undefined{}
 				err = v.Decode(stream)
 			}
 		}
@@ -81,8 +89,8 @@ func (this *SrsAmf0Object) Decode(stream *utils.SrsStream) error {
 		}
 
 		pair := SrsValuePair{
-			name:pname,
-			value:v,
+			Name:  pname,
+			Value: v,
 		}
 		this.Properties = append(this.Properties, pair)
 	}
@@ -92,8 +100,8 @@ func (this *SrsAmf0Object) Decode(stream *utils.SrsStream) error {
 func (this *SrsAmf0Object) Encode(stream *utils.SrsStream) error {
 	stream.WriteByte(RTMP_AMF0_Object)
 	for i := 0; i < len(this.Properties); i++ {
-		_ = this.Properties[i].name.Encode(stream)
-		_ = this.Properties[i].value.Encode(stream)
+		_ = this.Properties[i].Name.Encode(stream)
+		_ = this.Properties[i].Value.Encode(stream)
 	}
 	_ = this.eof.Encode(stream)
 	return nil
@@ -102,11 +110,51 @@ func (this *SrsAmf0Object) Encode(stream *utils.SrsStream) error {
 func (this *SrsAmf0Object) IsMyType(stream *utils.SrsStream) (bool, error) {
 	marker, err := stream.PeekByte()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if marker != RTMP_AMF0_Object {
 		return false, nil
 	}
 	return true, nil
+}
+
+func (this *SrsAmf0Object) Set(name string, value interface{}) {
+	var p *SrsValuePair
+	switch value.(type) {
+	case string:
+		p = &SrsValuePair{
+			Name:  SrsAmf0Utf8{Value: name},
+			Value: &SrsAmf0String{Value: SrsAmf0Utf8{Value: value.(string)}},
+		}
+	case bool:
+		p = &SrsValuePair{
+			Name:  SrsAmf0Utf8{Value: name},
+			Value: &SrsAmf0Boolean{Value: value.(bool)},
+		}
+	case float64:
+		p = &SrsValuePair{
+			Name:  SrsAmf0Utf8{Value: name},
+			Value: &SrsAmf0Number{Value: value.(float64)},
+		}
+	}
+	this.Properties = append(this.Properties, *p)
+}
+
+func (this *SrsAmf0Object) Get(name string, pval interface{}) error {
+	if reflect.TypeOf(pval).Kind() != reflect.Ptr {
+		return errors.New("need pointer to get value")
+	}
+
+	for i := 0; i < len(this.Properties); i++ {
+		if this.Properties[i].Name.Value == name {
+			if reflect.TypeOf(pval).Elem() == reflect.TypeOf(this.Properties[i].Value) {
+				reflect.ValueOf(pval).Elem().Set(reflect.ValueOf(this.Properties[i].Value))
+				return nil
+			} else {
+				return errors.New("type not match")
+			}
+		}
+	}
+	return errors.New("could not find key:" + name)
 }

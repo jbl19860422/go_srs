@@ -1,4 +1,8 @@
-package protocol
+package rtmp
+
+import (
+	"go_srs/srs/global"
+)
 
 //message header
 type SrsMessageHeader struct {
@@ -43,49 +47,49 @@ type SrsMessageHeader struct {
 }
 
 func (s *SrsMessageHeader) IsAudio() bool {
-	return s.message_type == RTMP_MSG_AudioMessage
+	return s.message_type == global.RTMP_MSG_AudioMessage
 }
 
 func (s *SrsMessageHeader) IsVideo() bool {
-	return s.message_type == RTMP_MSG_VideoMessage
+	return s.message_type == global.RTMP_MSG_VideoMessage
 }
 
 func (s *SrsMessageHeader) IsAmf0Command() bool {
-	return s.message_type == RTMP_MSG_AMF0CommandMessage
+	return s.message_type == global.RTMP_MSG_AMF0CommandMessage
 }
 
 func (s *SrsMessageHeader) IsAmf0Data() bool {
-	return s.message_type == RTMP_MSG_AMF0DataMessage
+	return s.message_type == global.RTMP_MSG_AMF0DataMessage
 }
 
 func (s *SrsMessageHeader) IsAmf3Command() bool {
-	return s.message_type == RTMP_MSG_AMF3CommandMessage
+	return s.message_type == global.RTMP_MSG_AMF3CommandMessage
 }
 
 func (s *SrsMessageHeader) IsAmf3Data() bool {
-	return s.message_type == RTMP_MSG_AMF3DataMessage
+	return s.message_type == global.RTMP_MSG_AMF3DataMessage
 }
 
 func (s *SrsMessageHeader) IsWindowAckledgementSize() bool {
-	return s.message_type == RTMP_MSG_WindowAcknowledgementSize
+	return s.message_type == global.RTMP_MSG_WindowAcknowledgementSize
 }
 
 func (s *SrsMessageHeader) IsAckledgement() bool {
-	return s.message_type == RTMP_MSG_Acknowledgement
+	return s.message_type == global.RTMP_MSG_Acknowledgement
 }
 
 func (s *SrsMessageHeader) IsSetChunkSize() bool {
-	return s.message_type == RTMP_MSG_SetChunkSize
+	return s.message_type == global.RTMP_MSG_SetChunkSize
 }
 
 func (s *SrsMessageHeader) IsUserControlMessage() bool {
-	return s.message_type == RTMP_MSG_UserControlMessage
+	return s.message_type == global.RTMP_MSG_UserControlMessage
 }
 
 func (s *SrsMessageHeader) IsSetPeerBandwidth() bool {
-	return s.message_type == RTMP_MSG_SetPeerBandwidth
+	return s.message_type == global.RTMP_MSG_SetPeerBandwidth
 }
 
 func (s *SrsMessageHeader) IsAggregate() bool {
-	return s.message_type == RTMP_MSG_AggregateMessage
+	return s.message_type == global.RTMP_MSG_AggregateMessage
 }

@@ -1,11 +1,18 @@
 package amf0
+
+import (
+	"go_srs/srs/utils"
+	"encoding/binary"
+	"errors"
+)
+
 type SrsAmf0Number struct {
 	Value float64
 }
 
 func NewSrsAmf0Number(data float64) *SrsAmf0Number {
 	return &SrsAmf0Number{
-		Value:data
+		Value: data,
 	}
 }
 
@@ -20,7 +27,7 @@ func (this *SrsAmf0Number) Decode(stream *utils.SrsStream) error {
 		return err
 	}
 
-	this.Value, err := stream.ReadFloat64(binary.BigEndian)
+	this.Value, err = stream.ReadFloat64(binary.BigEndian)
 	if err != nil {
 		return err
 	}
@@ -33,10 +40,10 @@ func (this *SrsAmf0Number) Encode(stream *utils.SrsStream) error {
 	return nil
 }
 
-func (this *SrsAmf0Null) IsMyType(stream *utils.SrsStream) (bool, error) {
+func (this *SrsAmf0Number) IsMyType(stream *utils.SrsStream) (bool, error) {
 	marker, err := stream.PeekByte()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if marker != RTMP_AMF0_Number {

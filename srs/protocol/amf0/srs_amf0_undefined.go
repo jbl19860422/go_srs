@@ -1,4 +1,10 @@
-package protocol
+package amf0
+
+import (
+	"errors"
+	"go_srs/srs/utils"
+)
+
 type SrsAmf0Undefined struct {
 }
 
@@ -23,7 +29,7 @@ func (this *SrsAmf0Undefined) Encode(stream *utils.SrsStream) error {
 func (this *SrsAmf0Undefined) IsMyType(stream *utils.SrsStream) (bool, error) {
 	marker, err := stream.PeekByte()
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if marker != RTMP_AMF0_Undefined {

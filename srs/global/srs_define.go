@@ -1,4 +1,6 @@
-package protocol
+package global
+
+const SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE = 128
 
 const (
 	RTMP_MSG_SetChunkSize               = 0x01
@@ -73,26 +75,6 @@ const (
 	RTMP_MSG_AggregateMessage = 0x16
 )
 
-/**
- * amf0 command message, command name macros
- */
-const (
-	RTMP_AMF0_COMMAND_CONNECT        = "connect"
-	RTMP_AMF0_COMMAND_CREATE_STREAM  = "createStream"
-	RTMP_AMF0_COMMAND_CLOSE_STREAM   = "closeStream"
-	RTMP_AMF0_COMMAND_PLAY           = "play"
-	RTMP_AMF0_COMMAND_PAUSE          = "pause"
-	RTMP_AMF0_COMMAND_ON_BW_DONE     = "onBWDone"
-	RTMP_AMF0_COMMAND_ON_STATUS      = "onStatus"
-	RTMP_AMF0_COMMAND_RESULT         = "_result"
-	RTMP_AMF0_COMMAND_ERROR          = "_error"
-	RTMP_AMF0_COMMAND_RELEASE_STREAM = "releaseStream"
-	RTMP_AMF0_COMMAND_FC_PUBLISH     = "FCPublish"
-	RTMP_AMF0_COMMAND_UNPUBLISH      = "FCUnpublish"
-	RTMP_AMF0_COMMAND_PUBLISH        = "publish"
-	RTMP_AMF0_DATA_SAMPLE_ACCESS     = "|RtmpSampleAccess"
-)
-
 /****************************************************************************
  *****************************************************************************
  ****************************************************************************/
@@ -133,19 +115,6 @@ const (
 	 * generally use 0x07.
 	 */
 	RTMP_CID_Audio = 0x07
-)
-
-/**
- * the rtmp client type.
- */
-type SrsRtmpConnType int
-
-const (
-	_                           SrsRtmpConnType = iota
-	SrsRtmpConnPlay                             = 0
-	SrsRtmpConnFMLEPublish                      = 1
-	SrsRtmpConnFlashPublish                     = 2
-	SrsRtmpConnHaivisionPublish                 = 3
 )
 
 /**
@@ -204,13 +173,15 @@ const (
 const RTMP_SIG_SRS_KEY = "SRS"
 const RTMP_SIG_SRS_CODE = "ZhouGuowen"
 const RTMP_SIG_SRS_AUTHROS = "winlin,wenjie.zhao"
+
 // contact info.
 const RTMP_SIG_SRS_WEB = "http://ossrs.net"
 const RTMP_SIG_SRS_EMAIL = "winlin@vip.126.com"
+
 // debug info.
 const RTMP_SIG_SRS_ROLE = "cluster"
 const RTMP_SIG_SRS_NAME = "SRS(Simple RTMP Server)"
-const RTMP_SIG_SRS_URL_SHORT  = "github.com/ossrs/srs"
+const RTMP_SIG_SRS_URL_SHORT = "github.com/ossrs/srs"
 const RTMP_SIG_SRS_URL = "https://github.com/ossrs/srs"
 const RTMP_SIG_SRS_LICENSE = "The MIT License (MIT)"
 const RTMP_SIG_SRS_COPYRIGHT = "Copyright (c) 2013-2015 SRS(ossrs)"

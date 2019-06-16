@@ -1,11 +1,17 @@
 package amf0
+
+import (
+	"errors"
+	"go_srs/srs/utils"
+)
+
 type SrsAmf0Boolean struct {
 	Value bool
 }
 
 func NewSrsAmf0Boolean(data bool) *SrsAmf0Boolean {
 	return &SrsAmf0Boolean{
-		Value:data
+		Value: data,
 	}
 }
 
@@ -29,12 +35,18 @@ func (this *SrsAmf0Boolean) Decode(stream *utils.SrsStream) error {
 
 func (this *SrsAmf0Boolean) Encode(stream *utils.SrsStream) error {
 	stream.WriteByte(RTMP_AMF0_Boolean)
-	stream.WriteByte(byte(this.Value))
+	var d byte
+	if this.Value {
+		d = 1
+	} else {
+		d = 0
+	}
+	stream.WriteByte(d)
 	return nil
 }
 
 func (this *SrsAmf0Boolean) IsMyType(stream *utils.SrsStream) (bool, error) {
-	marker, err := stream.PeekByte(1)
+	marker, err := stream.PeekByte()
 	if err != nil {
 		return false, err
 	}
@@ -44,5 +56,3 @@ func (this *SrsAmf0Boolean) IsMyType(stream *utils.SrsStream) (bool, error) {
 	}
 	return true, nil
 }
-
-

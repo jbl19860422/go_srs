@@ -40,7 +40,7 @@ func (this *SrsStream) Require(required_size uint32) bool {
 
 func (this *SrsStream) Skip(size uint32) {
 	this.pos += size
-	this.p = this.bytes[s.pos:]
+	this.p = this.bytes[this.pos:]
 }
 
 func (this *SrsStream) PeekByte() (byte, error) {
@@ -54,7 +54,7 @@ func (this *SrsStream) PeekByte() (byte, error) {
 func (this *SrsStream) PeekBytes(count uint32) ([]byte, error) {
 	if !this.Require(count) {
 		err := errors.New("SrsStream not have enough data")
-		return 0, err
+		return nil, err
 	}
 	return this.p[:count], nil
 }
@@ -71,7 +71,7 @@ func (this *SrsStream) ReadByte() (byte, error) {
 }
 
 func (this *SrsStream) WriteByte(data byte) {
-	this.p = append(this.p, data)
+	this.bytes = append(this.bytes, data)
 }
 
 func (this *SrsStream) ReadBytes(count uint32) ([]byte, error) {
@@ -86,7 +86,7 @@ func (this *SrsStream) ReadBytes(count uint32) ([]byte, error) {
 }
 
 func (this *SrsStream) WriteBytes(data []byte) {
-	this.p = append(this.p, data...)
+	this.bytes = append(this.bytes, data...)
 }
 
 func (this *SrsStream) ReadBool() (bool, error) {
@@ -94,15 +94,27 @@ func (this *SrsStream) ReadBool() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return b, err
+	if b == 0x01 {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }
 
 func (this *SrsStream) WriteBool(data bool) {
-	this.WriteByte(byte(data))
+	var d byte
+	if data {
+		d = 1
+	} else {
+		d = 0
+	}
+	this.WriteByte(d)
 }
 
 func (this *SrsStream) ReadInt8() (int8, error) {
-	if b, err := this.ReadByte(); err != nil {
+	var b byte
+	var err error
+	if b, err = this.ReadByte(); err != nil {
 		return 0, err
 	}
 

@@ -1,15 +1,25 @@
-package handshake
+package rtmp
+
+import(
+	"errors"
+	"math/rand"
+	"time"
+	"encoding/binary"
+	"bytes"
+	"log"
+	"go_srs/srs/protocol/skt"
+)
 
 type SrsHandshakeBytes struct {
 	C0C1 []byte
 	S0S1S2 []byte
 	C2 []byte
-	conn *net.Conn
+	io *skt.SrsIOReadWriter
 }
 
-func NewSrsHandshakeBytes(c *net.Conn) *SrsHandshakeBytes {
+func NewSrsHandshakeBytes(io_ *skt.SrsIOReadWriter) *SrsHandshakeBytes {
 	return &SrsHandshakeBytes{
-		conn:c,
+		io: io_,
 	}
 }
 
@@ -22,21 +32,21 @@ func (this *SrsHandshakeBytes) ReadC0C1() error {
 	this.C0C1 = make([]byte, 1537)
 	left := 1537
 	for {
-		n, err := (*this.conn).Read(this.C0C1[1537-left:1537])
+		n, err := this.io.Read(this.C0C1[1537-left:1537])
 		if err != nil {
-			return -1
+			return err
 		}
 		
 		left = left - n
 		if left <= 0 {
-			return 0
+			return nil
 		}
 	}
 }
 
-func (this *SrsHandshakeBytes) CreateS0S1S2() int {
+func (this *SrsHandshakeBytes) CreateS0S1S2() error {
 	if len(this.S0S1S2) > 0 {
-		return -1
+		return errors.New("already create")
 	}
 	rand.Seed(time.Now().UnixNano())
 	this.S0S1S2 = make([]byte, 3073)
@@ -46,11 +56,11 @@ func (this *SrsHandshakeBytes) CreateS0S1S2() int {
 	binary.Write(bytes.NewBuffer(this.S0S1S2[1:5]), binary.LittleEndian, time.Now().Unix())
 	//s1 rand bytes
 	if n, err := rand.Read(this.S0S1S2[9:1537]); err != nil || n != 1528 {
-		return -2
+		return errors.New("create rand number failed")
 	}
 	//s2=c1
 	copy(this.S0S1S2[1537:], this.C0C1[1:])
-	return 0
+	return nil
 }
 
 func (this *SrsHandshakeBytes) ReadC2() int {
@@ -61,7 +71,7 @@ func (this *SrsHandshakeBytes) ReadC2() int {
 	this.C2 = make([]byte, 1536)
 	left := 1536
 	for {
-		n, err := (*this.conn).Read(this.C2[1536-left:1536])
+		n, err := this.io.Read(this.C2[1536-left:1536])
 		if err != nil {
 			return -1
 		}
