@@ -172,6 +172,7 @@ func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 }
 
 func (this *SrsRtmpConn) doPublishing(source *SrsSource) error {
+	fmt.Println("******************doPublishing*******************")
 	this.publishThread = NewSrsAppPublishRecvThread(this.rtmp, this.req, this, source, false, false)
 	this.publishThread.Start()
 	for {

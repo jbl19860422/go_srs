@@ -122,6 +122,7 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 
 	// but, we can ensure that when a chunk stream is fresh,
 	// the fmt must be 0, a new stream.
+	fmt.Println("chunk.MsgCount=", chunk.MsgCount)
 	if chunk.MsgCount == 0 && format != RTMP_FMT_TYPE0 {
 		if chunk.Cid == global.RTMP_CID_ProtocolControl && format == RTMP_FMT_TYPE1 {
 			log.Print("accept cid=2, fmt=1 to make librtmp happy.")
