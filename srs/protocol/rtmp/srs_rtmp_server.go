@@ -3,6 +3,7 @@ package rtmp
 import (
 	_ "context"
 	"log"
+	"net"
 	_ "net/url"
 	_ "strings"
 	_ "time"
@@ -10,7 +11,7 @@ import (
 	"go_srs/srs/protocol/packet"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/global"
-	"fmt"
+	// "fmt"
 )
 
 type SrsRtmpServer struct {
@@ -20,13 +21,22 @@ type SrsRtmpServer struct {
 	IOErrListener 	skt.SrsIOErrListener
 }
 
-func NewSrsRtmpServer(io_ *skt.SrsIOReadWriter, listener skt.SrsIOErrListener) *SrsRtmpServer {
+func NewSrsRtmpServer(conn net.Conn, listener skt.SrsIOErrListener) *SrsRtmpServer {
+	io_ := skt.NewSrsIOReadWriter(conn)
 	return &SrsRtmpServer{
 		io: io_,
 		Protocol: NewSrsProtocol(io_), 
 		HandShaker: NewSrsSimpleHandShake(io_),
 		IOErrListener:listener,
 	}
+}
+
+func (this *SrsRtmpServer) Close() {
+	this.io.Close()
+}
+
+func (this *SrsRtmpServer) GetClientIP() string {
+	return this.io.GetClientIP()
 }
 
 func (this *SrsRtmpServer) HandShake() error {
@@ -40,18 +50,6 @@ func (this *SrsRtmpServer) ConnectApp() (packet.SrsPacket, error) {
 		return nil, err
 	}
 	return connPacket, nil
-	// fmt.Println("aaaaaa=", pkt)
-	// if pkt == nil {
-	// 	fmt.Println("nilnilnilnil")
-	// }
-	// srs_discovery_tc_url(req->tcUrl,
-	//     req->schema, req->host, req->vhost, req->app, req->stream, req->port,
-	//     req->param);
-	// req->strip();
-	// for {
-	// 	time.Sleep(10 * time.Second)
-	// }
-	// return pkt, nil
 }
 
 func (this *SrsRtmpServer) RecvMessage() (*SrsRtmpMessage, error) {
@@ -63,7 +61,6 @@ func (this *SrsRtmpServer) DecodeMessage(msg *SrsRtmpMessage) (packet.SrsPacket,
 }
 
 func (this *SrsRtmpServer) OnRecvError(err error) {
-	fmt.Println("SrsRtmpServer OnRecvError")
 	if this.IOErrListener != nil {
 		this.IOErrListener.OnRecvError(err)
 	}
@@ -76,7 +73,6 @@ func (this *SrsRtmpServer) IdentifyClient(streamId int) (SrsRtmpConnType, string
 	for {
 		msg, err := this.Protocol.RecvMessage()
 		if err != nil {
-			// log.Print("identify_client err, msg=", err)
 			continue
 		}
 		header := msg.GetHeader()
@@ -92,21 +88,17 @@ func (this *SrsRtmpServer) IdentifyClient(streamId int) (SrsRtmpConnType, string
 		switch pkt.(type) {
 			//todo
 			case *packet.SrsCreateStreamPacket: {
-				// log.Print("*****************SrsCreateStreamPacket********************")
 				typ, streamname, duration, err = this.identify_create_stream_client(pkt.(*packet.SrsCreateStreamPacket), streamId)
 				return typ, streamname, duration, err
 			}
 			case *packet.SrsFMLEStartPacket: {
-				// log.Print("SrsFMLEStartPacket streamname=", pkt.(*packet.SrsFMLEStartPacket).StreamName)
 				typ, streamname, err = this.identify_fmle_publish_client(pkt.(*packet.SrsFMLEStartPacket))
 				if err != nil {
-					log.Print("identify_fmle_publish_client reeturn")
 					return typ, streamname, 0, nil
 				}
 				return typ, streamname, 0, nil
 			}
 			case *packet.SrsPlayPacket:{
-				log.Print("SrsPlayPacket")
 				typ, streamname, duration, err = this.identify_play_client(pkt.(*packet.SrsPlayPacket))
 				return typ, streamname, duration, err
 			}
@@ -252,10 +244,8 @@ func (this *SrsRtmpServer) SetWindowAckSize(act_size int32) error {
 	pkt.AckowledgementWindowSize = act_size
 	err := this.Protocol.SendPacket(pkt, 0)
 	if err != nil {
-		// log.Print("send packet err ", err)
 		return err
 	}
-	// log.Print("send act size succeed")
 	return nil
 }
 

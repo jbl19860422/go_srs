@@ -2,7 +2,6 @@ package app
 
 import (
 	"go_srs/srs/protocol/rtmp"
-	"go_srs/srs/protocol/skt"
 	"go_srs/srs/protocol/packet"
 	// "go_srs/srs/codec/flv"
 	"go_srs/srs/utils"
@@ -10,33 +9,29 @@ import (
 	"strings"
 	"net/url"
 	// "log"
-	"time"
+	// "time"
 	"fmt"
 	// "context"
 	"errors"
 )
 
 type SrsRtmpConn struct {
-	io   					*skt.SrsIOReadWriter
 	rtmp 					*rtmp.SrsRtmpServer
 	req						*SrsRequest
 	res 					*SrsResponse
-	server				*SrsServer
-	source				*SrsSource
-	clientType 		rtmp.SrsRtmpConnType
-	publishThread *SrsAppPublishRecvThread
+	server					*SrsServer
+	source					*SrsSource
+	clientType 				rtmp.SrsRtmpConnType
+	// publishThread 			*SrsAppPublishRecvThread
 }
 
-func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
-	socketIO := skt.NewSrsIOReadWriter(conn)
-	// ctx, cancelFun := context.WithCancel(context.Background())
+func NewSrsRtmpConn(c net.Conn, s *SrsServer) *SrsRtmpConn {
 	rtmpConn := &SrsRtmpConn{
-		io: socketIO,
 		req:NewSrsRequest(),
 		res:NewSrsResponse(1),
 		server:s,
 	}
-	rtmpConn.rtmp = rtmp.NewSrsRtmpServer(socketIO, rtmpConn)
+	rtmpConn.rtmp = rtmp.NewSrsRtmpServer(c, rtmpConn)
 	return rtmpConn
 }
 
@@ -47,7 +42,7 @@ func (this *SrsRtmpConn) Start() error {
 }
 
 func (this *SrsRtmpConn) Stop() {
-	this.io.Close()
+	this.rtmp.Close()
 	fmt.Println("typ=", this.req.typ)
 	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
 		fmt.Println("RemoveConsumers")
@@ -62,7 +57,7 @@ func (this *SrsRtmpConn) Stop() {
 * @fun：关闭连接，由底层consumer或者source调用，将导致内部socket读取接口返回错误，从而回溯
 */
 func (this *SrsRtmpConn) Close() {
-	this.io.Close()
+	this.rtmp.Close()
 }
 
 func (this *SrsRtmpConn) do_cycle() error {
@@ -127,7 +122,7 @@ func (this *SrsRtmpConn) service_cycle() error {
 		return err
 	}
 
-	this.req.ip = this.io.GetClientIP()
+	this.req.ip = this.rtmp.GetClientIP()
 
 	err = this.rtmp.SetChunkSize(4096)
 	if err != nil {
@@ -154,7 +149,7 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 		return errors.New("srs_discovery_tc_url failed")
 	}
 	// fmt.Println("Srs_discovery_tc_url succeed, stream_name=", this.req.stream)
-	this.source, err = FetchOrCreate(this.req, this.server)
+	this.source, err = FetchOrCreate(this, this.req, this.server)
 	if err != nil {
 		fmt.Println("FetchOrCreate failed")
 		return err
@@ -201,7 +196,7 @@ func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer) er
 	//todo refer check
 	//todo srsprint
 	// realtime := false
-	_ = consumer.PlayingCycle()
+	_ = consumer.PlayCycle()
 	fmt.Println("end playing cycle")
 	return nil
 	// for {
@@ -290,66 +285,65 @@ func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 
 func (this *SrsRtmpConn) doPublishing(source *SrsSource) error {
 	// fmt.Println("******************doPublishing*******************")
-	this.publishThread = NewSrsAppPublishRecvThread(this.rtmp, this.req, this, source, false, false)
-	this.publishThread.Start()
-	for {
-		time.Sleep(time.Second)
-	}
-	return nil
+	// this.publishThread = NewSrsAppPublishRecvThread(this.rtmp, this.req, this, source, false, false)
+	// this.publishThread.Start()
+
+	// return nil
+	return source.CyclePublish()
 }
 
-func (this *SrsRtmpConn) HandlePublishMessage(source *SrsSource, msg *rtmp.SrsRtmpMessage, isFmle bool, isEdge bool) error {
-	if msg.GetHeader().IsAmf0Command() || msg.GetHeader().IsAmf3Command() {
-		pkt, err := this.rtmp.DecodeMessage(msg)
-		if err != nil {
-			return err
-		}
-		_ = pkt
-		//todo isfmle process
-	}
+// func (this *SrsRtmpConn) HandlePublishMessage(source *SrsSource, msg *rtmp.SrsRtmpMessage, isFmle bool, isEdge bool) error {
+// 	if msg.GetHeader().IsAmf0Command() || msg.GetHeader().IsAmf3Command() {
+// 		pkt, err := this.rtmp.DecodeMessage(msg)
+// 		if err != nil {
+// 			return err
+// 		}
+// 		_ = pkt
+// 		//todo isfmle process
+// 	}
 
-	return this.ProcessPublishMessage(source, msg, isEdge)
-}
+// 	return this.ProcessPublishMessage(source, msg, isEdge)
+// }
 
-func (this *SrsRtmpConn) ProcessPublishMessage(source *SrsSource, msg *rtmp.SrsRtmpMessage, isEdge bool) error {
-	//todo fix edge process
-	if msg.GetHeader().IsAudio() {
-		//process audio
-		// fmt.Println("onaudio*******************")
-		if err := source.OnAudio(msg); err != nil {
+// func (this *SrsRtmpConn) ProcessPublishMessage(source *SrsSource, msg *rtmp.SrsRtmpMessage, isEdge bool) error {
+// 	//todo fix edge process
+// 	if msg.GetHeader().IsAudio() {
+// 		//process audio
+// 		// fmt.Println("onaudio*******************")
+// 		if err := source.OnAudio(msg); err != nil {
 
-		}
-	}
+// 		}
+// 	}
 
-	if msg.GetHeader().IsVideo() {
-		// fmt.Println("onvideo******************")
-		if err := source.OnVideo(msg); err != nil {
+// 	if msg.GetHeader().IsVideo() {
+// 		// fmt.Println("onvideo******************")
+// 		if err := source.OnVideo(msg); err != nil {
 			
-		}
-		//process video
-	}
-	//todo fix aggregate message
-	//todo fix amf0 or amf3 data
+// 		}
+// 		//process video
+// 	}
+// 	//todo fix aggregate message
+// 	//todo fix amf0 or amf3 data
 
-	// process onMetaData
-    if (msg.GetHeader().IsAmf0Data() || msg.GetHeader().IsAmf3Data()) {
-		pkt, err := this.rtmp.DecodeMessage(msg)
-		if err != nil {
-			return err
-		}
+// 	// process onMetaData
+//     if (msg.GetHeader().IsAmf0Data() || msg.GetHeader().IsAmf3Data()) {
+// 		pkt, err := this.rtmp.DecodeMessage(msg)
+// 		if err != nil {
+// 			return err
+// 		}
 
-		switch pkt.(type) {
-			case *packet.SrsOnMetaDataPacket: {
-				// fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxmetadata")
-				err := source.on_meta_data(msg, pkt.(*packet.SrsOnMetaDataPacket))
-				if err != nil {
-					return err
-				}
-			}
-		}
-    }
-	return nil
-}
+// 		switch pkt.(type) {
+// 			case *packet.SrsOnMetaDataPacket: {
+// 				// fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxmetadata")
+// 				err := source.on_meta_data(msg, pkt.(*packet.SrsOnMetaDataPacket))
+// 				if err != nil {
+// 					return err
+// 				}
+// 			}
+// 		}
+//     }
+// 	return nil
+// }
 
 func (this *SrsRtmpConn) Playing(source *SrsSource) {
 	//todo

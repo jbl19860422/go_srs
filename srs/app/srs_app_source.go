@@ -4,7 +4,6 @@ import (
 	"sync"
 	"errors"
 	"fmt"
-	"context"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/codec/flv"
 	"go_srs/srs/protocol/packet"
@@ -17,27 +16,48 @@ type ISrsSourceHandler interface {
 	OnUnpublish(s *SrsSource, r *SrsRequest) error
 }
 
-var sourcePoolMtx sync.Mutex
-var sourcePool map[string]*SrsSource
-
 type SrsSource struct {
-	handler 	ISrsSourceHandler
-	req 		*SrsRequest
-	ctx			context.Context
-	cancel		context.CancelFunc
-	consumersMtx sync.Mutex
-	consumers 	[]*SrsConsumer
+	handler 		ISrsSourceHandler
+	conn			*SrsRtmpConn
+	rtmp			*rtmp.SrsRtmpServer
+	req 			*SrsRequest
+	recvThread		*SrsRecvThread
+
+	consumersMtx 	sync.Mutex
+	consumers 		[]*SrsConsumer
+	gopCache		*SrsGopCache
 	cacheSHVideo 	*rtmp.SrsRtmpMessage
 	cacheSHAudio 	*rtmp.SrsRtmpMessage
 	cacheMetaData 	*rtmp.SrsRtmpMessage
+
+	/**
+    * atc whether atc(use absolute time and donot adjust time),
+    * directly use msg time and donot adjust if atc is true,
+    * otherwise, adjust msg time to start from 0 to make flash happy.
+    */
+	// TODO: FIXME: to support reload atc.
+	atc 			bool
+	jitterAlgorithm *SrsRtmpJitterAlgorithm
 }
 
-func NewSrsSource() *SrsSource {
-	c, cancelFun := context.WithCancel(context.Background())
-	return &SrsSource{
-		ctx:c,
-		cancel:cancelFun,
+var sourcePoolMtx sync.Mutex
+var sourcePool map[string]*SrsSource
+
+func init() {
+	sourcePool = make(map[string]*SrsSource)
+}
+
+func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource {
+	source := &SrsSource{
+		req:r,
+		conn:c,
+		handler:h,
+		rtmp:c.rtmp,
+		gopCache:NewSrsGopCache(),
+		atc:false,
 	}
+	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
+	return source
 }
 
 func RemoveSrsSource(s *SrsSource) {
@@ -51,6 +71,95 @@ func RemoveSrsSource(s *SrsSource) {
 	}
 }
 
+func FetchOrCreate(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
+	source := FetchSource(r)
+	if source != nil {
+		return source, nil
+	}
+
+	streamUrl := r.GetStreamUrl()
+	vhost := r.vhost
+	_ = vhost
+	sourcePoolMtx.Lock()
+	defer sourcePoolMtx.Unlock()
+	if s, ok := sourcePool[streamUrl]; ok {
+		return s, errors.New("source already in pool")
+	}
+	source = NewSrsSource(c, r, h)
+	sourcePool[streamUrl] = source
+	return source, nil
+}
+
+func FetchSource(r *SrsRequest) *SrsSource {
+	sourcePoolMtx.Lock()
+	defer sourcePoolMtx.Unlock()
+	streamUrl := r.GetStreamUrl()
+	source, ok := sourcePool[streamUrl]
+	if !ok {
+		return nil
+	}
+
+	//TODO
+	// we always update the request of resource, 
+    // for origin auth is on, the token in request maybe invalid,
+    // and we only need to update the token of request, it's simple.
+	//source->req->update_auth(r)
+	return source
+}
+
+func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
+	if msg.GetHeader().IsAmf0Command() || msg.GetHeader().IsAmf3Command() {
+		pkt, err := this.rtmp.DecodeMessage(msg)
+		if err != nil {
+			return err
+		}
+		_ = pkt
+		//todo isfmle process
+	}
+
+	return this.ProcessPublishMessage(msg)
+}
+
+func (this *SrsSource) ProcessPublishMessage(msg *rtmp.SrsRtmpMessage) error {
+	//todo fix edge process
+	if msg.GetHeader().IsAudio() {
+		// process audio
+		if err := this.OnAudio(msg); err != nil {
+
+		}
+	}
+
+	if msg.GetHeader().IsVideo() {
+		if err := this.OnVideo(msg); err != nil {
+		}
+		//process video
+	}
+	//todo fix aggregate message
+	//todo fix amf0 or amf3 data
+
+	// process onMetaData
+    if (msg.GetHeader().IsAmf0Data() || msg.GetHeader().IsAmf3Data()) {
+		pkt, err := this.rtmp.DecodeMessage(msg)
+		if err != nil {
+			return err
+		}
+
+		switch pkt.(type) {
+			case *packet.SrsOnMetaDataPacket: {
+				err := this.on_meta_data(msg, pkt.(*packet.SrsOnMetaDataPacket))
+				if err != nil {
+					return err
+				}
+			}
+		}
+    }
+	return nil
+}
+
+func (this *SrsSource) OnRecvError(err error) {
+	RemoveSrsSource(this)
+}
+
 func (this *SrsSource) RemoveConsumers() {
 	this.consumersMtx.Lock()
 	defer this.consumersMtx.Unlock()
@@ -62,12 +171,6 @@ func (this *SrsSource) RemoveConsumers() {
 	this.consumers = this.consumers[0:0]
 }
 
-func (this *SrsSource) Initialize(r *SrsRequest, h ISrsSourceHandler) error {
-	this.handler = h
-	this.req = r
-	return nil
-}
-
 func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 	isSequenceHeader := flvcodec.AudioIsSequenceHeader(msg.GetPayload())
 	if isSequenceHeader {
@@ -76,9 +179,14 @@ func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 	}
 
 	for i := 0; i < len(this.consumers); i++ {
-		this.consumers[i].Enqueue(msg, false)
+		this.consumers[i].Enqueue(msg, false, this.jitterAlgorithm)
 		// fmt.Println("***********************************************send audio**************************************")
 	}
+
+	if err := this.gopCache.cache(msg); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -90,9 +198,14 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 	}
 
 	for i := 0; i < len(this.consumers); i++ {
-		this.consumers[i].Enqueue(msg, false)
+		this.consumers[i].Enqueue(msg, false, this.jitterAlgorithm)
 		// fmt.Println("***********************************************send video**************************************")
 	}
+
+	if err := this.gopCache.cache(msg); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -159,7 +272,7 @@ func (this *SrsSource) on_meta_data(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnM
 	this.cacheMetaData.SetPayload(stream.Data())
 
 	for i := 0; i < len(this.consumers); i++ {
-		this.consumers[i].Enqueue(this.cacheMetaData, false)
+		this.consumers[i].Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
 	}
     // when already got metadata, drop when reduce sequence header.
     // bool drop_for_reduce = false;
@@ -233,18 +346,22 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 	//many things todo 
 	fmt.Println("CreateConsumer")
 	if this.cacheMetaData != nil {
-		fmt.Println("cacheMetaData")
-		consumer.Enqueue(this.cacheMetaData, false)
+		consumer.Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
 	}
 
 	if this.cacheSHVideo != nil {
-		consumer.Enqueue(this.cacheSHVideo, false)
+		consumer.Enqueue(this.cacheSHVideo, false, this.jitterAlgorithm)
 	}
 	
 	if this.cacheSHAudio != nil {
-		consumer.Enqueue(this.cacheSHAudio, false)
+		consumer.Enqueue(this.cacheSHAudio, false, this.jitterAlgorithm)
 	}
+
 	
+	if err := this.gopCache.dump(consumer, false, this.jitterAlgorithm); err != nil {
+		return nil
+	}
+
 	return consumer
 }
 
@@ -258,50 +375,12 @@ func (this *SrsSource) RemoveConsumer(consumer *SrsConsumer) {
 	}
 }
 
-func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
-	fmt.Println("**********FetchOrCreate**********")
-	source := FetchSource(r)
-	if source != nil {
-		fmt.Println("xxxxfetch source")
-		return source, nil
-	}
-
-	streamUrl := r.GetStreamUrl()
-	vhost := r.vhost
-	_ = vhost
-	fmt.Println("**********streamUrl=", streamUrl)
-	sourcePoolMtx.Lock()
-	defer sourcePoolMtx.Unlock()
-	if s, ok := sourcePool[streamUrl]; ok {
-		return s, errors.New("source already in pool")
-	}
-
-	source = NewSrsSource()
-	if err := source.Initialize(r, h); err != nil {
-		return nil, err
-	}
-	fmt.Println("createsource")
-	sourcePool[streamUrl] = source
-	return source, nil
+func (this *SrsSource) CyclePublish() error {
+	this.recvThread.Start()
+	this.recvThread.Join()
+	return nil
 }
 
-func FetchSource(r *SrsRequest) *SrsSource {
-	sourcePoolMtx.Lock()
-	defer sourcePoolMtx.Unlock()
-	streamUrl := r.GetStreamUrl()
-	source, ok := sourcePool[streamUrl]
-	if !ok {
-		return nil
-	}
-
-	//TODO
-	// we always update the request of resource, 
-    // for origin auth is on, the token in request maybe invalid,
-    // and we only need to update the token of request, it's simple.
-	//source->req->update_auth(r)
-	return source
-}
-
-func init() {
-	sourcePool = make(map[string]*SrsSource)
+func (this *SrsSource) StopPublish() {
+	this.recvThread.Stop()
 }

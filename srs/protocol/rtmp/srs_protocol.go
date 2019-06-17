@@ -13,7 +13,7 @@ import (
 	"log"
 	"reflect"
 	_ "bufio"
-	// "fmt"
+	"fmt"
 	"time"
 )
 
@@ -170,17 +170,19 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 	if format <= RTMP_FMT_TYPE2 {
 		buf_timestamp := make([]byte, 4)
 		buf_timestamp[2] = buf1[pos]
-		pos += 1
+		pos++
 		buf_timestamp[1] = buf1[pos]
-		pos += 1
+		pos++
 		buf_timestamp[0] = buf1[pos]
-		pos += 1
+		pos++
 		buf_timestamp[3] = 0
+		// fmt.Println("buf_timestamp=", buf_timestamp)
 		//trans to int32
 		buf_reader := bytes.NewBuffer(buf_timestamp)
 		binary.Read(buf_reader, binary.LittleEndian, &chunk.Header.timestamp_delta)
+		// fmt.Println("chunk.Header.timestamp_delta=", chunk.Header.timestamp_delta)
 		chunk.ExtendedTimestamp = chunk.Header.timestamp_delta >= global.RTMP_EXTENDED_TIMESTAMP
-		if chunk.ExtendedTimestamp {
+		if !chunk.ExtendedTimestamp {
 			// Extended timestamp: 0 or 4 bytes
 			// This field MUST be sent when the normal timsestamp is set to
 			// 0xffffff, it MUST NOT be sent if the normal timestamp is set to
@@ -194,6 +196,7 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 			} else {
 				chunk.Header.timestamp += (int64)(chunk.Header.timestamp_delta)
 			}
+			// fmt.Println("chunk.Header.timestamp=", chunk.Header.timestamp)
 		}
 
 		if format <= RTMP_FMT_TYPE1 {
@@ -457,50 +460,40 @@ func (this *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *utils.Sr
 		// decode command object.
 		//todo other message
 		if command == amf0.RTMP_AMF0_COMMAND_CONNECT {
-			p := packet.NewSrsConnectAppPacket()
-			err = p.Decode(stream)
-			pkt = p
+			pkt = packet.NewSrsConnectAppPacket()
+			err = pkt.Decode(stream)
 			return
 		} else if command == amf0.RTMP_AMF0_COMMAND_PLAY {
-			p := packet.NewSrsPlayPacket()
-			err = p.Decode(stream)
-			pkt = p
+			pkt = packet.NewSrsPlayPacket()
+			err = pkt.Decode(stream)
 			return
 		} else if command == amf0.RTMP_AMF0_COMMAND_RELEASE_STREAM {
-			p := packet.NewSrsFMLEStartPacket(command)
-			err = p.Decode(stream)
-			pkt = p
+			pkt = packet.NewSrsFMLEStartPacket(command)
+			err = pkt.Decode(stream)
 			return
 		} else if command == amf0.RTMP_AMF0_COMMAND_FC_PUBLISH {
-			p := packet.NewSrsFMLEStartPacket(command)
-			err = p.Decode(stream)
-			pkt = p
+			pkt = packet.NewSrsFMLEStartPacket(command)
+			err = pkt.Decode(stream)
 			return
 		} else if command == amf0.RTMP_AMF0_COMMAND_CREATE_STREAM {
-			p := packet.NewSrsCreateStreamPacket()
-			err = p.Decode(stream)
-			if err != nil {
-				// log.Print("decode create stream packet failed")
-			} else {
-				// log.Print("decode create stream packet succeed")
-			}
-			pkt = p
+			pkt = packet.NewSrsCreateStreamPacket()
+			err = pkt.Decode(stream)
 			return
 		} else if command == amf0.RTMP_AMF0_COMMAND_PUBLISH {
-			p := packet.NewSrsPublishPacket()
-			err = p.Decode(stream)
-			pkt = p
+			pkt = packet.NewSrsPublishPacket()
+			err = pkt.Decode(stream)
 			return
-		}  else if command == amf0.RTMP_AMF0_COMMAND_CLOSE_STREAM {
-			p := packet.NewSrsCloseStreamPacket()
-			err = p.Decode(stream)
-			pkt = p
+		}  else if command == amf0.RTMP_AMF0_COMMAND_UNPUBLISH {
+            pkt = packet.NewSrsFMLEStartPacket(command)
+			err = pkt.Decode(stream)
+			fmt.Println("RTMP_AMF0_COMMAND_UNPUBLISH****************")
+        } else if command == amf0.RTMP_AMF0_COMMAND_CLOSE_STREAM {
+			pkt = packet.NewSrsCloseStreamPacket()
+			err = pkt.Decode(stream)
 			return
         } else if command == amf0.SRS_CONSTS_RTMP_SET_DATAFRAME || command == amf0.SRS_CONSTS_RTMP_ON_METADATA {
-			p := packet.NewSrsOnMetaDataPacket(command)
-			err = p.Decode(stream)
-			pkt = p
-			// fmt.Println("decode the AMF0/AMF3 data(onMetaData message).")
+			pkt = packet.NewSrsOnMetaDataPacket(command)
+			err = pkt.Decode(stream)
 			return 
         } 
 

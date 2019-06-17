@@ -4,13 +4,13 @@ import (
 	"go_srs/srs/codec"
 )
 
-func VideoIsKeyframe(data []byte) bool {
+func VideoIsKeyFrame(data []byte) bool {
 	if len(data) < 1 {
 		return false
 	}
 
 	frameType := (data[0] >> 4) & 0x0F
-    return frameType == codec.SrsCodecVideoAVCFrameKeyFrame
+	return frameType == codec.SrsCodecVideoAVCFrameKeyFrame
 }
 
 func VideoIsSequenceHeader(data []byte) bool {

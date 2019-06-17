@@ -6,11 +6,8 @@ import (
 )
 
 type ISrsMessageHandler interface {
-	CanHandle() bool
 	Handle(msg *rtmp.SrsRtmpMessage) error
 	OnRecvError(err error)
-	OnThreadStart()
-	OnThreadStop()
 }
 
 type SrsRecvThread struct {
@@ -27,7 +24,7 @@ func NewSrsRecvThread(r *rtmp.SrsRtmpServer, h ISrsMessageHandler, timeoutMS int
 		handler: h,
 		timeout: timeoutMS,
 		exit:    make(chan bool),
-		done:	 make(chan bool),
+		done:    make(chan bool),
 	}
 }
 
@@ -45,6 +42,7 @@ DONE:
 
 		if err != nil {
 			this.handler.OnRecvError(err)
+			close(this.done)
 			return err
 		}
 
@@ -60,12 +58,14 @@ DONE:
 			}
 		}
 	}
-	this.done <- true
+	close(this.done)
 	return nil
 }
 
-func (this *SrsRecvThread) Stop() error {
-	close(this.exit)//直接关闭，避免cycle先退出
-	// <- this.done
-	return nil
+func (this *SrsRecvThread) Stop() {
+	close(this.exit) //直接关闭，避免cycle先退出
+}
+
+func (this *SrsRecvThread) Join() {
+	<-this.done
 }

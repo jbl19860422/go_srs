@@ -35,7 +35,7 @@ func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) *SrsConsumer {
 	return consumer
 }
 //有两个协程需要处理，这里的cycle和queueRecvThread
-func (this *SrsConsumer) PlayingCycle() error {
+func (this *SrsConsumer) PlayCycle() error {
 	for {
 		for !this.queueRecvThread.Empty() {//process signal message
 			msg := this.queueRecvThread.GetMsg()
@@ -50,7 +50,6 @@ func (this *SrsConsumer) PlayingCycle() error {
 		//todo process realtime stream
 		msg, err := this.queue.Wait()
 		if err != nil {
-			fmt.Println("quit PlayingCycle")
 			return err
 		}
 
@@ -58,13 +57,13 @@ func (this *SrsConsumer) PlayingCycle() error {
 			// fmt.Println("send to consumer")
 			if msg.GetHeader().IsVideo() {
 				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
-				if flvcodec.VideoIsKeyframe(msg.GetPayload()) {
+				if flvcodec.VideoIsKeyFrame(msg.GetPayload()) {
 					// fmt.Println("send key frame")
 				}
+				fmt.Println("timestamp=", msg.GetTimestamp())
 			} else {
 				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");
 			}
-			
 			err := this.conn.rtmp.SendMsg(msg, this.StreamId)
 			_ = err
 		}
@@ -121,7 +120,7 @@ func (this *SrsConsumer) process_play_control_msg(msg *rtmp.SrsRtmpMessage) erro
 
 
 //todo add rtmp jitter algorithm
-func (this *SrsConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool) {
+func (this *SrsConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) {
 	this.queue.Enqueue(msg)
 }
 
