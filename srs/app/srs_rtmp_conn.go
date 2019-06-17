@@ -100,7 +100,7 @@ func (this *SrsRtmpConn) service_cycle() error {
 	//this.request.ip = this.Conn.Conn.RemoteAddr().String()
 
 	time.Sleep(10 * time.Millisecond)
-	err = this.rtmp.SetChunkSize(60000)
+	err = this.rtmp.SetChunkSize(128)
 	if err != nil {
 		log.Print("set_chunk_size failed")
 		return err

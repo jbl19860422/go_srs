@@ -41,8 +41,8 @@ func (this *SrsIOReadWriter) ReadFullyWithTimeout(b []byte, timeoutms uint32) (i
 }
 
 func (this *SrsIOReadWriter) Write(b []byte) (int, error) {
-	n, err := this.conn.Write(b)
-	// _ = this.IOWriter.Flush()
+	n, err := this.IOWriter.Write(b)
+	_ = this.IOWriter.Flush()
 	return n, err
 }
 

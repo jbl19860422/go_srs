@@ -103,6 +103,20 @@ func BytesToFloat64(data []byte, order binary.ByteOrder) (float64, error) {
 	return v, err
 }
 
+func MinInt32(a int32, b int32) int32 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func MinUInt32(a uint32, b uint32) uint32 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func SrsDiscoveryTCUrl(tcUrl string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
 	var err1 error
 	u, err1 := url.Parse(tcUrl)
