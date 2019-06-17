@@ -10,7 +10,7 @@ import (
 	"go_srs/srs/protocol/packet"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/global"
-	// "fmt"
+	"fmt"
 )
 
 type SrsRtmpServer struct {
@@ -64,6 +64,7 @@ func (this *SrsRtmpServer) DecodeMessage(msg *SrsRtmpMessage) (packet.SrsPacket,
 }
 
 func (this *SrsRtmpServer) OnRecvError(err error) {
+	fmt.Println("SrsRtmpServer OnRecvError")
 	if this.IOErrListener != nil {
 		this.IOErrListener.OnRecvError(err)
 	}

@@ -26,6 +26,10 @@ func (this *SrsQueueRecvThread) Start() {
 	this.recvThread.Start()
 }
 
+func (this *SrsQueueRecvThread) Stop() {
+	this.recvThread.Stop()
+}
+
 func (this *SrsQueueRecvThread) CanHandle() bool {
 	return true
 }

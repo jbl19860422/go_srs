@@ -4,6 +4,7 @@ import (
 	"sync"
 	"errors"
 	"fmt"
+	"context"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/codec/flv"
 	"go_srs/srs/protocol/packet"
@@ -22,6 +23,9 @@ var sourcePool map[string]*SrsSource
 type SrsSource struct {
 	handler 	ISrsSourceHandler
 	req 		*SrsRequest
+	ctx			context.Context
+	cancel		context.CancelFunc
+	consumersMtx sync.Mutex
 	consumers 	[]*SrsConsumer
 	cacheSHVideo 	*rtmp.SrsRtmpMessage
 	cacheSHAudio 	*rtmp.SrsRtmpMessage
@@ -29,7 +33,33 @@ type SrsSource struct {
 }
 
 func NewSrsSource() *SrsSource {
-	return &SrsSource{}
+	c, cancelFun := context.WithCancel(context.Background())
+	return &SrsSource{
+		ctx:c,
+		cancel:cancelFun,
+	}
+}
+
+func RemoveSrsSource(s *SrsSource) {
+	sourcePoolMtx.Lock()
+	defer sourcePoolMtx.Unlock()
+	for k, v := range sourcePool {
+		if v == s {
+			fmt.Println("source removed")
+			delete(sourcePool,k)
+		}
+	}
+}
+
+func (this *SrsSource) RemoveConsumers() {
+	this.consumersMtx.Lock()
+	defer this.consumersMtx.Unlock()
+
+	for i := 0; i < len(this.consumers); i++ {
+		this.consumers[i].Stop()
+	}
+
+	this.consumers = this.consumers[0:0]
 }
 
 func (this *SrsSource) Initialize(r *SrsRequest, h ISrsSourceHandler) error {
@@ -182,6 +212,42 @@ func (this *SrsSource) SetCache(cache bool) {
 	
 }
 
+/**
+* create consumer and dumps packets in cache.
+* @param consumer, output the create consumer.
+* @param ds, whether dumps the sequence header.
+* @param dm, whether dumps the metadata.
+* @param dg, whether dumps the gop cache.
+*/
+	
+func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bool) *SrsConsumer {
+	this.consumersMtx.Lock()
+	consumer := NewSrsConsumer(this, conn)
+	this.consumers = append(this.consumers, consumer)
+	this.consumersMtx.Unlock()
+	//todo set queue size
+	//todo process atc
+	//todo copy meta data
+	//todo cppy sequence header
+	//todo copy gop to consumers queue
+	//many things todo 
+	fmt.Println("CreateConsumer")
+	if this.cacheMetaData != nil {
+		fmt.Println("cacheMetaData")
+		consumer.Enqueue(this.cacheMetaData, false)
+	}
+
+	if this.cacheSHVideo != nil {
+		consumer.Enqueue(this.cacheSHVideo, false)
+	}
+	
+	if this.cacheSHAudio != nil {
+		consumer.Enqueue(this.cacheSHAudio, false)
+	}
+	
+	return consumer
+}
+
 func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
 	fmt.Println("**********FetchOrCreate**********")
 	source := FetchSource(r)
@@ -208,41 +274,6 @@ func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
 	sourcePool[streamUrl] = source
 	return source, nil
 }
-
-/**
-* create consumer and dumps packets in cache.
-* @param consumer, output the create consumer.
-* @param ds, whether dumps the sequence header.
-* @param dm, whether dumps the metadata.
-* @param dg, whether dumps the gop cache.
-*/
-	
-func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bool) *SrsConsumer {
-	consumer := NewSrsConsumer(this, conn)
-	this.consumers = append(this.consumers, consumer)
-	//todo set queue size
-	//todo process atc
-	//todo copy meta data
-	//todo cppy sequence header
-	//todo copy gop to consumers queue
-	//many things todo 
-	fmt.Println("CreateConsumer")
-	if this.cacheMetaData != nil {
-		fmt.Println("cacheMetaData")
-		consumer.Enqueue(this.cacheMetaData, false)
-	}
-
-	if this.cacheSHVideo != nil {
-		consumer.Enqueue(this.cacheSHVideo, false)
-	}
-	
-	if this.cacheSHAudio != nil {
-		consumer.Enqueue(this.cacheSHAudio, false)
-	}
-	
-	return consumer
-}
-
 
 func FetchSource(r *SrsRequest) *SrsSource {
 	sourcePoolMtx.Lock()

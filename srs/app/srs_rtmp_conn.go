@@ -10,7 +10,7 @@ import (
 	"strings"
 	"net/url"
 	// "log"
-	"time"
+	// "time"
 	"fmt"
 	"errors"
 )
@@ -21,6 +21,7 @@ type SrsRtmpConn struct {
 	req				*SrsRequest
 	res 			*SrsResponse
 	server			*SrsServer
+	source			*SrsSource
 	clientType 		rtmp.SrsRtmpConnType
 	publishThread 	*SrsAppPublishRecvThread
 }
@@ -125,18 +126,16 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 	var dur float64
 	this.req.typ, this.req.stream, dur, _ = this.rtmp.IdentifyClient(this.res.StreamId)
 	_ = dur
-	//log.Print("***************identify_client done ,type=", typ);
 	var err error
-	// fmt.Println("start discovery, tcUrl=", this.req.tcUrl)
 	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTCUrl(this.req.tcUrl)
 	if err != nil {
 		return errors.New("srs_discovery_tc_url failed")
 	}
 	// fmt.Println("Srs_discovery_tc_url succeed, stream_name=", this.req.stream)
-	source, err2 := FetchOrCreate(this.req, this.server)
-	if err2 != nil {
+	this.source, err = FetchOrCreate(this.req, this.server)
+	if err != nil {
 		fmt.Println("FetchOrCreate failed")
-		return err2
+		return err
 	}
 
 	this.clientType = this.req.typ
@@ -150,12 +149,12 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 
 		//todo http_hooks_on_play
 
-		return this.playing(source)
+		return this.playing(this.source)
 	}
 	case rtmp.SrsRtmpConnFMLEPublish:{
 		// log.Print("******************start SrsRtmpConnFMLEPublish*******************")
 		this.rtmp.Start_fmle_publish(0)
-		return this.publishing(source)
+		return this.publishing(this.source)
 	}
 	}
 	return nil
@@ -163,19 +162,27 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 
 func (this *SrsRtmpConn) playing(source *SrsSource) error {
 	consumer := source.CreateConsumer(this, true, true, true)
+	return this.do_playing(source, consumer)
+}
 
-	queueRecvThread := NewSrsQueueRecvThread(consumer, this.rtmp)
-	//todo
-	queueRecvThread.Start()
-
-	return this.do_playing(source, consumer, queueRecvThread)
+func (this *SrsRtmpConn) RemoveSelf() {
+	this.server.RemoveConn(this)
 }
 
 func (this *SrsRtmpConn) OnRecvError(err error) {
+	//判断如果是publish，则删除源
+	fmt.Println("typ=", this.req.typ)
+	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
+		fmt.Println("RemoveConsumers")
+		this.source.RemoveConsumers()
+		RemoveSrsSource(this.source)
+	}
+
+	fmt.Println("remove source conn")
 	this.server.OnRecvError(err, this)
 }
 
-func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, trd *SrsQueueRecvThread) error {
+func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer) error {
 	//todo refer check
 	//todo srsprint
 	realtime := false
@@ -183,8 +190,8 @@ func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, tr
 	for {
 		// fmt.Println("*************do_playing start***************")
 		//todo expired
-		for !trd.Empty() {//process signal message
-			msg := trd.GetMsg()
+		for !consumer.queueRecvThread.Empty() {//process signal message
+			msg := consumer.queueRecvThread.GetMsg()
 			if msg != nil {
 				err := this.process_play_control_msg(consumer, msg)
 				if err != nil {
@@ -266,9 +273,6 @@ func (this *SrsRtmpConn) doPublishing(source *SrsSource) error {
 	// fmt.Println("******************doPublishing*******************")
 	this.publishThread = NewSrsAppPublishRecvThread(this.rtmp, this.req, this, source, false, false)
 	this.publishThread.Start()
-	for {
-		time.Sleep(time.Second)
-	}
 	return nil
 }
 

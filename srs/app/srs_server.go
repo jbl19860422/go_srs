@@ -26,9 +26,16 @@ func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 		if this.conns[i] == c {
 			fmt.Println("remove conn")
 			this.conns = append(this.conns[:i], this.conns[i+1:]...)
+			fmt.Println("conns.len=", len(this.conns))
 			break
 		}
 	}
+}
+
+func (this *SrsServer) AddConn(c *SrsRtmpConn) {
+	this.connsMtx.Lock()
+	this.conns = append(this.conns, c)
+	this.connsMtx.Unlock()
 }
 
 func (this *SrsServer) StartProcess(port int) error {
@@ -46,10 +53,12 @@ func (this *SrsServer) StartProcess(port int) error {
 
 func (this *SrsServer) HandleConnection(conn net.Conn) {
 	rtmpConn := NewSrsRtmpConn(conn, this)
-	this.conns = append(this.conns, rtmpConn)
+	this.AddConn(rtmpConn)
 	err := rtmpConn.Start()
 	_ = err
 	this.RemoveConn(rtmpConn)
+
+	fmt.Println("HandleConnection done")
 }
 
 func (this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
