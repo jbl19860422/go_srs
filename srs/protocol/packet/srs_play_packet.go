@@ -54,6 +54,8 @@ func (this *SrsPlayPacket) Decode(stream *utils.SrsStream) error {
 			return err
 		}
 	}
+	//todo fix this
+	return nil
 
 	if len(this.StreamName.GetValue().(string)) > 0 {
 		if err := this.Duration.Decode(stream); err != nil {

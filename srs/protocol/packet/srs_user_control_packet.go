@@ -4,6 +4,7 @@ import "encoding/binary"
 
 // import "log"
 import (
+	"go_srs/srs/global"
 	"go_srs/srs/utils"
 )
 
@@ -174,4 +175,13 @@ func (this *SrsUserControlPacket) Encode(stream *utils.SrsStream) error {
 		stream.WriteInt32(this.ExtraData, binary.BigEndian)
 	}
 	return nil
+}
+
+
+func (this *SrsUserControlPacket) GetPreferCid() int32 {
+    return global.RTMP_CID_ProtocolControl
+}
+
+func (this *SrsUserControlPacket) GetMessageType() int8 {
+    return global.RTMP_MSG_UserControlMessage
 }

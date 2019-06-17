@@ -61,7 +61,7 @@ func (this *SrsRtmpServer) DecodeMessage(msg *SrsRtmpMessage) (packet.SrsPacket,
 	return this.Protocol.DecodeMessage(msg)
 }
 
-func (this *SrsRtmpServer) IdentifyClient() (SrsRtmpConnType, string, float64, error) {
+func (this *SrsRtmpServer) IdentifyClient(streamId int) (SrsRtmpConnType, string, float64, error) {
 	var typ SrsRtmpConnType
 	var streamname string
 	var duration float64
@@ -84,7 +84,9 @@ func (this *SrsRtmpServer) IdentifyClient() (SrsRtmpConnType, string, float64, e
 		switch pkt.(type) {
 			//todo
 			case *packet.SrsCreateStreamPacket: {
-				log.Print("SrsCreateStreamPacket")
+				log.Print("*****************SrsCreateStreamPacket********************")
+				typ, streamname, duration, err = this.identify_create_stream_client(pkt.(*packet.SrsCreateStreamPacket), streamId)
+				return typ, streamname, duration, err
 			}
 			case *packet.SrsFMLEStartPacket: {
 				log.Print("SrsFMLEStartPacket streamname=", pkt.(*packet.SrsFMLEStartPacket).StreamName)
@@ -107,6 +109,61 @@ func (this *SrsRtmpServer) IdentifyClient() (SrsRtmpConnType, string, float64, e
 	return typ, streamname, 0, nil
 }
 
+func (this *SrsRtmpServer) identify_create_stream_client(req *packet.SrsCreateStreamPacket, streamId int) (SrsRtmpConnType, string, float64, error) {
+	typ := SrsRtmpConnType(SrsRtmpConnFMLEPublish)
+	resPkt := packet.NewSrsCreateStreamResPacket(req.TransactionId.GetValue().(float64), float64(streamId))
+	err := this.Protocol.SendPacket(resPkt, 0)
+	var streamname string
+	var duration float64
+	if err != nil {
+		return SrsRtmpConnType(SrsRtmpConnFMLEPublish), "", 0, err
+	}
+
+	for {
+		msg, err := this.Protocol.RecvMessage()
+		if err != nil {
+			log.Print("identify_client err, msg=", err)
+			continue
+		}
+		header := msg.GetHeader()
+		if header.IsAckledgement() || header.IsSetChunkSize() || header.IsWindowAckledgementSize() || header.IsUserControlMessage() {
+			continue
+		}
+
+		if !header.IsAmf0Command() && !header.IsAmf3Command() {
+			continue
+		}
+
+		pkt, err := this.Protocol.DecodeMessage(msg)
+		switch pkt.(type) {
+			case *packet.SrsPlayPacket:{
+				log.Print("SrsPlayPacket")
+				typ, streamname, duration, err = this.identify_play_client(pkt.(*packet.SrsPlayPacket))
+				return typ, streamname, duration, err
+			}
+			case *packet.SrsCreateStreamPacket: {
+				log.Print("SrsCreateStreamPacket")
+				typ, streamname, duration, err = this.identify_create_stream_client(pkt.(*packet.SrsCreateStreamPacket), streamId)
+				return typ, streamname, duration, err
+			}
+			case *packet.SrsFMLEStartPacket: {
+				log.Print("SrsFMLEStartPacket streamname=", pkt.(*packet.SrsFMLEStartPacket).StreamName)
+				typ, streamname, err = this.identify_fmle_publish_client(pkt.(*packet.SrsFMLEStartPacket))
+				if err != nil {
+					log.Print("identify_fmle_publish_client reeturn")
+					return typ, streamname, 0, nil
+				}
+				return typ, streamname, 0, nil
+			}
+			//todo
+			//identify_haivision_publish_client
+			//identify_flash_publish_client
+		}
+	}
+	_ = typ
+	return typ, streamname, 0, nil
+}
+
 func (this *SrsRtmpServer) identify_play_client(pkt *packet.SrsPlayPacket) (SrsRtmpConnType, string, float64, error) {
 	return SrsRtmpConnPlay, pkt.StreamName.GetValue().(string), pkt.Duration.GetValue().(float64),nil
 }
@@ -122,7 +179,58 @@ func (this *SrsRtmpServer) identify_fmle_publish_client(req *packet.SrsFMLEStart
 	return typ, req.StreamName.Value.Value, nil
 }
 
-func (this *SrsRtmpServer) StartPlay() error {
+func (this *SrsRtmpServer) StartPlay(streamId int) error {
+	 // StreamBegin
+	pkt := packet.NewSrsUserControlPacket()
+	pkt.EventType = global.SrcPCUCStreamBegin
+	pkt.EventData = int32(streamId)
+	err := this.Protocol.SendPacket(pkt, 0)
+	if err != nil {
+		return err
+	}
+
+	// onStatus(NetStream.Play.Reset)
+	callPkt := packet.NewSrsOnStatusCallPacket()
+	callPkt.Data.Set(global.StatusLevel, global.StatusLevelStatus)
+	callPkt.Data.Set(global.StatusCode, global.StatusCodeStreamReset)
+	callPkt.Data.Set(global.StatusDescription, "Playing and resetting stream.")
+	callPkt.Data.Set(global.StatusDetails, "stream")
+	callPkt.Data.Set(global.StatusClientId, global.RTMP_SIG_CLIENT_ID)
+	
+	err = this.Protocol.SendPacket(callPkt, int32(streamId))
+	if err != nil {
+		return err
+	}
+
+	// onStatus(NetStream.Play.Start)
+	startPkt := packet.NewSrsOnStatusCallPacket()
+	startPkt.Data.Set(global.StatusLevel, global.StatusLevelStatus)
+	startPkt.Data.Set(global.StatusCode, global.StatusCodeStreamStart)
+	startPkt.Data.Set(global.StatusDescription, "Started playing stream.")
+	startPkt.Data.Set(global.StatusDetails, "stream")
+	startPkt.Data.Set(global.StatusClientId, global.RTMP_SIG_CLIENT_ID)
+	// |RtmpSampleAccess(false, false)
+	err = this.Protocol.SendPacket(startPkt, int32(streamId))
+	if err != nil {
+		return err
+	}
+	// allow audio/video sample.
+    // @see: https://github.com/ossrs/srs/issues/49
+	samplePkt := packet.NewSrsSampleAccessPacket()
+	samplePkt.VideoSampleAccess.Value = true
+	samplePkt.AudioSampleAccess.Value = true
+	err = this.Protocol.SendPacket(samplePkt, int32(streamId))
+	if err != nil {
+		return err
+	}
+
+	statusPkt := packet.NewSrsOnStatusDataPacket()
+	statusPkt.Data.Set(global.StatusCode, global.StatusCodeDataStart)
+	err = this.Protocol.SendPacket(statusPkt, int32(streamId))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -228,16 +336,6 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 	// FCPublish
 	var fc_publish_tid float64 = 0
 	{
-		// startPacket := packet.NewSrsFMLEStartPacket("")
-		// pkt1 := this.Protocol.ExpectMessage(startPacket)
-		// fc_publish_tid = pkt1.(*packet.SrsFMLEStartPacket).TransactionId.Value
-		// pkt2 := packet.NewSrsFMLEStartResPacket(fc_publish_tid)
-		// err := this.Protocol.SendPacket(pkt2, 0)
-		// if err != nil {
-		// 	log.Print("send start fmle start res packet failed")
-		// 	return err
-		// }
-
 		startPkt := packet.NewSrsFMLEStartPacket("")
 		if err := this.Protocol.ExpectMessage(startPkt); err != nil {
 			return err
@@ -253,18 +351,6 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 
 	var create_stream_tid float64 = 0
 	{
-		// createPacket := packet.NewSrsCreateStreamPacket()
-		// pkt1 := this.Protocol.ExpectMessage(createPacket)
-		// create_stream_tid = pkt1.(*packet.SrsCreateStreamPacket).TransactionId.Value
-		// pkt2 := packet.NewSrsCreateStreamResPacket(create_stream_tid, float64(stream_id))
-		// err := this.Protocol.SendPacket(pkt2, 0)
-		// if err != nil {
-		// 	log.Print("send start fmle start res packet failed")
-		// 	return err
-		// } else {
-		// 	log.Print("NewSrsCreateStreamResPacket succeed")
-		// }
-
 		createPkt := packet.NewSrsCreateStreamPacket()
 		if err := this.Protocol.ExpectMessage(createPkt); err != nil {
 			return err
@@ -282,17 +368,11 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 
 	// publish
 	{
-		// publishPacket := packet.NewSrsPublishPacket()
-		// pkt := this.Protocol.ExpectMessage(publishPacket)
-		// log.Print("get SrsPublishPacket succeed")
-		// _ = pkt
-
 		publishPacket := packet.NewSrsPublishPacket()
 		if err := this.Protocol.ExpectMessage(publishPacket); err != nil {
 			return err
 		}
 		log.Print("get SrsPublishPacket succeed")
-		// _ = pkt
 	}
 
 	// publish response onFCPublish(NetStream.Publish.Start)

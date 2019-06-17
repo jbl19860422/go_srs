@@ -453,8 +453,14 @@ func (this *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *utils.Sr
 		command := amf0Command.Value.Value
 		log.Print("srs_amf0_read_string command=", command)
 		// decode command object.
+		//todo other message
 		if command == amf0.RTMP_AMF0_COMMAND_CONNECT {
 			p := packet.NewSrsConnectAppPacket()
+			err = p.Decode(stream)
+			pkt = p
+			return
+		} else if command == amf0.RTMP_AMF0_COMMAND_PLAY {
+			p := packet.NewSrsPlayPacket()
 			err = p.Decode(stream)
 			pkt = p
 			return

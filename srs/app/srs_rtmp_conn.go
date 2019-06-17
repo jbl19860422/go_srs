@@ -31,7 +31,7 @@ func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
 		io: socketIO,
 		rtmp:rtmp.NewSrsRtmpServer(socketIO),
 		req:NewSrsRequest(),
-		res:NewSrsResponse(0),
+		res:NewSrsResponse(1),
 		server:s,
 	}
 }
@@ -129,7 +129,7 @@ func (this *SrsRtmpConn) service_cycle() error {
 func (this *SrsRtmpConn) stream_service_cycle() error {
 	var typ rtmp.SrsRtmpConnType
 	var dur float64
-	this.req.typ, this.req.stream, dur, _ = this.rtmp.IdentifyClient()
+	this.req.typ, this.req.stream, dur, _ = this.rtmp.IdentifyClient(this.res.StreamId)
 	_ = dur
 	//log.Print("***************identify_client done ,type=", typ);
 	var err error
@@ -148,9 +148,12 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 
 	switch(this.req.typ) {
 	case rtmp.SrsRtmpConnPlay:{
-		if err := this.rtmp.StartPlay(); err != nil {
+		if err := this.rtmp.StartPlay(this.res.StreamId); err != nil {
 			return err
 		}
+
+		//todo http_hooks_on_play
+
 	}
 	case rtmp.SrsRtmpConnFMLEPublish:{
 		log.Print("******************start SrsRtmpConnFMLEPublish*******************")
@@ -159,6 +162,21 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 	}
 	}
 	_ = typ
+	return nil
+}
+
+func (this *SrsRtmpConn) playing(source *SrsSource) error {
+	consumer := source.CreateConsumer(this, true, true, true)
+
+	this.do_playing(source, consumer)
+	for {
+		time.Sleep(time.Second)
+	}
+}
+
+func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer) error {
+	//todo refer
+	//todo srsprint
 	return nil
 }
 
