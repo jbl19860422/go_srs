@@ -98,14 +98,13 @@ func (this *SrsRtmpConn) service_cycle() error {
 	}
 
 	//this.request.ip = this.Conn.Conn.RemoteAddr().String()
-
-	time.Sleep(10 * time.Millisecond)
-	err = this.rtmp.SetChunkSize(128)
+	fmt.Println("**************set chunk size1111*************************")
+	err = this.rtmp.SetChunkSize(4096)
 	if err != nil {
 		log.Print("set_chunk_size failed")
 		return err
 	}
-
+	fmt.Println("**************set chunk done*************************")
 	err = this.rtmp.ResponseConnectApp()
 	if err != nil {
 		log.Print("response_connect_app error")

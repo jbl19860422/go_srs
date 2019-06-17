@@ -19,12 +19,20 @@ import (
 
 const SRS_PERF_CHUNK_STREAM_CACHE = 16
 
+type AckWindowSize struct {
+	Window uint32
+	RecvBytes int64
+	SequenceNumber uint32
+}
+
 type SrsProtocol struct {
-	io *skt.SrsIOReadWriter
-	chunkCache []*SrsChunkStream
-	chunkStreams map[int32]*SrsChunkStream
-	in_chunk_size int32
-	OutChunkSize int32
+	io 				*skt.SrsIOReadWriter
+	chunkCache 		[]*SrsChunkStream
+	chunkStreams 	map[int32]*SrsChunkStream
+	in_chunk_size 	int32
+	OutChunkSize 	int32
+	OutAckSize 		AckWindowSize
+	Requests 		map[float64]string
 }
 
 func NewSrsProtocol(io_ *skt.SrsIOReadWriter) *SrsProtocol {
@@ -579,7 +587,7 @@ func (this *SrsProtocol) SendPacket(packet packet.SrsPacket, streamId int32) err
 	return err
 }
 
-func (s *SrsProtocol) do_send_packet(pkt packet.SrsPacket, streamId int32) error {
+func (this *SrsProtocol) do_send_packet(pkt packet.SrsPacket, streamId int32) error {
 	stream := utils.NewSrsStream([]byte{})
 	err := pkt.Encode(stream)
 	if err != nil {
@@ -596,37 +604,14 @@ func (s *SrsProtocol) do_send_packet(pkt packet.SrsPacket, streamId int32) error
 	header.stream_id = streamId
 	header.perfer_cid = pkt.GetPreferCid()
 
-	err = s.do_simple_send(&header, payload)
+	err = this.do_simple_send(&header, payload)
+	if err == nil {
+		return this.on_send_packet(&header, pkt)
+	}
 	return err
 }
 
 func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) error {
-	// var sended_count int = 0
-	// var d []byte
-	// var err error
-	// firstPkt := true
-	// for sended_count < len(payload) {
-	// 	if firstPkt {
-	// 		firstPkt = false
-	// 		// log.Print("cid=", mh.perfer_cid, ",timestamp=", mh.timestamp, ",payload_length=", mh.payload_length, ",type=", mh.message_type, ",stream_id=", mh.stream_id)
-	// 		d, err = srs_chunk_header_c0(mh.perfer_cid, int32(mh.timestamp), mh.payload_length, mh.message_type, mh.stream_id)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	} else {
-	// 		//srs_chunk_header_c3
-	// 	}
-
-	// 	d = append(d, payload...)
-	// 	n2, err2 := this.io.Write(d)
-	// 	if err2 != nil {
-	// 		return err2
-	// 	}
-
-	// 	sended_count += n2
-	// }
-	// return nil
-
 	var sendedCount int = 0
 	var d []byte
 	var err error
@@ -651,8 +636,57 @@ func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) er
 		if err2 != nil {
 			return err2
 		}
-		fmt.Println("****************leftPayload=", len(leftPayload), "****************")
 		sendedCount += n2
+	}
+	return nil
+}
+
+func (this *SrsProtocol) on_send_packet(mh *SrsMessageHeader, pkt packet.SrsPacket) error {
+	fmt.Println("on_send_packet", mh.message_type)
+	if pkt == nil {
+		return errors.New("send pkt is nil")
+	}
+
+	switch mh.message_type {
+	case global.RTMP_MSG_SetChunkSize:
+		fmt.Println("************************set out chunk size********************")
+		this.OutChunkSize = pkt.(*packet.SrsSetChunkSizePacket).ChunkSize
+	case global.RTMP_MSG_WindowAcknowledgementSize:
+		this.OutAckSize.Window = uint32(pkt.(*packet.SrsSetWindowAckSizePacket).AckowledgementWindowSize)
+	case global.RTMP_MSG_AMF0CommandMessage:
+		switch pkt.(type) {
+			case *packet.SrsConnectAppPacket:{
+				p := pkt.(*packet.SrsConnectAppPacket)
+				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
+			}
+			case *packet.SrsCreateStreamPacket:{
+				p := pkt.(*packet.SrsCreateStreamPacket)
+				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
+			}
+			case *packet.SrsFMLEStartPacket:{
+				p := pkt.(*packet.SrsFMLEStartPacket)
+				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
+			}
+		}
+	case global.RTMP_MSG_AMF3CommandMessage:
+		switch pkt.(type) {
+			case *packet.SrsConnectAppPacket:{
+				p := pkt.(*packet.SrsConnectAppPacket)
+				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
+			}
+			case *packet.SrsCreateStreamPacket:{
+				p := pkt.(*packet.SrsCreateStreamPacket)
+				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
+			}
+			case *packet.SrsFMLEStartPacket:{
+				p := pkt.(*packet.SrsFMLEStartPacket)
+				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
+			}
+		}
+	case global.RTMP_MSG_VideoMessage:
+		fmt.Println("RTMP_MSG_VideoMessage")
+	case global.RTMP_MSG_AudioMessage:
+		fmt.Println("RTMP_MSG_AudioMessage")
 	}
 	return nil
 }
