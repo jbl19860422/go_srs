@@ -53,6 +53,14 @@ func (this *SrsRtmpServer) ConnectApp() (packet.SrsPacket, error) {
 	// return pkt, nil
 }
 
+func (this *SrsRtmpServer) RecvMessage() (*SrsRtmpMessage, error) {
+	return this.Protocol.RecvMessage()
+}
+
+func (this *SrsRtmpServer) DecodeMessage(msg *SrsRtmpMessage) (packet.SrsPacket, error) {
+	return this.Protocol.DecodeMessage(msg)
+}
+
 func (this *SrsRtmpServer) IdentifyClient() (SrsRtmpConnType, string, error) {
 	var typ SrsRtmpConnType
 	var streamname string

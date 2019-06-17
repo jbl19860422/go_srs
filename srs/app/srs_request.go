@@ -2,6 +2,7 @@ package app
 
 import (
 	"go_srs/srs/protocol/rtmp"
+	"go_srs/srs/utils"
 )
 
 type SrsRequest struct {
@@ -24,3 +25,8 @@ type SrsRequest struct {
 func NewSrsRequest() *SrsRequest {
 	return &SrsRequest{}
 }
+
+func (this SrsRequest) GetStreamUrl() string {
+    return utils.SrsGenerateStreamUrl(this.vhost, this.app, this.stream);
+}
+

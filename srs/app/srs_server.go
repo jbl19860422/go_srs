@@ -28,7 +28,15 @@ func (this *SrsServer) StartProcess(port int) error {
 }
 
 func (this *SrsServer) HandleConnection(conn net.Conn) {
-	rtmpConn := NewSrsRtmpConn(conn)
+	rtmpConn := NewSrsRtmpConn(conn, this)
 	this.conns = append(this.conns, rtmpConn)
 	rtmpConn.Start()
+}
+
+func (this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
+	return nil
+}
+	
+func (this *SrsServer) OnUnpublish(s *SrsSource, r *SrsRequest) error {
+	return nil
 }

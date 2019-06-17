@@ -22,6 +22,10 @@ func NewSrsIOReadWriter(c net.Conn) *SrsIOReadWriter {
 	return rw
 }
 
+func (this *SrsIOReadWriter) GetClientIP() string {
+	return this.conn.RemoteAddr().String()
+}
+
 func (this *SrsIOReadWriter) Read(b []byte) (int, error) {
 	return this.IOReader.Read(b)
 }

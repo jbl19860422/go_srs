@@ -43,6 +43,7 @@ func NewSrsProtocol(io_ *skt.SrsIOReadWriter) *SrsProtocol {
 	}
 
 	return &SrsProtocol{
+		chunkStreams:make(map[int32]*SrsChunkStream),
 		chunkCache:     cache,
 		io:io_,
 		in_chunk_size:  global.SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE,

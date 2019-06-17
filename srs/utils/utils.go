@@ -151,3 +151,17 @@ func SrsDiscoveryTCUrl(tcUrl string) (schema string, host string, vhost string, 
 	err = nil
 	return
 }
+
+func SrsGenerateStreamUrl(vhost string, app string, stream string) string {
+	var url string
+	if vhost != global.SRS_CONSTS_RTMP_DEFAULT_VHOST {
+		url += vhost
+	}
+
+    url += "/"
+    url += app
+    url += "/"
+    url += stream
+
+    return url
+}
