@@ -14,7 +14,7 @@ import (
 	"reflect"
 	_ "bufio"
 	"fmt"
-	_ "time"
+	"time"
 )
 
 const SRS_PERF_CHUNK_STREAM_CACHE = 16
@@ -381,18 +381,18 @@ func (s *SrsProtocol) RecvMessagePayload(chunk *SrsChunkStream) (msg *SrsRtmpMes
 
 	chunk.RtmpMessage.payload = append(chunk.RtmpMessage.payload, buffer1...)
 	chunk.RtmpMessage.size += payload_size
-	log.Printf("recv payload=%x %x %x %x", chunk.RtmpMessage.payload[0], chunk.RtmpMessage.payload[1], chunk.RtmpMessage.payload[2], chunk.RtmpMessage.payload[3])
+	// log.Printf("recv payload=%x %x %x %x", chunk.RtmpMessage.payload[0], chunk.RtmpMessage.payload[1], chunk.RtmpMessage.payload[2], chunk.RtmpMessage.payload[3])
 
-	log.Print("recv payload_length=", chunk.Header.payload_length)
+	// log.Print("recv payload_length=", chunk.Header.payload_length)
 
 	if chunk.Header.payload_length == chunk.RtmpMessage.size {
-		log.Print("recv new message")
+		// log.Print("recv new message")
 		new_msg := chunk.RtmpMessage
 		chunk.RtmpMessage = nil
 		return new_msg, nil
 	}
 
-	log.Print("not a message payload_length=", chunk.Header.payload_length, "&size=", chunk.RtmpMessage.size)
+	// log.Print("not a message payload_length=", chunk.Header.payload_length, "&size=", chunk.RtmpMessage.size)
 
 	_ = payload_size
 	_ = buffer1
@@ -527,32 +527,52 @@ func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 	return nil
 }
 
-func (this *SrsProtocol) ExpectMessage(packet packet.SrsPacket) packet.SrsPacket {
-	for {
-		log.Print("start RecvNewMessage")
-		msg, err := this.RecvMessage()
-		log.Print("end RecvNewMessage")
-		if err != nil {
-			continue
-		}
-
-		if msg == nil {
-			continue
-		}
-
-		p, err1 := this.DecodeMessage(msg)
-		if err1 != nil {
-			log.Print("decode message failed, err=", err1)
-			continue
-		}
-		log.Print("p=", p)
-		if reflect.TypeOf(p) != reflect.TypeOf(packet) {
-			log.Print("drop message, ", reflect.TypeOf(p))
-			continue
-		}
-		return p
+func (this *SrsProtocol) ExpectMessage(pkt packet.SrsPacket) error {
+	if reflect.TypeOf(pkt).Kind() != reflect.Ptr {
+		return errors.New("need ptr to store result")
 	}
-	return nil
+
+	donePkt := make(chan packet.SrsPacket)
+	go func() {
+		for {
+			msg, err := this.RecvMessage()
+			if err != nil {
+				continue
+			}
+	
+			if msg == nil {
+				continue
+			}
+	
+			p, err1 := this.DecodeMessage(msg)
+			if err1 != nil {
+				log.Print("decode message failed, err=", err1)
+				continue
+			}
+
+			if reflect.TypeOf(p) != reflect.TypeOf(pkt) {
+				log.Print("drop message, ", reflect.TypeOf(p), reflect.TypeOf(pkt).Elem())
+				continue
+			}
+			log.Print("recv message done")
+			donePkt <- p
+			break
+			// return p
+		}
+		// return nil
+	}()
+	
+	var tmp_pkt packet.SrsPacket
+	for {
+		select {
+		case tmp_pkt = <-donePkt :
+			fmt.Println(reflect.TypeOf(pkt))
+			reflect.ValueOf(pkt).Elem().Set(reflect.ValueOf(tmp_pkt).Elem())
+			return nil
+		case <- time.After(time.Second*2): 
+			return errors.New("expect message timeout, type=" + reflect.TypeOf(pkt).String())
+		}
+	}
 }
 
 func (s *SrsProtocol) SendPacket(packet packet.SrsPacket, stream_id int32) error {
@@ -605,14 +625,8 @@ func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) er
 
 		
 		sended_count += n2
-		log.Print("sended_count=", sended_count)
-		fmt.Println(d)
-		// if sended_count == 17 {
-			
-		// 	for {
-		// 		time.Sleep(1*time.Second)
-		// 	}
-		// }
+		// log.Print("sended_count=", sended_count)
+		// fmt.Println(d)
 	}
 	return nil
 }

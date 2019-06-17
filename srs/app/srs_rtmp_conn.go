@@ -44,7 +44,7 @@ func (this *SrsRtmpConn) do_cycle() error {
 		return err
 	}
 	
-	fmt.Println("pkt.(*packet.SrsConnectAppPacket).CommandObj=",pkt.(*packet.SrsConnectAppPacket).CommandObj)
+	// fmt.Println("pkt.(*packet.SrsConnectAppPacket).CommandObj=",pkt.(*packet.SrsConnectAppPacket).CommandObj)
 	err = pkt.(*packet.SrsConnectAppPacket).CommandObj.Get("tcUrl", &this.req.tcUrl)
 	if err != nil {
 		return err

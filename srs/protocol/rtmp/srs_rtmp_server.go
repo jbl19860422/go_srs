@@ -10,7 +10,7 @@ import (
 	"go_srs/srs/protocol/packet"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/global"
-	"fmt"
+	_ "fmt"
 )
 
 type SrsRtmpServer struct {
@@ -34,11 +34,15 @@ func (this *SrsRtmpServer) HandShake() error {
 
 func (this *SrsRtmpServer) ConnectApp() (packet.SrsPacket, error) {
 	connPacket := packet.NewSrsConnectAppPacket()
-	pkt := this.Protocol.ExpectMessage(connPacket)
-	fmt.Println("aaaaaa=", pkt)
-	if pkt == nil {
-		fmt.Println("nilnilnilnil")
+	// pkt := this.Protocol.ExpectMessage(connPacket)
+	if err := this.Protocol.ExpectMessage(connPacket); err != nil {
+		return nil, err
 	}
+	return connPacket, nil
+	// fmt.Println("aaaaaa=", pkt)
+	// if pkt == nil {
+	// 	fmt.Println("nilnilnilnil")
+	// }
 	// srs_discovery_tc_url(req->tcUrl,
 	//     req->schema, req->host, req->vhost, req->app, req->stream, req->port,
 	//     req->param);
@@ -46,7 +50,7 @@ func (this *SrsRtmpServer) ConnectApp() (packet.SrsPacket, error) {
 	// for {
 	// 	time.Sleep(10 * time.Second)
 	// }
-	return pkt, nil
+	// return pkt, nil
 }
 
 func (this *SrsRtmpServer) IdentifyClient() (SrsRtmpConnType, string, error) {
@@ -206,11 +210,23 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 	// FCPublish
 	var fc_publish_tid float64 = 0
 	{
-		startPacket := packet.NewSrsFMLEStartPacket("")
-		pkt1 := this.Protocol.ExpectMessage(startPacket)
-		fc_publish_tid = pkt1.(*packet.SrsFMLEStartPacket).TransactionId.Value
-		pkt2 := packet.NewSrsFMLEStartResPacket(fc_publish_tid)
-		err := this.Protocol.SendPacket(pkt2, 0)
+		// startPacket := packet.NewSrsFMLEStartPacket("")
+		// pkt1 := this.Protocol.ExpectMessage(startPacket)
+		// fc_publish_tid = pkt1.(*packet.SrsFMLEStartPacket).TransactionId.Value
+		// pkt2 := packet.NewSrsFMLEStartResPacket(fc_publish_tid)
+		// err := this.Protocol.SendPacket(pkt2, 0)
+		// if err != nil {
+		// 	log.Print("send start fmle start res packet failed")
+		// 	return err
+		// }
+
+		startPkt := packet.NewSrsFMLEStartPacket("")
+		if err := this.Protocol.ExpectMessage(startPkt); err != nil {
+			return err
+		}
+		fc_publish_tid = startPkt.TransactionId.GetValue().(float64)
+		startResPkt := packet.NewSrsFMLEStartResPacket(fc_publish_tid)
+		err := this.Protocol.SendPacket(startResPkt, 0)
 		if err != nil {
 			log.Print("send start fmle start res packet failed")
 			return err
@@ -219,11 +235,25 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 
 	var create_stream_tid float64 = 0
 	{
-		createPacket := packet.NewSrsCreateStreamPacket()
-		pkt1 := this.Protocol.ExpectMessage(createPacket)
-		create_stream_tid = pkt1.(*packet.SrsCreateStreamPacket).TransactionId.Value
-		pkt2 := packet.NewSrsCreateStreamResPacket(create_stream_tid, float64(stream_id))
-		err := this.Protocol.SendPacket(pkt2, 0)
+		// createPacket := packet.NewSrsCreateStreamPacket()
+		// pkt1 := this.Protocol.ExpectMessage(createPacket)
+		// create_stream_tid = pkt1.(*packet.SrsCreateStreamPacket).TransactionId.Value
+		// pkt2 := packet.NewSrsCreateStreamResPacket(create_stream_tid, float64(stream_id))
+		// err := this.Protocol.SendPacket(pkt2, 0)
+		// if err != nil {
+		// 	log.Print("send start fmle start res packet failed")
+		// 	return err
+		// } else {
+		// 	log.Print("NewSrsCreateStreamResPacket succeed")
+		// }
+
+		createPkt := packet.NewSrsCreateStreamPacket()
+		if err := this.Protocol.ExpectMessage(createPkt); err != nil {
+			return err
+		}
+		create_stream_tid = createPkt.TransactionId.Value
+		createResPkt := packet.NewSrsCreateStreamResPacket(create_stream_tid, float64(stream_id))
+		err := this.Protocol.SendPacket(createResPkt, 0)
 		if err != nil {
 			log.Print("send start fmle start res packet failed")
 			return err
@@ -234,10 +264,17 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 
 	// publish
 	{
+		// publishPacket := packet.NewSrsPublishPacket()
+		// pkt := this.Protocol.ExpectMessage(publishPacket)
+		// log.Print("get SrsPublishPacket succeed")
+		// _ = pkt
+
 		publishPacket := packet.NewSrsPublishPacket()
-		pkt := this.Protocol.ExpectMessage(publishPacket)
+		if err := this.Protocol.ExpectMessage(publishPacket); err != nil {
+			return err
+		}
 		log.Print("get SrsPublishPacket succeed")
-		_ = pkt
+		// _ = pkt
 	}
 
 	// publish response onFCPublish(NetStream.Publish.Start)
