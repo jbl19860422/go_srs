@@ -8,6 +8,7 @@ import(
 	"bytes"
 	"log"
 	"go_srs/srs/protocol/skt"
+	"go_srs/srs/utils"
 )
 
 type SrsHandshakeBytes struct {
@@ -53,7 +54,9 @@ func (this *SrsHandshakeBytes) CreateS0S1S2() error {
 	//s0 = version
 	this.S0S1S2[0] = 0x3
 	//s1 for bytes(timestamp)
-	binary.Write(bytes.NewBuffer(this.S0S1S2[1:5]), binary.LittleEndian, time.Now().Unix())
+	b := utils.Int32ToBytes(int32(time.Now().Unix()), binary.LittleEndian)
+	copy(this.S0S1S2[1:5], b)
+	// binary.Write(bytes.NewBuffer(this.S0S1S2[1:5]), binary.LittleEndian, )
 	//s1 rand bytes
 	if n, err := rand.Read(this.S0S1S2[9:1537]); err != nil || n != 1528 {
 		return errors.New("create rand number failed")
