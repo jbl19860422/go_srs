@@ -8,7 +8,7 @@ import (
 	"net"
 	"strings"
 	"net/url"
-	"log"
+	// "log"
 	"time"
 	"fmt"
 	"errors"
@@ -79,8 +79,8 @@ func (this *SrsRtmpConn) do_cycle() error {
 	}
 
 	m, _ := url.ParseQuery(u.RawQuery)
-	fmt.Println(this.req.tcUrl)
-	log.Print(m)
+	// fmt.Println(this.req.tcUrl)
+	// log.Print(m)
 	vhost, ok := m["vhost"]
 	if ok {
 		this.req.vhost = vhost[0]
@@ -93,13 +93,13 @@ func (this *SrsRtmpConn) do_cycle() error {
 func (this *SrsRtmpConn) service_cycle() error {
 	err := this.rtmp.SetWindowAckSize((int32)(1000000))
 	if err != nil {
-		log.Print("set_window_ack_size failed")
+		// log.Print("set_window_ack_size failed")
 		return err
 	}
 
 	err = this.rtmp.SetPeerBandwidth(1000*1000, 2)
 	if err != nil {
-		log.Print("set_peer_bandwidth failed")
+		// log.Print("set_peer_bandwidth failed")
 		return err
 	}
 
@@ -107,13 +107,13 @@ func (this *SrsRtmpConn) service_cycle() error {
 
 	err = this.rtmp.SetChunkSize(4096)
 	if err != nil {
-		log.Print("set_chunk_size failed")
+		// log.Print("set_chunk_size failed")
 		return err
 	}
 
 	err = this.rtmp.ResponseConnectApp()
 	if err != nil {
-		log.Print("response_connect_app error")
+		// log.Print("response_connect_app error")
 		return err
 	}
 
@@ -133,12 +133,12 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 	_ = dur
 	//log.Print("***************identify_client done ,type=", typ);
 	var err error
-	fmt.Println("start discovery, tcUrl=", this.req.tcUrl)
+	// fmt.Println("start discovery, tcUrl=", this.req.tcUrl)
 	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTCUrl(this.req.tcUrl)
 	if err != nil {
 		return errors.New("srs_discovery_tc_url failed")
 	}
-	fmt.Println("Srs_discovery_tc_url succeed, stream_name=", this.req.stream)
+	// fmt.Println("Srs_discovery_tc_url succeed, stream_name=", this.req.stream)
 	source, err2 := FetchOrCreate(this.req, this.server)
 	if err2 != nil {
 		fmt.Println("FetchOrCreate failed")
@@ -159,7 +159,7 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 		err = this.playing(source)
 	}
 	case rtmp.SrsRtmpConnFMLEPublish:{
-		log.Print("******************start SrsRtmpConnFMLEPublish*******************")
+		// log.Print("******************start SrsRtmpConnFMLEPublish*******************")
 		this.rtmp.Start_fmle_publish(0)
 		return this.publishing(source)
 	}
@@ -204,6 +204,7 @@ func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, tr
 		} else {
 			msg := consumer.Wait(1, 100)
 			if msg != nil {
+				fmt.Println("send to consumer")
 				if msg.GetHeader().IsVideo() {
 					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
 				} else {
@@ -264,7 +265,7 @@ func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 }
 
 func (this *SrsRtmpConn) doPublishing(source *SrsSource) error {
-	fmt.Println("******************doPublishing*******************")
+	// fmt.Println("******************doPublishing*******************")
 	this.publishThread = NewSrsAppPublishRecvThread(this.rtmp, this.req, this, source, false, false)
 	this.publishThread.Start()
 	for {
@@ -290,14 +291,14 @@ func (this *SrsRtmpConn) ProcessPublishMessage(source *SrsSource, msg *rtmp.SrsR
 	//todo fix edge process
 	if msg.GetHeader().IsAudio() {
 		//process audio
-		fmt.Println("onaudio*******************")
+		// fmt.Println("onaudio*******************")
 		if err := source.OnAudio(msg); err != nil {
 
 		}
 	}
 
 	if msg.GetHeader().IsVideo() {
-		fmt.Println("onvideo******************")
+		// fmt.Println("onvideo******************")
 		if err := source.OnVideo(msg); err != nil {
 			
 		}
@@ -315,7 +316,7 @@ func (this *SrsRtmpConn) ProcessPublishMessage(source *SrsSource, msg *rtmp.SrsR
 
 		switch pkt.(type) {
 			case *packet.SrsOnMetaDataPacket: {
-				fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxmetadata")
+				// fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxmetadata")
 				err := source.on_meta_data(msg, pkt.(*packet.SrsOnMetaDataPacket))
 				if err != nil {
 					return err

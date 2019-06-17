@@ -4,7 +4,7 @@ import (
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
 	"go_srs/srs/global"
-	"fmt"
+	// "fmt"
 )
 type SrsOnMetaDataPacket struct {
 	Name 		amf0.SrsAmf0String
@@ -51,7 +51,7 @@ func (this *SrsOnMetaDataPacket) Decode(stream *utils.SrsStream) error {
 		}
 	}
 	case amf0.RTMP_AMF0_EcmaArray:{
-		fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxx is arrayxxxxxxxxxxxxxxxxxxxxx")
+		// fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxx is arrayxxxxxxxxxxxxxxxxxxxxx")
 		this.IsObjMeta = false
 		if err = this.AMetaData.Decode(stream); err != nil {
 			return err

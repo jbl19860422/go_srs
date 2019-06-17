@@ -68,7 +68,7 @@ func (this *SrsRtmpServer) IdentifyClient(streamId int) (SrsRtmpConnType, string
 	for {
 		msg, err := this.Protocol.RecvMessage()
 		if err != nil {
-			log.Print("identify_client err, msg=", err)
+			// log.Print("identify_client err, msg=", err)
 			continue
 		}
 		header := msg.GetHeader()
@@ -84,12 +84,12 @@ func (this *SrsRtmpServer) IdentifyClient(streamId int) (SrsRtmpConnType, string
 		switch pkt.(type) {
 			//todo
 			case *packet.SrsCreateStreamPacket: {
-				log.Print("*****************SrsCreateStreamPacket********************")
+				// log.Print("*****************SrsCreateStreamPacket********************")
 				typ, streamname, duration, err = this.identify_create_stream_client(pkt.(*packet.SrsCreateStreamPacket), streamId)
 				return typ, streamname, duration, err
 			}
 			case *packet.SrsFMLEStartPacket: {
-				log.Print("SrsFMLEStartPacket streamname=", pkt.(*packet.SrsFMLEStartPacket).StreamName)
+				// log.Print("SrsFMLEStartPacket streamname=", pkt.(*packet.SrsFMLEStartPacket).StreamName)
 				typ, streamname, err = this.identify_fmle_publish_client(pkt.(*packet.SrsFMLEStartPacket))
 				if err != nil {
 					log.Print("identify_fmle_publish_client reeturn")
@@ -122,7 +122,7 @@ func (this *SrsRtmpServer) identify_create_stream_client(req *packet.SrsCreateSt
 	for {
 		msg, err := this.Protocol.RecvMessage()
 		if err != nil {
-			log.Print("identify_client err, msg=", err)
+			// log.Print("identify_client err, msg=", err)
 			continue
 		}
 		header := msg.GetHeader()
@@ -142,12 +142,12 @@ func (this *SrsRtmpServer) identify_create_stream_client(req *packet.SrsCreateSt
 				return typ, streamname, duration, err
 			}
 			case *packet.SrsCreateStreamPacket: {
-				log.Print("SrsCreateStreamPacket")
+				// log.Print("SrsCreateStreamPacket")
 				typ, streamname, duration, err = this.identify_create_stream_client(pkt.(*packet.SrsCreateStreamPacket), streamId)
 				return typ, streamname, duration, err
 			}
 			case *packet.SrsFMLEStartPacket: {
-				log.Print("SrsFMLEStartPacket streamname=", pkt.(*packet.SrsFMLEStartPacket).StreamName)
+				// log.Print("SrsFMLEStartPacket streamname=", pkt.(*packet.SrsFMLEStartPacket).StreamName)
 				typ, streamname, err = this.identify_fmle_publish_client(pkt.(*packet.SrsFMLEStartPacket))
 				if err != nil {
 					log.Print("identify_fmle_publish_client reeturn")
@@ -176,7 +176,6 @@ func (this *SrsRtmpServer) SendMsg(msg *SrsRtmpMessage, streamId int) error {
 
 func (this *SrsRtmpServer) identify_fmle_publish_client(req *packet.SrsFMLEStartPacket) (SrsRtmpConnType, string, error) {
 	typ := SrsRtmpConnType(SrsRtmpConnFMLEPublish)
-	log.Print("")
 	pkt := packet.NewSrsFMLEStartResPacket(req.TransactionId.Value)
 	err := this.Protocol.SendPacket(pkt, 0)
 	if err != nil {
@@ -245,10 +244,10 @@ func (this *SrsRtmpServer) SetWindowAckSize(act_size int32) error {
 	pkt.AckowledgementWindowSize = act_size
 	err := this.Protocol.SendPacket(pkt, 0)
 	if err != nil {
-		log.Print("send packet err ", err)
+		// log.Print("send packet err ", err)
 		return err
 	}
-	log.Print("send act size succeed")
+	// log.Print("send act size succeed")
 	return nil
 }
 
@@ -350,7 +349,7 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 		startResPkt := packet.NewSrsFMLEStartResPacket(fc_publish_tid)
 		err := this.Protocol.SendPacket(startResPkt, 0)
 		if err != nil {
-			log.Print("send start fmle start res packet failed")
+			// log.Print("send start fmle start res packet failed")
 			return err
 		}
 	}
@@ -365,10 +364,10 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 		createResPkt := packet.NewSrsCreateStreamResPacket(create_stream_tid, float64(stream_id))
 		err := this.Protocol.SendPacket(createResPkt, 0)
 		if err != nil {
-			log.Print("send start fmle start res packet failed")
+			// log.Print("send start fmle start res packet failed")
 			return err
 		} else {
-			log.Print("NewSrsCreateStreamResPacket succeed")
+			// log.Print("NewSrsCreateStreamResPacket succeed")
 		}
 	}
 
@@ -378,7 +377,7 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 		if err := this.Protocol.ExpectMessage(publishPacket); err != nil {
 			return err
 		}
-		log.Print("get SrsPublishPacket succeed")
+		// log.Print("get SrsPublishPacket succeed")
 	}
 
 	// publish response onFCPublish(NetStream.Publish.Start)

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"go_srs/srs/utils"
 	"reflect"
-	"fmt"
+	// "fmt"
 )
 
 type SrsAmf0Object struct {
@@ -122,7 +122,7 @@ func (this *SrsAmf0Object) IsMyType(stream *utils.SrsStream) (bool, error) {
 
 func (this *SrsAmf0Object) Set(name string, value interface{}) {
 	var p *SrsValuePair
-	fmt.Println(reflect.TypeOf(value))
+	// fmt.Println(reflect.TypeOf(value))
 	switch value.(type) {
 	case string:
 		p = &SrsValuePair{

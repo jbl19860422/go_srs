@@ -2,7 +2,7 @@ package packet
 
 import (
 	"errors"
-	"log"
+	// "log"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
 	"go_srs/srs/global"
@@ -40,17 +40,17 @@ func (this *SrsConnectAppPacket) Decode(stream *utils.SrsStream) error {
 	}
 
 	if this.TransactionId.Value != 1.0 {
-		log.Printf("amf0 decode connect transaction_id failed.%.1f", this.TransactionId.Value)
+		// log.Printf("amf0 decode connect transaction_id failed.%.1f", this.TransactionId.Value)
 		err = errors.New("amf0 decode connect transaction_id failed.")
 		return err
 	}
 
 	err = this.CommandObj.Decode(stream)
 	if err != nil {
-		log.Print("command read failed")
+		// log.Print("command read failed")
 		return err
 	} else {
-		log.Print("command_obj read succeed")
+		// log.Print("command_obj read succeed")
 	}
 
 	if !stream.Empty() {

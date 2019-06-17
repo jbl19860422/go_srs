@@ -10,10 +10,10 @@ import (
 	_ "context"
 	"encoding/binary"
 	"errors"
-	"log"
+	// "log"
 	"reflect"
 	_ "bufio"
-	"fmt"
+	// "fmt"
 	"time"
 )
 
@@ -40,6 +40,7 @@ func NewSrsProtocol(io_ *skt.SrsIOReadWriter) *SrsProtocol {
 	var cid int32
 	for cid = 0; cid < SRS_PERF_CHUNK_STREAM_CACHE; cid++ {
 		cache[cid] = NewSrsChunkStream(cid)
+		cache[cid].Header.perfer_cid = cid
 	}
 
 	return &SrsProtocol{
@@ -95,7 +96,7 @@ func (this *SrsProtocol) ReadNByte(count int) (b []byte, err error) {
 }
 
 func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err error) {
-	fmt.Println("ReadMessageHeader")
+	// fmt.Println("ReadMessageHeader")
 	/**
 	 * we should not assert anything about fmt, for the first packet.
 	 * (when first packet, the chunk->msg is NULL).
@@ -123,10 +124,10 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 
 	// but, we can ensure that when a chunk stream is fresh,
 	// the fmt must be 0, a new stream.
-	fmt.Println("chunk.MsgCount=", chunk.MsgCount)
+	// fmt.Println("chunk.MsgCount=", chunk.MsgCount)
 	if chunk.MsgCount == 0 && format != RTMP_FMT_TYPE0 {
 		if chunk.Cid == global.RTMP_CID_ProtocolControl && format == RTMP_FMT_TYPE1 {
-			log.Print("accept cid=2, fmt=1 to make librtmp happy.")
+			// log.Print("accept cid=2, fmt=1 to make librtmp happy.")
 		} else {
 			err = errors.New("error rtmp chunk start")
 			return
@@ -216,7 +217,7 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 				err = errors.New("error rtmp packet size")
 				return
 			}
-			log.Printf("read payload length=%d", payload_length)
+			// log.Printf("read payload length=%d", payload_length)
 			chunk.Header.payload_length = payload_length
 			chunk.Header.message_type = int8(buf1[pos])
 			pos += 1
@@ -327,13 +328,13 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 }
 
 func (this *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
-	log.Print("start ReadBasicHeader")
+	// log.Print("start ReadBasicHeader")
 	fmt, cid, err := this.ReadBasicHeader()
 	if nil != err {
-		log.Print("read basic header failed, err=", err)
+		// log.Print("read basic header failed, err=", err)
 		return nil, nil
 	}
-	log.Print("ReadBasicHeader done, fmt=", fmt, "&cid=", cid)
+	// log.Print("ReadBasicHeader done, fmt=", fmt, "&cid=", cid)
 	var chunk *SrsChunkStream
 
 	if cid < SRS_PERF_CHUNK_STREAM_CACHE {
@@ -351,14 +352,14 @@ func (this *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
 
 	err = this.ReadMessageHeader(chunk, fmt)
 	if err != nil {
-		log.Print("read message header ", err)
+		// log.Print("read message header ", err)
 		return nil, err
 	}
 
-	log.Print("read message header succeed")
+	// log.Print("read message header succeed")
 	var msg *SrsRtmpMessage = nil
 	if msg, err = this.RecvMessagePayload(chunk); err != nil {
-		log.Print("RecvMessagePayload failed")
+		// log.Print("RecvMessagePayload failed")
 		return nil, err
 	}
 	// log.Print("read payload succeed, len=", msg.size)
@@ -378,7 +379,7 @@ func (s *SrsProtocol) RecvMessagePayload(chunk *SrsChunkStream) (msg *SrsRtmpMes
 	if s.in_chunk_size < payload_size {
 		payload_size = s.in_chunk_size
 	}
-	fmt.Println("chunk.RtmpMessage.size=", chunk.RtmpMessage.size, "&expect payload_size=", payload_size)
+	// fmt.Println("chunk.RtmpMessage.size=", chunk.RtmpMessage.size, "&expect payload_size=", payload_size)
 	// create msg payload if not initialized
 	if chunk.RtmpMessage.payload == nil {
 		chunk.RtmpMessage.payload = make([]byte, 0)
@@ -414,16 +415,16 @@ func (s *SrsProtocol) RecvMessage() (*SrsRtmpMessage, error) {
 	for {
 		rtmp_msg, err := s.RecvInterlacedMessage()
 		if err != nil {
-			log.Print("recv a message")
+			// log.Print("recv a message")
 		}
 
 		if rtmp_msg == nil {
-			log.Print("recv a empty message")
+			// log.Print("recv a empty message")
 			continue
 		}
 
 		if rtmp_msg.size <= 0 || rtmp_msg.header.payload_length <= 0 {
-			log.Print("ignore empty message")
+			// log.Print("ignore empty message")
 			continue
 		}
 
@@ -451,7 +452,7 @@ func (this *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *utils.Sr
 			return
 		}
 		command := amf0Command.Value.Value
-		log.Print("srs_amf0_read_string command=", command)
+		// log.Print("srs_amf0_read_string command=", command)
 		// decode command object.
 		//todo other message
 		if command == amf0.RTMP_AMF0_COMMAND_CONNECT {
@@ -478,9 +479,9 @@ func (this *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *utils.Sr
 			p := packet.NewSrsCreateStreamPacket()
 			err = p.Decode(stream)
 			if err != nil {
-				log.Print("decode create stream packet failed")
+				// log.Print("decode create stream packet failed")
 			} else {
-				log.Print("decode create stream packet succeed")
+				// log.Print("decode create stream packet succeed")
 			}
 			pkt = p
 			return
@@ -498,14 +499,14 @@ func (this *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *utils.Sr
 			p := packet.NewSrsOnMetaDataPacket(command)
 			err = p.Decode(stream)
 			pkt = p
-			fmt.Println("decode the AMF0/AMF3 data(onMetaData message).")
+			// fmt.Println("decode the AMF0/AMF3 data(onMetaData message).")
 			return 
         } 
 
 	} else if msg.header.IsSetChunkSize() {
 		p := packet.NewSrsSetChunkSizePacket()
 		err = p.Decode(stream)
-		log.Print("NewSrsSetChunkSizePacket ", p.ChunkSize)
+		// log.Print("NewSrsSetChunkSizePacket ", p.ChunkSize)
 		//
 		pkt = p
 		return
@@ -519,7 +520,7 @@ func (s *SrsProtocol) DecodeMessage(msg *SrsRtmpMessage) (packet packet.SrsPacke
 		err = errors.New("newsrsstream failed")
 		return
 	}
-	log.Print("NewSrsStream size=", msg.size)
+	// log.Print("NewSrsStream size=", msg.size)
 	packet, err = s.do_decode_message(msg, stream)
 	if err != nil {
 		return
@@ -530,12 +531,12 @@ func (s *SrsProtocol) DecodeMessage(msg *SrsRtmpMessage) (packet packet.SrsPacke
 
 func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 	var pkt packet.SrsPacket
-	log.Print("message.type=", msg.header.message_type)
+	// log.Print("message.type=", msg.header.message_type)
 	if msg.header.message_type == global.RTMP_MSG_SetChunkSize || msg.header.message_type == global.RTMP_MSG_UserControlMessage || msg.header.message_type == global.RTMP_MSG_WindowAcknowledgementSize {
 		var err error
 		pkt, err = s.DecodeMessage(msg)
 		if err != nil {
-			log.Print("decode packet from message payload failed. ")
+			// log.Print("decode packet from message payload failed. ")
 			return errors.New("decode packet from message payload failed.")
 		}
 		_ = pkt
@@ -544,7 +545,7 @@ func (s *SrsProtocol) on_recv_message(msg *SrsRtmpMessage) error {
 	if msg.header.message_type == global.RTMP_MSG_SetChunkSize {
 		//参数检查
 		s.in_chunk_size = pkt.(*packet.SrsSetChunkSizePacket).ChunkSize
-		log.Print("in_chunk_size=", s.in_chunk_size)
+		// log.Print("in_chunk_size=", s.in_chunk_size)
 	}
 
 	return nil
@@ -570,15 +571,15 @@ func (this *SrsProtocol) ExpectMessage(pkt packet.SrsPacket) error {
 	
 			p, err1 := this.DecodeMessage(msg)
 			if err1 != nil {
-				log.Print("decode message failed, err=", err1)
+				// log.Print("decode message failed, err=", err1)
 				continue
 			}
 
 			if reflect.TypeOf(p) != reflect.TypeOf(pkt) {
-				log.Print("drop message, ", reflect.TypeOf(p), reflect.TypeOf(pkt).Elem())
+				// log.Print("drop message, ", reflect.TypeOf(p), reflect.TypeOf(pkt).Elem())
 				continue
 			}
-			log.Print("recv message done")
+			// log.Print("recv message done")
 			donePkt <- p
 			break
 		}
@@ -588,7 +589,7 @@ func (this *SrsProtocol) ExpectMessage(pkt packet.SrsPacket) error {
 	for {
 		select {
 		case tmp_pkt = <-donePkt:
-			fmt.Println(reflect.TypeOf(pkt))
+			// fmt.Println(reflect.TypeOf(pkt))
 			reflect.ValueOf(pkt).Elem().Set(reflect.ValueOf(tmp_pkt).Elem())
 			return nil
 		case <- time.After(time.Second*2): 
@@ -661,7 +662,7 @@ func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) er
 }
 
 func (this *SrsProtocol) SendMessages(msgs []*SrsRtmpMessage, streamId int) error {
-	fmt.Println("xxxxxxxxxxxxxxxxxxxxxSendMessagesxxxxxxxxxxxxxxxxxxxxx")
+	// fmt.Println("xxxxxxxxxxxxxxxxxxxxxSendMessagesxxxxxxxxxxxxxxxxxxxxx")
 	for i := 0; i < len(msgs); i++ {
 		if msgs[i] == nil {
 			continue
@@ -673,7 +674,7 @@ func (this *SrsProtocol) SendMessages(msgs []*SrsRtmpMessage, streamId int) erro
 
 		msg := msgs[i]
 		leftPayload := msg.GetPayload()
-		fmt.Println("xxxxxxxxxxxxxxxxxxxxxxSendMessages ", len(msgs[i].GetPayload()), "xxxxxxxxxxxxx")
+		// fmt.Println("xxxxxxxxxxxxxxxxxxxxxxSendMessages ", len(msgs[i].GetPayload()), "xxxxxxxxxxxxx")
 		var sendedCount int = 0
 		var d []byte
 		var err error
@@ -706,7 +707,7 @@ func (this *SrsProtocol) SendMessages(msgs []*SrsRtmpMessage, streamId int) erro
 }
 
 func (this *SrsProtocol) on_send_packet(mh *SrsMessageHeader, pkt packet.SrsPacket) error {
-	fmt.Println("on_send_packet", mh.message_type)
+	// fmt.Println("on_send_packet", mh.message_type)
 	if pkt == nil {
 		return errors.New("send pkt is nil")
 	}
@@ -732,9 +733,9 @@ func (this *SrsProtocol) on_send_packet(mh *SrsMessageHeader, pkt packet.SrsPack
 			}
 		}
 	case global.RTMP_MSG_VideoMessage:
-		fmt.Println("RTMP_MSG_VideoMessage")
+		// fmt.Println("RTMP_MSG_VideoMessage")
 	case global.RTMP_MSG_AudioMessage:
-		fmt.Println("RTMP_MSG_AudioMessage")
+		// fmt.Println("RTMP_MSG_AudioMessage")
 	}
 	return nil
 }

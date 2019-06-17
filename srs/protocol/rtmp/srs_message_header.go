@@ -1,6 +1,7 @@
 package rtmp
 
 import (
+	"fmt"
 	"go_srs/srs/global"
 )
 
@@ -44,6 +45,12 @@ type SrsMessageHeader struct {
 	* for example, dispatch to all connections.
 	 */
 	perfer_cid int32
+}
+
+func (this *SrsMessageHeader) Print() {
+	fmt.Println("perfer_cid=", this.perfer_cid)
+	fmt.Println("message_type=", this.message_type)
+	fmt.Println("payload_length=", this.payload_length)
 }
 
 func (s *SrsMessageHeader) IsAudio() bool {
@@ -92,4 +99,8 @@ func (s *SrsMessageHeader) IsSetPeerBandwidth() bool {
 
 func (s *SrsMessageHeader) IsAggregate() bool {
 	return s.message_type == global.RTMP_MSG_AggregateMessage
+}
+
+func (this *SrsMessageHeader) SetLength(len int32) {
+	this.payload_length = len
 }

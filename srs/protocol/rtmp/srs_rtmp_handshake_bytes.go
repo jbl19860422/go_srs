@@ -6,7 +6,7 @@ import(
 	"time"
 	"encoding/binary"
 	"bytes"
-	"log"
+	// "log"
 	"go_srs/srs/protocol/skt"
 	"go_srs/srs/utils"
 )
@@ -78,7 +78,7 @@ func (this *SrsHandshakeBytes) ReadC2() int {
 		if err != nil {
 			return -1
 		}
-		log.Print("read n=", n)
+		// log.Print("read n=", n)
 		left = left - n
 		if left <= 0 {
 			return 0

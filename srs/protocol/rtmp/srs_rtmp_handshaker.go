@@ -4,7 +4,7 @@ import (
 	"errors"
 	"go_srs/srs/protocol/skt"
 	"log"
-	"fmt"
+	// "fmt"
 )
 
 type HandShaker interface {
@@ -39,7 +39,7 @@ func (this *SrsSimpleHandShake) HandShakeWithClient() error {
 		return err
 	}
 
-	fmt.Println("this.HSBytes.S0S1S2=", len(this.HSBytes.S0S1S2))
+	// fmt.Println("this.HSBytes.S0S1S2=", len(this.HSBytes.S0S1S2))
 	n, err := this.io.Write(this.HSBytes.S0S1S2)
 	if err != nil {
 		log.Printf("write s0s1s2 failed")

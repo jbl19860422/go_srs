@@ -47,7 +47,7 @@ func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].Enqueue(msg, false)
-		fmt.Println("***********************************************send audio**************************************")
+		// fmt.Println("***********************************************send audio**************************************")
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].Enqueue(msg, false)
-		fmt.Println("***********************************************send video**************************************")
+		// fmt.Println("***********************************************send video**************************************")
 	}
 	return nil
 }
@@ -123,7 +123,14 @@ func (this *SrsSource) on_meta_data(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnM
 	
 	this.cacheMetaData = rtmp.NewSrsRtmpMessage()
 	this.cacheMetaData.SetHeader(*(msg.GetHeader()))
+	
+	this.cacheMetaData.GetHeader().SetLength(int32(len(stream.Data())))
+	this.cacheMetaData.GetHeader().Print()
 	this.cacheMetaData.SetPayload(stream.Data())
+
+	for i := 0; i < len(this.consumers); i++ {
+		this.consumers[i].Enqueue(this.cacheMetaData, false)
+	}
     // when already got metadata, drop when reduce sequence header.
     // bool drop_for_reduce = false;
     // if (cache_metadata && _srs_config->get_reduce_sequence_header(_req->vhost)) {
@@ -219,9 +226,9 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 	//todo cppy sequence header
 	//todo copy gop to consumers queue
 	//many things todo 
-
+	fmt.Println("CreateConsumer")
 	if this.cacheMetaData != nil {
-		fmt.Println("cacheMetaDataxxxxx")
+		fmt.Println("cacheMetaData")
 		consumer.Enqueue(this.cacheMetaData, false)
 	}
 
