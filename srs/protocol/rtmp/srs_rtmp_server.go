@@ -10,20 +10,22 @@ import (
 	"go_srs/srs/protocol/packet"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/global"
-	_ "fmt"
+	// "fmt"
 )
 
 type SrsRtmpServer struct {
-	io   		*skt.SrsIOReadWriter
-	Protocol    *SrsProtocol
-	HandShaker  *SrsSimpleHandShake
+	io   			*skt.SrsIOReadWriter
+	Protocol    	*SrsProtocol
+	HandShaker  	*SrsSimpleHandShake
+	IOErrListener 	skt.SrsIOErrListener
 }
 
-func NewSrsRtmpServer(io_ *skt.SrsIOReadWriter) *SrsRtmpServer {
+func NewSrsRtmpServer(io_ *skt.SrsIOReadWriter, listener skt.SrsIOErrListener) *SrsRtmpServer {
 	return &SrsRtmpServer{
 		io: io_,
 		Protocol: NewSrsProtocol(io_), 
 		HandShaker: NewSrsSimpleHandShake(io_),
+		IOErrListener:listener,
 	}
 }
 
@@ -62,7 +64,9 @@ func (this *SrsRtmpServer) DecodeMessage(msg *SrsRtmpMessage) (packet.SrsPacket,
 }
 
 func (this *SrsRtmpServer) OnRecvError(err error) {
-	
+	if this.IOErrListener != nil {
+		this.IOErrListener.OnRecvError(err)
+	}
 }
 
 func (this *SrsRtmpServer) IdentifyClient(streamId int) (SrsRtmpConnType, string, float64, error) {

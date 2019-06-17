@@ -28,13 +28,14 @@ type SrsRtmpConn struct {
 func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
 	socketIO := skt.NewSrsIOReadWriter(conn)
 	
-	return &SrsRtmpConn{
+	c := &SrsRtmpConn{
 		io: socketIO,
-		rtmp:rtmp.NewSrsRtmpServer(socketIO),
 		req:NewSrsRequest(),
 		res:NewSrsResponse(1),
 		server:s,
 	}
+	c.rtmp = rtmp.NewSrsRtmpServer(socketIO, c)
+	return c
 }
 
 func (this *SrsRtmpConn) Start() error {

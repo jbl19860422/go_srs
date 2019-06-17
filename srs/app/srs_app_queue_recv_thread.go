@@ -5,16 +5,17 @@ import (
 )
 
 type SrsQueueRecvThread struct {
-	queue 		[]*rtmp.SrsRtmpMessage
-	consumer 	*SrsConsumer
-	rtmp		*rtmp.SrsRtmpServer
-	recvThread 	*SrsRecvThread
+	queue      []*rtmp.SrsRtmpMessage
+	consumer   *SrsConsumer
+	rtmp       *rtmp.SrsRtmpServer
+	recvThread *SrsRecvThread
 }
 
 func NewSrsQueueRecvThread(c *SrsConsumer, s *rtmp.SrsRtmpServer) *SrsQueueRecvThread {
 	st := &SrsQueueRecvThread{
-		queue:make([]*rtmp.SrsRtmpMessage, 1000),
-		consumer:c,
+		queue:    make([]*rtmp.SrsRtmpMessage, 1000),
+		consumer: c,
+		rtmp:     s,
 	}
 
 	st.recvThread = NewSrsRecvThread(s, st, 1000)
@@ -56,8 +57,9 @@ func (this *SrsQueueRecvThread) GetMsg() *rtmp.SrsRtmpMessage {
 }
 
 func (this *SrsQueueRecvThread) OnRecvError(err error) {
+	this.rtmp.OnRecvError(err)
 	return
-}	
+}
 
 func (this *SrsQueueRecvThread) OnThreadStart() {
 	return
@@ -66,4 +68,3 @@ func (this *SrsQueueRecvThread) OnThreadStart() {
 func (this *SrsQueueRecvThread) OnThreadStop() {
 	return
 }
-

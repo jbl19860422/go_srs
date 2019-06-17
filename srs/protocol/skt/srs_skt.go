@@ -8,6 +8,10 @@ import (
 	_ "fmt"
 )
 
+type SrsIOErrListener interface {
+	OnRecvError(err error)
+}
+
 type SrsIOReadWriter struct {
 	conn     net.Conn
 	IOReader *bufio.Reader
