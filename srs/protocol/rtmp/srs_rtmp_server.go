@@ -61,9 +61,10 @@ func (this *SrsRtmpServer) DecodeMessage(msg *SrsRtmpMessage) (packet.SrsPacket,
 	return this.Protocol.DecodeMessage(msg)
 }
 
-func (this *SrsRtmpServer) IdentifyClient() (SrsRtmpConnType, string, error) {
+func (this *SrsRtmpServer) IdentifyClient() (SrsRtmpConnType, string, float64, error) {
 	var typ SrsRtmpConnType
 	var streamname string
+	var duration float64
 	for {
 		msg, err := this.Protocol.RecvMessage()
 		if err != nil {
@@ -81,27 +82,33 @@ func (this *SrsRtmpServer) IdentifyClient() (SrsRtmpConnType, string, error) {
 
 		pkt, err := this.Protocol.DecodeMessage(msg)
 		switch pkt.(type) {
-		// case SrsCreateStreamPacket: {
-		// 	log.Print("SrsCreateStreamPacket")
-		// }
-		case (*packet.SrsFMLEStartPacket):
-			{
+			//todo
+			case *packet.SrsCreateStreamPacket: {
+				log.Print("SrsCreateStreamPacket")
+			}
+			case *packet.SrsFMLEStartPacket: {
 				log.Print("SrsFMLEStartPacket streamname=", pkt.(*packet.SrsFMLEStartPacket).StreamName)
 				typ, streamname, err = this.identify_fmle_publish_client(pkt.(*packet.SrsFMLEStartPacket))
 				if err != nil {
 					log.Print("identify_fmle_publish_client reeturn")
-					return typ, streamname, nil
+					return typ, streamname, 0, nil
 				}
-				return typ, streamname, nil
+				return typ, streamname, 0, nil
 			}
-			// case SrsPlayPacket:{
-			// 	log.Print("SrsPlayPacket")
-			// }
+			case *packet.SrsPlayPacket:{
+				log.Print("SrsPlayPacket")
+				typ, streamname, duration, err = this.identify_play_client(pkt.(*packet.SrsPlayPacket))
+				return typ, streamname, duration, err
+			}
 		}
-		return typ, streamname, nil
+		return typ, streamname, 0, nil
 	}
 	_ = typ
-	return typ, streamname, nil
+	return typ, streamname, 0, nil
+}
+
+func (this *SrsRtmpServer) identify_play_client(pkt *packet.SrsPlayPacket) (SrsRtmpConnType, string, float64, error) {
+	return SrsRtmpConnPlay, pkt.StreamName.GetValue().(string), pkt.Duration.GetValue().(float64),nil
 }
 
 func (this *SrsRtmpServer) identify_fmle_publish_client(req *packet.SrsFMLEStartPacket) (SrsRtmpConnType, string, error) {
@@ -115,6 +122,9 @@ func (this *SrsRtmpServer) identify_fmle_publish_client(req *packet.SrsFMLEStart
 	return typ, req.StreamName.Value.Value, nil
 }
 
+func (this *SrsRtmpServer) StartPlay() error {
+	return nil
+}
 
 func (this *SrsRtmpServer) SetWindowAckSize(act_size int32) error {
 	pkt := packet.NewSrsSetWindowAckSizePacket()

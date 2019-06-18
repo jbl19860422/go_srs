@@ -652,26 +652,10 @@ func (this *SrsProtocol) on_send_packet(mh *SrsMessageHeader, pkt packet.SrsPack
 
 	switch mh.message_type {
 	case global.RTMP_MSG_SetChunkSize:
-		fmt.Println("************************set out chunk size********************")
 		this.OutChunkSize = pkt.(*packet.SrsSetChunkSizePacket).ChunkSize
 	case global.RTMP_MSG_WindowAcknowledgementSize:
 		this.OutAckSize.Window = uint32(pkt.(*packet.SrsSetWindowAckSizePacket).AckowledgementWindowSize)
-	case global.RTMP_MSG_AMF0CommandMessage:
-		switch pkt.(type) {
-			case *packet.SrsConnectAppPacket:{
-				p := pkt.(*packet.SrsConnectAppPacket)
-				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
-			}
-			case *packet.SrsCreateStreamPacket:{
-				p := pkt.(*packet.SrsCreateStreamPacket)
-				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
-			}
-			case *packet.SrsFMLEStartPacket:{
-				p := pkt.(*packet.SrsFMLEStartPacket)
-				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
-			}
-		}
-	case global.RTMP_MSG_AMF3CommandMessage:
+	case global.RTMP_MSG_AMF0CommandMessage, global.RTMP_MSG_AMF3CommandMessage:
 		switch pkt.(type) {
 			case *packet.SrsConnectAppPacket:{
 				p := pkt.(*packet.SrsConnectAppPacket)

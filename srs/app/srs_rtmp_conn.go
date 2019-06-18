@@ -18,6 +18,7 @@ type SrsRtmpConn struct {
 	io   			*skt.SrsIOReadWriter
 	rtmp 			*rtmp.SrsRtmpServer
 	req				*SrsRequest
+	res 			*SrsResponse
 	server			*SrsServer
 	clientType 		rtmp.SrsRtmpConnType
 	publishThread 	*SrsAppPublishRecvThread
@@ -30,6 +31,7 @@ func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
 		io: socketIO,
 		rtmp:rtmp.NewSrsRtmpServer(socketIO),
 		req:NewSrsRequest(),
+		res:NewSrsResponse(0),
 		server:s,
 	}
 }
@@ -126,7 +128,9 @@ func (this *SrsRtmpConn) service_cycle() error {
 
 func (this *SrsRtmpConn) stream_service_cycle() error {
 	var typ rtmp.SrsRtmpConnType
-	this.req.typ, this.req.stream, _ = this.rtmp.IdentifyClient()
+	var dur float64
+	this.req.typ, this.req.stream, dur, _ = this.rtmp.IdentifyClient()
+	_ = dur
 	//log.Print("***************identify_client done ,type=", typ);
 	var err error
 	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTCUrl(this.req.tcUrl)
@@ -143,6 +147,11 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 
 
 	switch(this.req.typ) {
+	case rtmp.SrsRtmpConnPlay:{
+		if err := this.rtmp.StartPlay(); err != nil {
+			return err
+		}
+	}
 	case rtmp.SrsRtmpConnFMLEPublish:{
 		log.Print("******************start SrsRtmpConnFMLEPublish*******************")
 		this.rtmp.Start_fmle_publish(0)
@@ -198,14 +207,24 @@ func (this *SrsRtmpConn) ProcessPublishMessage(source *SrsSource, msg *rtmp.SrsR
 	//todo fix edge process
 	if msg.GetHeader().IsAudio() {
 		//process audio
-		fmt.Println("onaudio")
+		fmt.Println("onaudio*******************")
+		if err := source.OnAudio(msg); err != nil {
+
+		}
 	}
 
 	if msg.GetHeader().IsVideo() {
-		fmt.Println("onvideo")
+		fmt.Println("onvideo******************")
+		if err := source.OnVideo(msg); err != nil {
+			
+		}
 		//process video
 	}
 	//todo fix aggregate message
 	//todo fix amf0 or amf3 data
 	return nil
+}
+
+func (this *SrsRtmpConn) Playing(source *SrsSource) {
+	//todo
 }

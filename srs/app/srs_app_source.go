@@ -3,6 +3,7 @@ package app
 import (
 	"sync"
 	"errors"
+	"go_srs/srs/protocol/rtmp"
 )
 
 type ISrsSourceHandler interface {
@@ -14,8 +15,9 @@ var sourcePoolMtx sync.Mutex
 var sourcePool map[string]*SrsSource
 
 type SrsSource struct {
-	handler ISrsSourceHandler
-	req 	*SrsRequest
+	handler 	ISrsSourceHandler
+	req 		*SrsRequest
+	consumers 	[]*SrsConsumer
 }
 
 func NewSrsSource() *SrsSource {
@@ -25,6 +27,14 @@ func NewSrsSource() *SrsSource {
 func (this *SrsSource) Initialize(r *SrsRequest, h ISrsSourceHandler) error {
 	this.handler = h
 	this.req = r
+	return nil
+}
+
+func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
+	return nil
+}
+
+func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 	return nil
 }
 
@@ -56,6 +66,26 @@ func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
 
 	sourcePool[streamUrl] = source
 	return source, nil
+}
+
+/**
+* create consumer and dumps packets in cache.
+* @param consumer, output the create consumer.
+* @param ds, whether dumps the sequence header.
+* @param dm, whether dumps the metadata.
+* @param dg, whether dumps the gop cache.
+*/
+	
+func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bool) *SrsConsumer {
+	consumer := NewSrsConsumer(this, conn)
+	this.consumers = append(this.consumers, consumer)
+	//todo set queue size
+	//todo process atc
+	//todo copy meta data
+	//todo cppy sequence header
+	//todo copy gop to consumers queue
+	//many things todo 
+	return consumer
 }
 
 
