@@ -234,18 +234,15 @@ func (this *SrsSource) on_meta_data(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnM
     // }
     // srs_trace("got metadata%s", ss.str().c_str());
 	var width float64
-	fmt.Println("sxxxxxxxx=", pkt.IsObjMeta)
-	_ = pkt.AMetaData.Get("width", &width)
+	_ = pkt.Get("width", &width)
 	fmt.Println("width=", width)
-	// add server info to metadata
-	pkt.AMetaData.Set("server", global.RTMP_SIG_SRS_SERVER)
-	pkt.AMetaData.Set("srs_primary", global.RTMP_SIG_SRS_PRIMARY)
-	pkt.AMetaData.Set("srs_authors", global.RTMP_SIG_SRS_AUTHROS)
-    
-    // version, for example, 1.0.0
-    // add version to metadata, please donot remove it, for debug.
-    pkt.AMetaData.Set("server_version", global.RTMP_SIG_SRS_VERSION)
-    
+	pkt.Set("server", global.RTMP_SIG_SRS_SERVER)
+	pkt.Set("srs_primary", global.RTMP_SIG_SRS_PRIMARY)
+	pkt.Set("srs_authors", global.RTMP_SIG_SRS_AUTHROS)
+	// version, for example, 1.0.0
+	// add version to metadata, please donot remove it, for debug.
+	pkt.Set("server_version", global.RTMP_SIG_SRS_VERSION)
+	
 	// if allow atc_auto and bravo-atc detected, open atc for vhost.
 	//todo
     // atc = _srs_config->get_atc(_req->vhost);
