@@ -3,6 +3,7 @@ package app
 import (
 	"sync"
 	"errors"
+	"fmt"
 	"go_srs/srs/protocol/rtmp"
 )
 
@@ -31,10 +32,18 @@ func (this *SrsSource) Initialize(r *SrsRequest, h ISrsSourceHandler) error {
 }
 
 func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
+	for i := 0; i < len(this.consumers); i++ {
+		this.consumers[i].Enqueue(msg, false)
+		fmt.Println("***********************************************send audio**************************************")
+	}
 	return nil
 }
 
 func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
+	for i := 0; i < len(this.consumers); i++ {
+		this.consumers[i].Enqueue(msg, false)
+		fmt.Println("***********************************************send video**************************************")
+	}
 	return nil
 }
 
@@ -44,6 +53,7 @@ func (this *SrsSource) SetCache(cache bool) {
 }
 
 func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
+	fmt.Println("**********FetchOrCreate**********")
 	source := FetchSource(r)
 	if source != nil {
 		return source, nil
@@ -52,7 +62,7 @@ func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
 	streamUrl := r.GetStreamUrl()
 	vhost := r.vhost
 	_ = vhost
-
+	fmt.Println("**********streamUrl=", streamUrl)
 	sourcePoolMtx.Lock()
 	defer sourcePoolMtx.Unlock()
 	if s, ok := sourcePool[streamUrl]; ok {

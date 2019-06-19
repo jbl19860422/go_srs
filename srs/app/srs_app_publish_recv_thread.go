@@ -22,7 +22,7 @@ func NewSrsAppPublishRecvThread(s *rtmp.SrsRtmpServer, r *SrsRequest, c *SrsRtmp
 		isFmle:isFmle_,
 		isEdge:isEdge_,
 	}
-	st.recvThread = NewSrsRecvThread(s, st	, 1000)
+	st.recvThread = NewSrsRecvThread(s, st, 1000)
 	return st
 }
 
@@ -33,8 +33,8 @@ func (this *SrsAppPublishRecvThread) Start() {
 func (this *SrsAppPublishRecvThread) CanHandle() bool {
 	return true
 }
-
 func (this *SrsAppPublishRecvThread) Handle(msg *rtmp.SrsRtmpMessage) error {
+
 	//todo fix cid change
 	//todo nbmsg++
 	err := this.conn.HandlePublishMessage(this.source, msg, this.isFmle, this.isEdge)

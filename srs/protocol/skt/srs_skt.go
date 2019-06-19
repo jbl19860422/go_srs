@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"time"
+	_ "fmt"
 )
 
 type SrsIOReadWriter struct {
@@ -36,7 +37,22 @@ func (this *SrsIOReadWriter) ReadWithTimeout(b []byte, timeoutms uint32) (int, e
 }
 
 func (this *SrsIOReadWriter) ReadFully(b []byte, timeoutms uint32) (int, error) {
-	return io.ReadFull(this.conn, b)
+	// fmt.Println("ReadFully len=", len(b))
+	// return io.ReadFull(this.conn, b)
+
+	count := len(b)
+	left := count
+	for {
+		n, err := this.IOReader.Read(b[count-left:count])
+		if err != nil {
+			return 0, err
+		}
+
+		left = left - n
+		if left <= 0 {
+			return count, nil
+		}
+	}
 }
 
 func (this *SrsIOReadWriter) ReadFullyWithTimeout(b []byte, timeoutms uint32) (int, error) {

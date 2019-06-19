@@ -53,11 +53,11 @@ func NewSrsProtocol(io_ *skt.SrsIOReadWriter) *SrsProtocol {
 
 var mh_sizes = [4]int{11, 7, 3, 0}
 
-func (s *SrsProtocol) ReadBasicHeader() (fmt byte, cid int32, err error) {
+func (this *SrsProtocol) ReadBasicHeader() (fmt byte, cid int32, err error) {
 	var buffer1 []byte
 	var buffer2 []byte
 	var buffer3 []byte
-	if buffer1, err = s.ReadNByte(1); err != nil {
+	if buffer1, err = this.ReadNByte(1); err != nil {
 		return
 	}
 
@@ -69,14 +69,14 @@ func (s *SrsProtocol) ReadBasicHeader() (fmt byte, cid int32, err error) {
 	}
 	// 64-319, 2B chunk header
 	if cid == 0 {
-		if buffer2, err = s.ReadNByte(1); err != nil {
+		if buffer2, err = this.ReadNByte(1); err != nil {
 			return
 		}
 
 		cid = 64
 		cid += (int32)(buffer2[0])
 	} else if cid == 1 { // 64-65599, 3B chunk header
-		if buffer3, err = s.ReadNByte(2); err != nil {
+		if buffer3, err = this.ReadNByte(2); err != nil {
 			return
 		}
 
@@ -326,9 +326,9 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 	return
 }
 
-func (s *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
+func (this *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
 	log.Print("start ReadBasicHeader")
-	fmt, cid, err := s.ReadBasicHeader()
+	fmt, cid, err := this.ReadBasicHeader()
 	if nil != err {
 		log.Print("read basic header failed, err=", err)
 		return nil, nil
@@ -337,19 +337,19 @@ func (s *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
 	var chunk *SrsChunkStream
 
 	if cid < SRS_PERF_CHUNK_STREAM_CACHE {
-		chunk = s.chunkCache[cid]
+		chunk = this.chunkCache[cid]
 	} else {
 		var ok bool
-		if chunk, ok = s.chunkStreams[cid]; !ok {
-			s.chunkStreams[cid] = NewSrsChunkStream(cid)
-			chunk = s.chunkStreams[cid]
+		if chunk, ok = this.chunkStreams[cid]; !ok {
+			this.chunkStreams[cid] = NewSrsChunkStream(cid)
+			chunk = this.chunkStreams[cid]
 			// set the perfer cid of chunk,
 			// which will copy to the message received.
 			chunk.Header.perfer_cid = cid
 		}
 	}
 
-	err = s.ReadMessageHeader(chunk, fmt)
+	err = this.ReadMessageHeader(chunk, fmt)
 	if err != nil {
 		log.Print("read message header ", err)
 		return nil, err
@@ -357,7 +357,7 @@ func (s *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
 
 	log.Print("read message header succeed")
 	var msg *SrsRtmpMessage = nil
-	if msg, err = s.RecvMessagePayload(chunk); err != nil {
+	if msg, err = this.RecvMessagePayload(chunk); err != nil {
 		log.Print("RecvMessagePayload failed")
 		return nil, err
 	}
@@ -487,14 +487,14 @@ func (this *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *utils.Sr
 		} else if command == amf0.RTMP_AMF0_COMMAND_PUBLISH {
 			p := packet.NewSrsPublishPacket()
 			err = p.Decode(stream)
-			if err != nil {
-				log.Print("decode publish packet failed")
-			} else {
-				log.Print("decode publish packet succeed")
-			}
 			pkt = p
 			return
-		}
+		}  else if command == amf0.RTMP_AMF0_COMMAND_CLOSE_STREAM {
+			p := packet.NewSrsCloseStreamPacket()
+			err = p.Decode(stream)
+			pkt = p
+			return
+        } 
 
 	} else if msg.header.IsSetChunkSize() {
 		p := packet.NewSrsSetChunkSizePacket()
@@ -596,6 +596,10 @@ func (this *SrsProtocol) SendPacket(packet packet.SrsPacket, streamId int32) err
 	return err
 }
 
+func (this *SrsProtocol) SendMsg(msg *SrsRtmpMessage, streamId int32) error {
+	return nil
+}
+
 func (this *SrsProtocol) do_send_packet(pkt packet.SrsPacket, streamId int32) error {
 	stream := utils.NewSrsStream([]byte{})
 	err := pkt.Encode(stream)
@@ -646,6 +650,21 @@ func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) er
 			return err2
 		}
 		sendedCount += n2
+	}
+	return nil
+}
+
+func (this *SrsProtocol) SendMessages(msgs []*SrsRtmpMessage, streamId int) error {
+	for i := 0; i < len(msgs); i++ {
+		if msgs[i] != nil {
+			continue
+		}
+
+		if len(msgs[i].GetPayload()) <= 0 {
+			continue
+		}
+
+
 	}
 	return nil
 }

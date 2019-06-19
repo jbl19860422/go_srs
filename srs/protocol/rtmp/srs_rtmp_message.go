@@ -56,3 +56,13 @@ func (this *SrsRtmpMessage) SetTimestamp(t int64) {
 func (this *SrsRtmpMessage) GetTimestamp() int64 {
 	return this.timestamp
 }
+
+func (this *SrsRtmpMessage) ChunkHeader(c0 bool) ([]byte, error) {
+	if c0 {
+		d, err := srs_chunk_header_c0(this.header.perfer_cid, int32(this.header.timestamp), this.header.payload_length, this.header.message_type, this.header.stream_id)
+		return d, err
+	} else {
+		d, err := srs_chunk_header_c3(this.header.perfer_cid, int32(this.header.timestamp))
+		return d, err
+	}
+}

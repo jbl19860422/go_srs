@@ -22,3 +22,8 @@ func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) *SrsConsumer {
 func (this *SrsConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool) {
 	this.queue.Enqueue(msg)
 }
+
+//todo wait until reqired msg count recv
+func (this *SrsConsumer) Wait(minCount uint32, duration uint32) *rtmp.SrsRtmpMessage {
+	return this.queue.Wait()
+}

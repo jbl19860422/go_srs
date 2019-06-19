@@ -133,6 +133,7 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 	_ = dur
 	//log.Print("***************identify_client done ,type=", typ);
 	var err error
+	fmt.Println("start discovery, tcUrl=", this.req.tcUrl)
 	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTCUrl(this.req.tcUrl)
 	if err != nil {
 		return errors.New("srs_discovery_tc_url failed")
@@ -168,15 +169,71 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 func (this *SrsRtmpConn) playing(source *SrsSource) error {
 	consumer := source.CreateConsumer(this, true, true, true)
 
-	this.do_playing(source, consumer)
+	queueRecvThread := NewSrsQueueRecvThread(consumer, this.rtmp)
+	//todo
+	queueRecvThread.Start()
+
+	this.do_playing(source, consumer, queueRecvThread)
 	for {
 		time.Sleep(time.Second)
 	}
 }
 
-func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer) error {
-	//todo refer
+func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, trd *SrsQueueRecvThread) error {
+	//todo refer check
 	//todo srsprint
+	realtime := false
+
+	for {
+		//todo expired
+		for !trd.Empty() {//process signal message
+			msg := trd.GetMsg()
+			if msg != nil {
+				err := this.process_play_control_msg(consumer, msg)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		//todo process trd error
+		//todo process realtime stream
+		if realtime {
+
+		} else {
+			msg := consumer.Wait(1, 100)
+			if msg != nil {
+				err := this.rtmp.SendMsg(msg, this.res.StreamId)
+				_ = err
+			}
+		}
+
+		//time.Sleep(time.Millisecond*1)
+	}
+
+	return nil
+}
+
+func (this *SrsRtmpConn) process_play_control_msg(consumer *SrsConsumer, msg *rtmp.SrsRtmpMessage) error {
+	if !msg.GetHeader().IsAmf0Command() && !msg.GetHeader().IsAmf3Command() {
+		//ignore 
+		return nil
+	}
+	
+	pkt, err := this.rtmp.DecodeMessage(msg)
+	if err != nil {
+		return err
+	}
+	//todo add callpacket 
+	//todo process pause message
+	switch pkt.(type) {
+	case *packet.SrsCloseStreamPacket:{
+		//todo fix close stream action
+		return errors.New("get close stream packet")
+	}
+	case *packet.SrsPausePacket:{
+		return nil
+	}
+	}
 	return nil
 }
 

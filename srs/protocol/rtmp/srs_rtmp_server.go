@@ -168,6 +168,12 @@ func (this *SrsRtmpServer) identify_play_client(pkt *packet.SrsPlayPacket) (SrsR
 	return SrsRtmpConnPlay, pkt.StreamName.GetValue().(string), pkt.Duration.GetValue().(float64),nil
 }
 
+func (this *SrsRtmpServer) SendMsg(msg *SrsRtmpMessage, streamId int) error {
+	msgs := make([]*SrsRtmpMessage, 1)
+	msgs[0] = msg
+	return this.Protocol.SendMessages(msgs, streamId)
+}
+
 func (this *SrsRtmpServer) identify_fmle_publish_client(req *packet.SrsFMLEStartPacket) (SrsRtmpConnType, string, error) {
 	typ := SrsRtmpConnType(SrsRtmpConnFMLEPublish)
 	log.Print("")
