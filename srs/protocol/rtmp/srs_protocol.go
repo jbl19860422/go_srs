@@ -494,6 +494,12 @@ func (this *SrsProtocol) do_decode_message(msg *SrsRtmpMessage, stream *utils.Sr
 			err = p.Decode(stream)
 			pkt = p
 			return
+        } else if command == amf0.SRS_CONSTS_RTMP_SET_DATAFRAME || command == amf0.SRS_CONSTS_RTMP_ON_METADATA {
+			p := packet.NewSrsOnMetaDataPacket(command)
+			err = p.Decode(stream)
+			pkt = p
+			fmt.Println("decode the AMF0/AMF3 data(onMetaData message).")
+			return 
         } 
 
 	} else if msg.header.IsSetChunkSize() {
@@ -655,8 +661,9 @@ func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) er
 }
 
 func (this *SrsProtocol) SendMessages(msgs []*SrsRtmpMessage, streamId int) error {
+	fmt.Println("xxxxxxxxxxxxxxxxxxxxxSendMessagesxxxxxxxxxxxxxxxxxxxxx")
 	for i := 0; i < len(msgs); i++ {
-		if msgs[i] != nil {
+		if msgs[i] == nil {
 			continue
 		}
 
@@ -664,6 +671,35 @@ func (this *SrsProtocol) SendMessages(msgs []*SrsRtmpMessage, streamId int) erro
 			continue
 		}
 
+		msg := msgs[i]
+		leftPayload := msg.GetPayload()
+		fmt.Println("xxxxxxxxxxxxxxxxxxxxxxSendMessages ", len(msgs[i].GetPayload()), "xxxxxxxxxxxxx")
+		var sendedCount int = 0
+		var d []byte
+		var err error
+		firstPkt := true
+		for len(leftPayload) > 0 {
+			if firstPkt {
+				firstPkt = false
+				d, err = srs_chunk_header_c0(msg.GetHeader().perfer_cid, int32(msg.GetHeader().timestamp), msg.GetHeader().payload_length, msg.GetHeader().message_type, int32(streamId))
+				if err != nil {
+					return err
+				}
+			} else {
+				d, err = srs_chunk_header_c3(msg.GetHeader().perfer_cid, int32(msg.GetHeader().timestamp))
+			}
+
+			payloadSize := utils.MinInt32(int32(len(leftPayload)), this.OutChunkSize)//int32(len(leftPayload))//
+			sendPayload := leftPayload[:payloadSize]
+			leftPayload = leftPayload[payloadSize:]
+			d = append(d, sendPayload...)
+			n2, err2 := this.io.Write(d)
+			if err2 != nil {
+				return err2
+			}
+			sendedCount += n2
+		}
+		return nil
 
 	}
 	return nil

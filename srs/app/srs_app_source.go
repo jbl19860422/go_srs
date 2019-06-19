@@ -5,6 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"go_srs/srs/protocol/rtmp"
+	"go_srs/srs/codec/flv"
+	"go_srs/srs/protocol/packet"
+	"go_srs/srs/global"
+	"go_srs/srs/utils"
 )
 
 type ISrsSourceHandler interface {
@@ -19,6 +23,9 @@ type SrsSource struct {
 	handler 	ISrsSourceHandler
 	req 		*SrsRequest
 	consumers 	[]*SrsConsumer
+	cacheSHVideo 	*rtmp.SrsRtmpMessage
+	cacheSHAudio 	*rtmp.SrsRtmpMessage
+	cacheMetaData 	*rtmp.SrsRtmpMessage
 }
 
 func NewSrsSource() *SrsSource {
@@ -32,6 +39,12 @@ func (this *SrsSource) Initialize(r *SrsRequest, h ISrsSourceHandler) error {
 }
 
 func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
+	isSequenceHeader := flvcodec.AudioIsSequenceHeader(msg.GetPayload())
+	if isSequenceHeader {
+		fmt.Println("***********************AudioIsSequenceHeader*************************")
+		this.cacheSHAudio = msg
+	}
+
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].Enqueue(msg, false)
 		fmt.Println("***********************************************send audio**************************************")
@@ -40,11 +53,121 @@ func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 }
 
 func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
+	isSequenceHeader := flvcodec.VideoIsSequenceHeader(msg.GetPayload())
+	if isSequenceHeader {
+		fmt.Println("***********************VideoIsSequenceHeader*************************")
+		this.cacheSHVideo = msg
+	}
+
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].Enqueue(msg, false)
 		fmt.Println("***********************************************send video**************************************")
 	}
 	return nil
+}
+
+func (this *SrsSource) on_meta_data(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMetaDataPacket) error {
+    // SrsAmf0Any* prop = NULL;
+	
+	//todo
+    // when exists the duration, remove it to make ExoPlayer happy.
+    // if (metadata->metadata->get_property("duration") != NULL) {
+    //     metadata->metadata->remove("duration");
+    // }
+    
+    // generate metadata info to print
+    // std::stringstream ss;
+    // if ((prop = metadata->metadata->ensure_property_number("width")) != NULL) {
+    //     ss << ", width=" << (int)prop->to_number();
+    // }
+    // if ((prop = metadata->metadata->ensure_property_number("height")) != NULL) {
+    //     ss << ", height=" << (int)prop->to_number();
+    // }
+    // if ((prop = metadata->metadata->ensure_property_number("videocodecid")) != NULL) {
+    //     ss << ", vcodec=" << (int)prop->to_number();
+    // }
+    // if ((prop = metadata->metadata->ensure_property_number("audiocodecid")) != NULL) {
+    //     ss << ", acodec=" << (int)prop->to_number();
+    // }
+    // srs_trace("got metadata%s", ss.str().c_str());
+	var width float64
+	fmt.Println("sxxxxxxxx=", pkt.IsObjMeta)
+	_ = pkt.AMetaData.Get("width", &width)
+	fmt.Println("width=", width)
+	// add server info to metadata
+	pkt.AMetaData.Set("server", global.RTMP_SIG_SRS_SERVER)
+	pkt.AMetaData.Set("srs_primary", global.RTMP_SIG_SRS_PRIMARY)
+	pkt.AMetaData.Set("srs_authors", global.RTMP_SIG_SRS_AUTHROS)
+    
+    // version, for example, 1.0.0
+    // add version to metadata, please donot remove it, for debug.
+    pkt.AMetaData.Set("server_version", global.RTMP_SIG_SRS_VERSION)
+    
+	// if allow atc_auto and bravo-atc detected, open atc for vhost.
+	//todo
+    // atc = _srs_config->get_atc(_req->vhost);
+    // if (_srs_config->get_atc_auto(_req->vhost)) {
+    //     if ((prop = metadata->metadata->get_property("bravo_atc")) != NULL) {
+    //         if (prop->is_string() && prop->to_str() == "true") {
+    //             atc = true;
+    //         }
+    //     }
+    // }
+    
+	// encode the metadata to payload
+	d := make([]byte, 0)
+	stream := utils.NewSrsStream(d)
+	if err := pkt.Encode(stream); err != nil {
+		return err
+	}
+	
+	this.cacheMetaData = rtmp.NewSrsRtmpMessage()
+	this.cacheMetaData.SetHeader(*(msg.GetHeader()))
+	this.cacheMetaData.SetPayload(stream.Data())
+    // when already got metadata, drop when reduce sequence header.
+    // bool drop_for_reduce = false;
+    // if (cache_metadata && _srs_config->get_reduce_sequence_header(_req->vhost)) {
+    //     drop_for_reduce = true;
+    //     srs_warn("drop for reduce sh metadata, size=%d", msg->size);
+    // }
+    
+    // create a shared ptr message.
+    // srs_freep(cache_metadata);
+    // cache_metadata = new SrsSharedPtrMessage();
+    
+    // dump message to shared ptr message.
+    // the payload/size managed by cache_metadata, user should not free it.
+    // if ((ret = cache_metadata->create(&msg->header, payload, size)) != ERROR_SUCCESS) {
+    //     srs_error("initialize the cache metadata failed. ret=%d", ret);
+    //     return ret;
+    // }
+    
+	// copy to all consumer
+	//todo
+    // if (!drop_for_reduce) {
+    //     std::vector<SrsConsumer*>::iterator it;
+    //     for (it = consumers.begin(); it != consumers.end(); ++it) {
+    //         SrsConsumer* consumer = *it;
+    //         if ((ret = consumer->enqueue(cache_metadata, atc, jitter_algorithm)) != ERROR_SUCCESS) {
+    //             srs_error("dispatch the metadata failed. ret=%d", ret);
+    //             return ret;
+    //         }
+    //     }
+    // }
+	
+	//todo
+    // copy to all forwarders
+    // if (true) {
+    //     std::vector<SrsForwarder*>::iterator it;
+    //     for (it = forwarders.begin(); it != forwarders.end(); ++it) {
+    //         SrsForwarder* forwarder = *it;
+    //         if ((ret = forwarder->on_meta_data(cache_metadata)) != ERROR_SUCCESS) {
+    //             srs_error("forwarder process onMetaData message failed. ret=%d", ret);
+    //             return ret;
+    //         }
+    //     }
+    // }
+    return nil
 }
 
 //TODO
@@ -56,6 +179,7 @@ func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
 	fmt.Println("**********FetchOrCreate**********")
 	source := FetchSource(r)
 	if source != nil {
+		fmt.Println("xxxxfetch source")
 		return source, nil
 	}
 
@@ -73,7 +197,7 @@ func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {
 	if err := source.Initialize(r, h); err != nil {
 		return nil, err
 	}
-
+	fmt.Println("createsource")
 	sourcePool[streamUrl] = source
 	return source, nil
 }
@@ -95,6 +219,20 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 	//todo cppy sequence header
 	//todo copy gop to consumers queue
 	//many things todo 
+
+	if this.cacheMetaData != nil {
+		fmt.Println("cacheMetaDataxxxxx")
+		consumer.Enqueue(this.cacheMetaData, false)
+	}
+
+	if this.cacheSHVideo != nil {
+		consumer.Enqueue(this.cacheSHVideo, false)
+	}
+	
+	if this.cacheSHAudio != nil {
+		consumer.Enqueue(this.cacheSHAudio, false)
+	}
+	
 	return consumer
 }
 

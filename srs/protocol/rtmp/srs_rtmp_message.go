@@ -45,6 +45,15 @@ func (this *SrsRtmpMessage) GetHeader() *SrsMessageHeader {
 	return &(this.header)
 }
 
+func (this *SrsRtmpMessage) SetHeader(h SrsMessageHeader) {
+	this.header = h
+}
+
+func (this *SrsRtmpMessage) SetPayload(p []byte) {
+	this.payload = make([]byte, len(p))
+	copy(this.payload, p)
+}
+
 func (this *SrsRtmpMessage) GetPayload() []byte {
 	return this.payload
 }

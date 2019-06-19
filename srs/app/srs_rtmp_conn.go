@@ -141,11 +141,12 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 	fmt.Println("Srs_discovery_tc_url succeed, stream_name=", this.req.stream)
 	source, err2 := FetchOrCreate(this.req, this.server)
 	if err2 != nil {
+		fmt.Println("FetchOrCreate failed")
 		return err2
 	}
 
 	this.clientType = this.req.typ
-
+	// fmt.Println("*************clientType=", this.clientType, "*************")
 
 	switch(this.req.typ) {
 	case rtmp.SrsRtmpConnPlay:{
@@ -155,6 +156,7 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 
 		//todo http_hooks_on_play
 
+		err = this.playing(source)
 	}
 	case rtmp.SrsRtmpConnFMLEPublish:{
 		log.Print("******************start SrsRtmpConnFMLEPublish*******************")
@@ -202,6 +204,12 @@ func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, tr
 		} else {
 			msg := consumer.Wait(1, 100)
 			if msg != nil {
+				if msg.GetHeader().IsVideo() {
+					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
+				} else {
+					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");
+				}
+				
 				err := this.rtmp.SendMsg(msg, this.res.StreamId)
 				_ = err
 			}
@@ -297,6 +305,24 @@ func (this *SrsRtmpConn) ProcessPublishMessage(source *SrsSource, msg *rtmp.SrsR
 	}
 	//todo fix aggregate message
 	//todo fix amf0 or amf3 data
+
+	// process onMetaData
+    if (msg.GetHeader().IsAmf0Data() || msg.GetHeader().IsAmf3Data()) {
+		pkt, err := this.rtmp.DecodeMessage(msg)
+		if err != nil {
+			return err
+		}
+
+		switch pkt.(type) {
+			case *packet.SrsOnMetaDataPacket: {
+				fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxmetadata")
+				err := source.on_meta_data(msg, pkt.(*packet.SrsOnMetaDataPacket))
+				if err != nil {
+					return err
+				}
+			}
+		}
+    }
 	return nil
 }
 

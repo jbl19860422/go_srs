@@ -6,6 +6,7 @@ import (
 	"go_srs/srs/utils"
 	"reflect"
 	_ "log"
+	"fmt"
 )
 
 type SrsAmf0EcmaArray struct {
@@ -83,7 +84,7 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 		if err != nil {
 			return err
 		}
-
+		
 		marker, err := stream.PeekByte()
 		if err != nil {
 			return err
@@ -131,6 +132,7 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 			Name:  pname,
 			Value: v,
 		}
+		fmt.Println("pname=", pname.GetValue().(string), "&val=", v.GetValue())
 		this.Properties = append(this.Properties, pair)
 	}
 	return nil
@@ -187,9 +189,10 @@ func (this *SrsAmf0EcmaArray) Get(name string, pval interface{}) error {
 	}
 
 	for i := 0; i < len(this.Properties); i++ {
+		fmt.Println(this.Properties[i].Name.Value, name)
 		if this.Properties[i].Name.Value == name {
-			if reflect.TypeOf(pval).Elem() == reflect.TypeOf(this.Properties[i].Value) {
-				reflect.ValueOf(pval).Elem().Set(reflect.ValueOf(this.Properties[i].Value))
+			if reflect.TypeOf(pval).Elem() == reflect.TypeOf(this.Properties[i].Value.GetValue()) {
+				reflect.ValueOf(pval).Elem().Set(reflect.ValueOf(this.Properties[i].Value.GetValue()))
 				return nil
 			} else {
 				return errors.New("type not match")
