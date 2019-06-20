@@ -187,6 +187,7 @@ func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, tr
 	realtime := false
 
 	for {
+		// fmt.Println("*************do_playing start***************")
 		//todo expired
 		for !trd.Empty() {//process signal message
 			msg := trd.GetMsg()

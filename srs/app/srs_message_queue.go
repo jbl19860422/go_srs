@@ -3,6 +3,7 @@ package app
 import(
 	"go_srs/srs/protocol/rtmp"
 	// "go_srs/srs/codec"
+	"fmt"
 	"go_srs/srs/codec/flv"
 )
 
@@ -22,12 +23,17 @@ func NewSrsMessageQueue() *SrsMessageQueue {
 		avStartTime:0,
 		avEndTime:0,
 		queueSizeMs:0,
-		msgs:make([]*rtmp.SrsRtmpMessage, 1000),
-		msgCount:make(chan int, 1000),
+		msgs:make([]*rtmp.SrsRtmpMessage, 0),
+		msgCount:make(chan int, 10000),
 	}
 }
 
 func (this *SrsMessageQueue) Enqueue(msg *rtmp.SrsRtmpMessage) {
+	// if msg == nil {
+	// 	fmt.Println("enque nil*******************")
+	// } else {
+	// 	fmt.Println("enqueue no nil*************")
+	// }
 	this.msgs = append(this.msgs, msg)
 	this.msgCount <- len(this.msgs)
 }
@@ -50,12 +56,16 @@ func (this *SrsMessageQueue) Empty() bool {
 
 func (this *SrsMessageQueue) Wait() *rtmp.SrsRtmpMessage {
 	<- this.msgCount
+	// fmt.Println("msgCount=", len(this.msgs), "&a=", a)
 	if len(this.msgs) <= 0 {
 		return nil
 	}
 
 	msg := this.msgs[0]
 	this.msgs = this.msgs[1:]
+	if msg == nil {
+		fmt.Println("msg is nil")
+	}
 	return msg
 }
 
