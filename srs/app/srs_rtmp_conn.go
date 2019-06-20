@@ -4,6 +4,7 @@ import (
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/protocol/skt"
 	"go_srs/srs/protocol/packet"
+	"go_srs/srs/codec/flv"
 	"go_srs/srs/utils"
 	"net"
 	"strings"
@@ -205,9 +206,12 @@ func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, tr
 		} else {
 			msg := consumer.Wait(1, 100)
 			if msg != nil {
-				fmt.Println("send to consumer")
+				// fmt.Println("send to consumer")
 				if msg.GetHeader().IsVideo() {
 					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
+					if flvcodec.VideoIsKeyframe(msg.GetPayload()) {
+						fmt.Println("send key frame")
+					}
 				} else {
 					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");
 				}
