@@ -61,6 +61,10 @@ func (this *SrsRtmpServer) DecodeMessage(msg *SrsRtmpMessage) (packet.SrsPacket,
 	return this.Protocol.DecodeMessage(msg)
 }
 
+func (this *SrsRtmpServer) OnRecvError(err error) {
+	
+}
+
 func (this *SrsRtmpServer) IdentifyClient(streamId int) (SrsRtmpConnType, string, float64, error) {
 	var typ SrsRtmpConnType
 	var streamname string

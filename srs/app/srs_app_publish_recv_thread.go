@@ -2,6 +2,7 @@ package app
 
 import(
 	"go_srs/srs/protocol/rtmp"
+	"fmt"
 )
 type SrsAppPublishRecvThread struct {
 	recvThread 	*SrsRecvThread
@@ -42,6 +43,8 @@ func (this *SrsAppPublishRecvThread) Handle(msg *rtmp.SrsRtmpMessage) error {
 }
 
 func (this *SrsAppPublishRecvThread) OnRecvError(err error) {
+	fmt.Println("OnRecvErr=", err)
+	this.conn.OnRecvError(err)
 	return
 }	
 

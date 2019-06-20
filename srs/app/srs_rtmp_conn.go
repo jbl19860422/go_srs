@@ -37,9 +37,8 @@ func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
 	}
 }
 
-func (this *SrsRtmpConn) Start() {
-	err := this.do_cycle()
-	_ = err
+func (this *SrsRtmpConn) Start() error {
+	return this.do_cycle()
 }
 
 func (this *SrsRtmpConn) do_cycle() error {
@@ -169,6 +168,10 @@ func (this *SrsRtmpConn) playing(source *SrsSource) error {
 	queueRecvThread.Start()
 
 	return this.do_playing(source, consumer, queueRecvThread)
+}
+
+func (this *SrsRtmpConn) OnRecvError(err error) {
+	this.server.OnRecvError(err, this)
 }
 
 func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, trd *SrsQueueRecvThread) error {

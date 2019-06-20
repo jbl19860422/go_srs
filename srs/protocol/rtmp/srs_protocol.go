@@ -10,7 +10,7 @@ import (
 	_ "context"
 	"encoding/binary"
 	"errors"
-	// "log"
+	"log"
 	"reflect"
 	_ "bufio"
 	// "fmt"
@@ -331,8 +331,8 @@ func (this *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
 	// log.Print("start ReadBasicHeader")
 	fmt, cid, err := this.ReadBasicHeader()
 	if nil != err {
-		// log.Print("read basic header failed, err=", err)
-		return nil, nil
+		log.Print("read basic header failed, err=", err)
+		return nil, err
 	}
 	// log.Print("ReadBasicHeader done, fmt=", fmt, "&cid=", cid)
 	var chunk *SrsChunkStream
@@ -416,6 +416,7 @@ func (s *SrsProtocol) RecvMessage() (*SrsRtmpMessage, error) {
 		rtmp_msg, err := s.RecvInterlacedMessage()
 		if err != nil {
 			// log.Print("recv a message")
+			return nil, err
 		}
 
 		if rtmp_msg == nil {
