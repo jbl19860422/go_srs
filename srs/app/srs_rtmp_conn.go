@@ -118,17 +118,10 @@ func (this *SrsRtmpConn) service_cycle() error {
 		return err
 	}
 
-	for {
-		this.stream_service_cycle()
-		for {
-			time.Sleep(time.Second * 1)
-		}
-	}
-	return nil
+	return this.stream_service_cycle()
 }
 
 func (this *SrsRtmpConn) stream_service_cycle() error {
-	var typ rtmp.SrsRtmpConnType
 	var dur float64
 	this.req.typ, this.req.stream, dur, _ = this.rtmp.IdentifyClient(this.res.StreamId)
 	_ = dur
@@ -157,7 +150,7 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 
 		//todo http_hooks_on_play
 
-		err = this.playing(source)
+		return this.playing(source)
 	}
 	case rtmp.SrsRtmpConnFMLEPublish:{
 		// log.Print("******************start SrsRtmpConnFMLEPublish*******************")
@@ -165,7 +158,6 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 		return this.publishing(source)
 	}
 	}
-	_ = typ
 	return nil
 }
 
@@ -176,10 +168,7 @@ func (this *SrsRtmpConn) playing(source *SrsSource) error {
 	//todo
 	queueRecvThread.Start()
 
-	this.do_playing(source, consumer, queueRecvThread)
-	for {
-		time.Sleep(time.Second)
-	}
+	return this.do_playing(source, consumer, queueRecvThread)
 }
 
 func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer, trd *SrsQueueRecvThread) error {

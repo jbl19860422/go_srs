@@ -30,6 +30,7 @@ func NewSrsRecvThread(r *rtmp.SrsRtmpServer, h ISrsMessageHandler, timeoutMS int
 func (this *SrsRecvThread) Start() {
 	go this.cycle()
 }
+
 func (this *SrsRecvThread) cycle() error {
 	for {
 		msg, err := this.rtmp.RecvMessage()
