@@ -21,8 +21,10 @@ srs的go版本
 | skt | 网络层 |
 
 ## 握手协议
+<html>
 <script src="mermaid.min.js"></script>
 <script>mermaid.initialize({startOnLoad:true});</script>
+</html>
 <div class="mermaid">
 graph LR
     A --- B
