@@ -5,8 +5,8 @@ import(
 	// "go_srs/srs/codec"
 	"fmt"
 	"go_srs/srs/codec/flv"
-	"context"
-	"errors"
+	// "context"
+	// "errors"
 )
 
 type SrsMessageQueue struct {
@@ -17,10 +17,9 @@ type SrsMessageQueue struct {
 
 	msgs 			[]*rtmp.SrsRtmpMessage
 	msgCount 		chan int
-	ctx				context.Context
 }
 
-func NewSrsMessageQueue(c context.Context) *SrsMessageQueue {
+func NewSrsMessageQueue() *SrsMessageQueue {
 	return &SrsMessageQueue{
 		ignoreShrink:true,
 		avStartTime:0,
@@ -28,7 +27,6 @@ func NewSrsMessageQueue(c context.Context) *SrsMessageQueue {
 		queueSizeMs:0,
 		msgs:make([]*rtmp.SrsRtmpMessage, 0),
 		msgCount:make(chan int, 10000),
-		ctx:c,
 	}
 }
 
@@ -73,9 +71,9 @@ func (this *SrsMessageQueue) Wait() (*rtmp.SrsRtmpMessage, error) {
 		}
 		return msg, nil
 	}
-	case <-this.ctx.Done():{
-		return nil, errors.New("done")
-	}
+	// case <-this.ctx.Done():{
+	// 	return nil, errors.New("done")
+	// }
 	}
 }
 

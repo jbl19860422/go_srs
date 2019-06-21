@@ -19,7 +19,7 @@ type SrsConsumer struct {
 func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) *SrsConsumer {
 	//todo
 	consumer := &SrsConsumer{
-		queue:  NewSrsMessageQueue(c.ctx),
+		queue:  NewSrsMessageQueue(),
 		source: s,
 		conn:   c,
 	}

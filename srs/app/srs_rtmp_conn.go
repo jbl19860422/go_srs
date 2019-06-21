@@ -12,7 +12,7 @@ import (
 	// "log"
 	"time"
 	"fmt"
-	"context"
+	// "context"
 	"errors"
 )
 
@@ -24,21 +24,17 @@ type SrsRtmpConn struct {
 	server				*SrsServer
 	source				*SrsSource
 	clientType 		rtmp.SrsRtmpConnType
-	publishThread *SrsAppPublishRecvThread
-	ctx						context.Context
-	stopFun				context.CancelFunc				
+	publishThread *SrsAppPublishRecvThread			
 }
 
 func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
 	socketIO := skt.NewSrsIOReadWriter(conn)
-	ctx, cancelFun := context.WithCancel(context.Background())
+	// ctx, cancelFun := context.WithCancel(context.Background())
 	rtmpConn := &SrsRtmpConn{
 		io: socketIO,
 		req:NewSrsRequest(),
 		res:NewSrsResponse(1),
 		server:s,
-		ctx:ctx,
-		stopFun:cancelFun,
 	}
 	rtmpConn.rtmp = rtmp.NewSrsRtmpServer(socketIO, rtmpConn)
 	return rtmpConn
@@ -49,7 +45,7 @@ func (this *SrsRtmpConn) Start() error {
 }
 
 func (this *SrsRtmpConn) Stop() {
-	this.stopFun()
+	// this.stopFun()
 	this.io.Close()
 	fmt.Println("typ=", this.req.typ)
 	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
