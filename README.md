@@ -19,3 +19,11 @@ srs的go版本
 | packet | 信令包封包解包 |
 | rtmp | rtmp协议，chunk，message |
 | skt | 网络层 |
+
+## 握手协议
+```sequence
+client->server: c0c1
+server->client: s0s1s2
+client->server: c2
+
+```
