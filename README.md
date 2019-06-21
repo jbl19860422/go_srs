@@ -19,4 +19,3 @@ srs的go版本
 | packet | 信令包封包解包 |
 | rtmp | rtmp协议，chunk，message |
 | skt | 网络层 |
-| | |
