@@ -40,7 +40,8 @@ func (this *SrsConsumer) Wait(minCount uint32, duration uint32) *rtmp.SrsRtmpMes
 
 func (this *SrsConsumer) Stop() {
 	fmt.Println("this.queueRecvThread.Stop() start")
-	this.queueRecvThread.Stop()
+	this.conn.Stop()
+	//this.queueRecvThread.Stop()
 	this.conn.RemoveSelf()
 	fmt.Println("this.queueRecvThread.Stop() end")
 }

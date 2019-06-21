@@ -35,6 +35,10 @@ func (this *SrsIOReadWriter) Read(b []byte) (int, error) {
 	return this.IOReader.Read(b)
 }
 
+func (this *SrsIOReadWriter) Close() {
+	this.conn.Close()
+}
+
 func (this *SrsIOReadWriter) ReadWithTimeout(b []byte, timeoutms uint32) (int, error) {
 	this.conn.SetReadDeadline(time.Now().Add(time.Millisecond * time.Duration(timeoutms)))
 	return this.IOReader.Read(b)

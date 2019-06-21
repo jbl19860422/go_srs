@@ -43,6 +43,18 @@ func (this *SrsRtmpConn) Start() error {
 	return this.do_cycle()
 }
 
+func (this *SrsRtmpConn) Stop() {
+	this.io.Close()
+	fmt.Println("typ=", this.req.typ)
+	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
+		fmt.Println("RemoveConsumers")
+		this.source.RemoveConsumers()
+		RemoveSrsSource(this.source)
+	}
+
+	fmt.Println("remove source conn")
+}
+
 func (this *SrsRtmpConn) do_cycle() error {
 	if err := this.rtmp.HandShake(); err != nil {
 		return err
@@ -171,14 +183,7 @@ func (this *SrsRtmpConn) RemoveSelf() {
 
 func (this *SrsRtmpConn) OnRecvError(err error) {
 	//判断如果是publish，则删除源
-	fmt.Println("typ=", this.req.typ)
-	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
-		fmt.Println("RemoveConsumers")
-		this.source.RemoveConsumers()
-		RemoveSrsSource(this.source)
-	}
-
-	fmt.Println("remove source conn")
+	this.Stop()
 	this.server.OnRecvError(err, this)
 }
 
