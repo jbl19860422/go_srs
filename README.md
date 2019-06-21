@@ -21,9 +21,11 @@ srs的go版本
 | skt | 网络层 |
 
 ## 握手协议
-```sequence
-client->server: c0c1
-server->client: s0s1s2
-client->server: c2
-
-```
+<script src="mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
+<div class="mermaid">
+graph LR
+    A --- B
+    B-->C[fa:fa-ban forbidden]
+    B-->D(fa:fa-spinner);
+</div>
