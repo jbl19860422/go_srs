@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"go_srs/srs/global"
+	"runtime"
+	"log"
 )
 
 func numberToBytes(data interface{}, order binary.ByteOrder) []byte {
@@ -164,4 +166,10 @@ func SrsGenerateStreamUrl(vhost string, app string, stream string) string {
     url += stream
 
     return url
+}
+
+func TraceMemStats() {
+    var ms runtime.MemStats
+    runtime.ReadMemStats(&ms)
+    log.Printf("Alloc:%d(bytes) HeapIdle:%d(bytes) HeapReleased:%d(bytes), RoutineNum:%d", ms.Alloc, ms.HeapIdle, ms.HeapReleased, runtime.NumGoroutine())
 }

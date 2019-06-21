@@ -12,31 +12,36 @@ import (
 	// "log"
 	// "time"
 	"fmt"
+	"context"
 	"errors"
 )
 
 type SrsRtmpConn struct {
-	io   			*skt.SrsIOReadWriter
-	rtmp 			*rtmp.SrsRtmpServer
-	req				*SrsRequest
-	res 			*SrsResponse
-	server			*SrsServer
-	source			*SrsSource
+	io   					*skt.SrsIOReadWriter
+	rtmp 					*rtmp.SrsRtmpServer
+	req						*SrsRequest
+	res 					*SrsResponse
+	server				*SrsServer
+	source				*SrsSource
 	clientType 		rtmp.SrsRtmpConnType
-	publishThread 	*SrsAppPublishRecvThread
+	publishThread *SrsAppPublishRecvThread
+	ctx						context.Context
+	stopFun				context.CancelFunc				
 }
 
 func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
 	socketIO := skt.NewSrsIOReadWriter(conn)
-	
-	c := &SrsRtmpConn{
+	ctx, cancelFun := context.WithCancel(context.Background())
+	rtmpConn := &SrsRtmpConn{
 		io: socketIO,
 		req:NewSrsRequest(),
 		res:NewSrsResponse(1),
 		server:s,
+		ctx:ctx,
+		stopFun:cancelFun,
 	}
-	c.rtmp = rtmp.NewSrsRtmpServer(socketIO, c)
-	return c
+	rtmpConn.rtmp = rtmp.NewSrsRtmpServer(socketIO, rtmpConn)
+	return rtmpConn
 }
 
 func (this *SrsRtmpConn) Start() error {
@@ -44,6 +49,7 @@ func (this *SrsRtmpConn) Start() error {
 }
 
 func (this *SrsRtmpConn) Stop() {
+	this.stopFun()
 	this.io.Close()
 	fmt.Println("typ=", this.req.typ)
 	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
@@ -209,13 +215,17 @@ func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer) er
 		if realtime {
 
 		} else {
-			msg := consumer.Wait(1, 100)
+			msg, err := consumer.Wait(1, 100)
+			if err != nil {
+				return err
+			}
+
 			if msg != nil {
 				// fmt.Println("send to consumer")
 				if msg.GetHeader().IsVideo() {
 					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
 					if flvcodec.VideoIsKeyframe(msg.GetPayload()) {
-						fmt.Println("send key frame")
+						// fmt.Println("send key frame")
 					}
 				} else {
 					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");

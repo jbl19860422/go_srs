@@ -19,7 +19,7 @@ type SrsConsumer struct {
 func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) *SrsConsumer {
 	//todo
 	consumer := &SrsConsumer{
-		queue:  NewSrsMessageQueue(),
+		queue:  NewSrsMessageQueue(c.ctx),
 		source: s,
 		conn:   c,
 	}
@@ -34,7 +34,7 @@ func (this *SrsConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool) {
 }
 
 //todo wait until reqired msg count recv
-func (this *SrsConsumer) Wait(minCount uint32, duration uint32) *rtmp.SrsRtmpMessage {
+func (this *SrsConsumer) Wait(minCount uint32, duration uint32) (*rtmp.SrsRtmpMessage, error) {
 	return this.queue.Wait()
 }
 

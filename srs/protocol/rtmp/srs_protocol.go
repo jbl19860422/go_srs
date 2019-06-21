@@ -558,7 +558,7 @@ func (this *SrsProtocol) ExpectMessage(pkt packet.SrsPacket) error {
 	}
 
 	donePkt := make(chan packet.SrsPacket)
-	//这里需要修改为cancelctx
+	//todo 这里需要修改为cancelctx
 	go func() {
 		for {
 			msg, err := this.RecvMessage()

@@ -8,6 +8,9 @@ import (
 	_ "log"
 	"net"
 	"strconv"
+	"go_srs/srs/utils"
+	"runtime"
+	"time"
 )
 
 type SrsServer struct {
@@ -24,7 +27,7 @@ func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 	defer this.connsMtx.Unlock()
 	for i := 0; i < len(this.conns); i++ {
 		if this.conns[i] == c {
-			fmt.Println("remove conn")
+			fmt.Println("remove conn len=", len(this.conns))
 			this.conns = append(this.conns[:i], this.conns[i+1:]...)
 			fmt.Println("conns.len=", len(this.conns))
 			break
@@ -43,6 +46,14 @@ func (this *SrsServer) StartProcess(port int) error {
 	if err != nil {
 		return err
 	}
+
+	go func() {
+		for {
+			time.Sleep(time.Second*2)
+			runtime.GC()
+			utils.TraceMemStats()
+		}
+	}()
 
 	for {
 		conn, _ := ln.Accept()

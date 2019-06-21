@@ -36,7 +36,6 @@ func (this *SrsRtmpServer) HandShake() error {
 
 func (this *SrsRtmpServer) ConnectApp() (packet.SrsPacket, error) {
 	connPacket := packet.NewSrsConnectAppPacket()
-	// pkt := this.Protocol.ExpectMessage(connPacket)
 	if err := this.Protocol.ExpectMessage(connPacket); err != nil {
 		return nil, err
 	}

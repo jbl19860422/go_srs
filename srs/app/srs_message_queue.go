@@ -5,6 +5,8 @@ import(
 	// "go_srs/srs/codec"
 	"fmt"
 	"go_srs/srs/codec/flv"
+	"context"
+	"errors"
 )
 
 type SrsMessageQueue struct {
@@ -15,9 +17,10 @@ type SrsMessageQueue struct {
 
 	msgs 			[]*rtmp.SrsRtmpMessage
 	msgCount 		chan int
+	ctx				context.Context
 }
 
-func NewSrsMessageQueue() *SrsMessageQueue {
+func NewSrsMessageQueue(c context.Context) *SrsMessageQueue {
 	return &SrsMessageQueue{
 		ignoreShrink:true,
 		avStartTime:0,
@@ -25,6 +28,7 @@ func NewSrsMessageQueue() *SrsMessageQueue {
 		queueSizeMs:0,
 		msgs:make([]*rtmp.SrsRtmpMessage, 0),
 		msgCount:make(chan int, 10000),
+		ctx:c,
 	}
 }
 
@@ -54,19 +58,25 @@ func (this *SrsMessageQueue) Empty() bool {
 	return len(this.msgs) == 0
 }
 
-func (this *SrsMessageQueue) Wait() *rtmp.SrsRtmpMessage {
-	<- this.msgCount
-	// fmt.Println("msgCount=", len(this.msgs), "&a=", a)
-	if len(this.msgs) <= 0 {
-		return nil
+func (this *SrsMessageQueue) Wait() (*rtmp.SrsRtmpMessage, error) {
+	select {
+	case <- this.msgCount :
+	{
+		if len(this.msgs) <= 0 {
+			return nil, nil
+		}
+	
+		msg := this.msgs[0]
+		this.msgs = this.msgs[1:]
+		if msg == nil {
+			fmt.Println("msg is nil")
+		}
+		return msg, nil
 	}
-
-	msg := this.msgs[0]
-	this.msgs = this.msgs[1:]
-	if msg == nil {
-		fmt.Println("msg is nil")
+	case <-this.ctx.Done():{
+		return nil, errors.New("done")
 	}
-	return msg
+	}
 }
 
 //todo dump packets with jitter algorithm
