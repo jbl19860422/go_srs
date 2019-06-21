@@ -19,15 +19,3 @@ srs的go版本
 | packet | 信令包封包解包 |
 | rtmp | rtmp协议，chunk，message |
 | skt | 网络层 |
-
-## 握手协议
-<html>
-<script src="mermaid.min.js"></script>
-<script>mermaid.initialize({startOnLoad:true});</script>
-</html>
-<div class="mermaid">
-graph LR
-    A --- B
-    B-->C[fa:fa-ban forbidden]
-    B-->D(fa:fa-spinner);
-</div>
