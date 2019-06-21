@@ -373,10 +373,7 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 		createResPkt := packet.NewSrsCreateStreamResPacket(create_stream_tid, float64(stream_id))
 		err := this.Protocol.SendPacket(createResPkt, 0)
 		if err != nil {
-			// log.Print("send start fmle start res packet failed")
 			return err
-		} else {
-			// log.Print("NewSrsCreateStreamResPacket succeed")
 		}
 	}
 
@@ -386,7 +383,6 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 		if err := this.Protocol.ExpectMessage(publishPacket); err != nil {
 			return err
 		}
-		// log.Print("get SrsPublishPacket succeed")
 	}
 
 	// publish response onFCPublish(NetStream.Publish.Start)
@@ -399,23 +395,19 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 		if err != nil {
 			log.Print("response onFCPublish failed")
 			return err
-		} else {
-			log.Print("response onFCPublish succeed")
 		}
 	}
 
 	{
-		statusPacket1 := packet.NewSrsOnStatusCallPacket()
-		statusPacket1.Data.Set(global.StatusLevel, global.StatusLevelStatus)
-		statusPacket1.Data.Set(global.StatusCode, global.StatusCodePublishStart)
-		statusPacket1.Data.Set(global.StatusDescription, "Started publishing stream.")
-		statusPacket1.Data.Set(global.StatusClientId, global.RTMP_SIG_CLIENT_ID)
-		err := this.Protocol.SendPacket(statusPacket1, 0)
+		statusPacket := packet.NewSrsOnStatusCallPacket()
+		statusPacket.Data.Set(global.StatusLevel, global.StatusLevelStatus)
+		statusPacket.Data.Set(global.StatusCode, global.StatusCodePublishStart)
+		statusPacket.Data.Set(global.StatusDescription, "Started publishing stream.")
+		statusPacket.Data.Set(global.StatusClientId, global.RTMP_SIG_CLIENT_ID)
+		err := this.Protocol.SendPacket(statusPacket, 0)
 		if err != nil {
 			log.Print("response onFCPublish failed")
 			return err
-		} else {
-			log.Print("response onFCPublish succeed")
 		}
 	}
 	log.Print("Start_fmle_publish succeed")
