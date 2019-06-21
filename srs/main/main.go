@@ -4,7 +4,7 @@ import (
 	"flag"
 	"go_srs/srs/app"
 	"net/http"
-	"log"
+	// "log"
 	"bytes"
     "io/ioutil"
     "math/rand"
@@ -16,13 +16,13 @@ var (
 )
 
 func main() {
-	go func() {
-		http.HandleFunc("/test", handler)
-    	log.Fatal(http.ListenAndServe(":9876", nil))
-	}()
+	// go func() {
+	// 	http.HandleFunc("/test", handler)
+    // 	log.Fatal(http.ListenAndServe(":9876", nil))
+	// }()
 
 	flag.Parse()
-	server := &app.SrsServer{}
+	server := app.NewSrsServer()
 	_ = server.StartProcess(*port)
 }
 

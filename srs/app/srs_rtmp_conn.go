@@ -10,7 +10,7 @@ import (
 	"strings"
 	"net/url"
 	// "log"
-	// "time"
+	"time"
 	"fmt"
 	"context"
 	"errors"
@@ -288,6 +288,9 @@ func (this *SrsRtmpConn) doPublishing(source *SrsSource) error {
 	// fmt.Println("******************doPublishing*******************")
 	this.publishThread = NewSrsAppPublishRecvThread(this.rtmp, this.req, this, source, false, false)
 	this.publishThread.Start()
+	for {
+		time.Sleep(time.Second)
+	}
 	return nil
 }
 

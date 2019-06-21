@@ -18,6 +18,12 @@ type SrsServer struct {
 	connsMtx	sync.Mutex
 }
 
+func NewSrsServer() *SrsServer {
+	return &SrsServer{
+		conns:make([]*SrsRtmpConn, 0),
+	}
+}
+
 func (this *SrsServer) OnRecvError(err error, c *SrsRtmpConn) {
 	this.RemoveConn(c)
 }
@@ -38,6 +44,7 @@ func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 func (this *SrsServer) AddConn(c *SrsRtmpConn) {
 	this.connsMtx.Lock()
 	this.conns = append(this.conns, c)
+	fmt.Println("xxxxxxxxxxxxxxxxxxxconns.len=", len(this.conns), "xxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	this.connsMtx.Unlock()
 }
 
