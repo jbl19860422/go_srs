@@ -61,7 +61,7 @@ func (this *SrsQueueRecvThread) GetMsg() *rtmp.SrsRtmpMessage {
 }
 
 func (this *SrsQueueRecvThread) OnRecvError(err error) {
-	this.rtmp.OnRecvError(err)
+	this.consumer.OnRecvError(err)
 	return
 }
 

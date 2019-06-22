@@ -4,7 +4,7 @@ import (
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/protocol/skt"
 	"go_srs/srs/protocol/packet"
-	"go_srs/srs/codec/flv"
+	// "go_srs/srs/codec/flv"
 	"go_srs/srs/utils"
 	"net"
 	"strings"
@@ -24,7 +24,7 @@ type SrsRtmpConn struct {
 	server				*SrsServer
 	source				*SrsSource
 	clientType 		rtmp.SrsRtmpConnType
-	publishThread *SrsAppPublishRecvThread			
+	publishThread *SrsAppPublishRecvThread
 }
 
 func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
@@ -41,11 +41,12 @@ func NewSrsRtmpConn(conn net.Conn, s *SrsServer) *SrsRtmpConn {
 }
 
 func (this *SrsRtmpConn) Start() error {
+	// ctx, cancel := context.WithCancel(context.Background())
+	// this.cancelFun = cancel
 	return this.do_cycle()
 }
 
 func (this *SrsRtmpConn) Stop() {
-	// this.stopFun()
 	this.io.Close()
 	fmt.Println("typ=", this.req.typ)
 	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
@@ -55,6 +56,13 @@ func (this *SrsRtmpConn) Stop() {
 	}
 
 	fmt.Println("remove source conn")
+}
+
+/*
+* @fun：关闭连接，由底层consumer或者source调用，将导致内部socket读取接口返回错误，从而回溯
+*/
+func (this *SrsRtmpConn) Close() {
+	this.io.Close()
 }
 
 func (this *SrsRtmpConn) do_cycle() error {
@@ -174,7 +182,7 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 	return nil
 }
 
-func (this *SrsRtmpConn) playing(source *SrsSource) error {
+func (this *SrsRtmpConn) playing( source *SrsSource) error {
 	consumer := source.CreateConsumer(this, true, true, true)
 	return this.do_playing(source, consumer)
 }
@@ -192,75 +200,75 @@ func (this *SrsRtmpConn) OnRecvError(err error) {
 func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer) error {
 	//todo refer check
 	//todo srsprint
-	realtime := false
+	// realtime := false
+	_ = consumer.PlayingCycle()
+	fmt.Println("end playing cycle")
+	return nil
+	// for {
+	// 	// fmt.Println("*************do_playing start***************")
+	// 	//todo expired
+	// 	for !consumer.queueRecvThread.Empty() {//process signal message
+	// 		msg := consumer.queueRecvThread.GetMsg()
+	// 		if msg != nil {
+	// 			err := this.process_play_control_msg(consumer, msg)
+	// 			if err != nil {
+	// 				return err
+	// 			}
+	// 		}
+	// 	}
+	// 	//todo process trd error
+	// 	//todo process realtime stream
+	// 	if realtime {
 
-	for {
-		// fmt.Println("*************do_playing start***************")
-		//todo expired
-		for !consumer.queueRecvThread.Empty() {//process signal message
-			msg := consumer.queueRecvThread.GetMsg()
-			if msg != nil {
-				err := this.process_play_control_msg(consumer, msg)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		//todo process trd error
-		//todo process realtime stream
-		if realtime {
+	// 	} else {
+	// 		msg, err := consumer.Wait(1, 100)
+	// 		if err != nil {
+	// 			return err
+	// 		}
 
-		} else {
-			msg, err := consumer.Wait(1, 100)
-			if err != nil {
-				return err
-			}
-
-			if msg != nil {
-				// fmt.Println("send to consumer")
-				if msg.GetHeader().IsVideo() {
-					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
-					if flvcodec.VideoIsKeyframe(msg.GetPayload()) {
-						// fmt.Println("send key frame")
-					}
-				} else {
-					//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");
-				}
+	// 		if msg != nil {
+	// 			// fmt.Println("send to consumer")
+	// 			if msg.GetHeader().IsVideo() {
+	// 				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
+	// 				if flvcodec.VideoIsKeyframe(msg.GetPayload()) {
+	// 					// fmt.Println("send key frame")
+	// 				}
+	// 			} else {
+	// 				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");
+	// 			}
 				
-				err := this.rtmp.SendMsg(msg, this.res.StreamId)
-				_ = err
-			}
-		}
+	// 			err := this.rtmp.SendMsg(msg, this.res.StreamId)
+	// 			_ = err
+	// 		}
+	// 	}
+	// }
 
-		//time.Sleep(time.Millisecond*1)
-	}
-
-	return nil
+	// return nil
 }
 
-func (this *SrsRtmpConn) process_play_control_msg(consumer *SrsConsumer, msg *rtmp.SrsRtmpMessage) error {
-	if !msg.GetHeader().IsAmf0Command() && !msg.GetHeader().IsAmf3Command() {
-		//ignore 
-		return nil
-	}
+// func (this *SrsRtmpConn) process_play_control_msg(consumer *SrsConsumer, msg *rtmp.SrsRtmpMessage) error {
+// 	if !msg.GetHeader().IsAmf0Command() && !msg.GetHeader().IsAmf3Command() {
+// 		//ignore 
+// 		return nil
+// 	}
 	
-	pkt, err := this.rtmp.DecodeMessage(msg)
-	if err != nil {
-		return err
-	}
-	//todo add callpacket 
-	//todo process pause message
-	switch pkt.(type) {
-	case *packet.SrsCloseStreamPacket:{
-		//todo fix close stream action
-		return errors.New("get close stream packet")
-	}
-	case *packet.SrsPausePacket:{
-		return nil
-	}
-	}
-	return nil
-}
+// 	pkt, err := this.rtmp.DecodeMessage(msg)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	//todo add callpacket 
+// 	//todo process pause message
+// 	switch pkt.(type) {
+// 	case *packet.SrsCloseStreamPacket:{
+// 		//todo fix close stream action
+// 		return errors.New("get close stream packet")
+// 	}
+// 	case *packet.SrsPausePacket:{
+// 		return nil
+// 	}
+// 	}
+// 	return nil
+// }
 
 func (this *SrsRtmpConn) publishing(s *SrsSource) error {
 	//TODO

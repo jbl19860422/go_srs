@@ -65,7 +65,7 @@ DONE:
 }
 
 func (this *SrsRecvThread) Stop() error {
-	this.exit <- true
+	close(this.exit)//直接关闭，避免cycle先退出
 	// <- this.done
 	return nil
 }

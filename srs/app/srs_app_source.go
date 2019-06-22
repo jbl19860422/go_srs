@@ -56,7 +56,7 @@ func (this *SrsSource) RemoveConsumers() {
 	defer this.consumersMtx.Unlock()
 
 	for i := 0; i < len(this.consumers); i++ {
-		this.consumers[i].Stop()
+		this.consumers[i].StopPlay()
 	}
 
 	this.consumers = this.consumers[0:0]
@@ -246,6 +246,16 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 	}
 	
 	return consumer
+}
+
+func (this *SrsSource) RemoveConsumer(consumer *SrsConsumer) {
+	this.consumersMtx.Lock()
+	defer this.consumersMtx.Unlock()
+	for i := 0; i < len(this.consumers); i++ {
+		if this.consumers[i] == consumer {
+			this.consumers = append(this.consumers[:i], this.consumers[i+1:]...)
+		}
+	}
 }
 
 func FetchOrCreate(r *SrsRequest, h ISrsSourceHandler) (*SrsSource, error) {

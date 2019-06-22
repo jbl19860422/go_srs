@@ -6,7 +6,7 @@ import(
 	"fmt"
 	"go_srs/srs/codec/flv"
 	// "context"
-	// "errors"
+	"errors"
 )
 
 type SrsMessageQueue struct {
@@ -17,6 +17,7 @@ type SrsMessageQueue struct {
 
 	msgs 			[]*rtmp.SrsRtmpMessage
 	msgCount 		chan int
+	exit			chan bool
 }
 
 func NewSrsMessageQueue() *SrsMessageQueue {
@@ -27,6 +28,7 @@ func NewSrsMessageQueue() *SrsMessageQueue {
 		queueSizeMs:0,
 		msgs:make([]*rtmp.SrsRtmpMessage, 0),
 		msgCount:make(chan int, 10000),
+		exit:make(chan bool),
 	}
 }
 
@@ -56,6 +58,10 @@ func (this *SrsMessageQueue) Empty() bool {
 	return len(this.msgs) == 0
 }
 
+func (this *SrsMessageQueue) Break() {
+	close(this.exit)
+}
+
 func (this *SrsMessageQueue) Wait() (*rtmp.SrsRtmpMessage, error) {
 	select {
 	case <- this.msgCount :
@@ -71,9 +77,11 @@ func (this *SrsMessageQueue) Wait() (*rtmp.SrsRtmpMessage, error) {
 		}
 		return msg, nil
 	}
-	// case <-this.ctx.Done():{
-	// 	return nil, errors.New("done")
-	// }
+	case <- this.exit :
+	{
+		fmt.Println("**************break from queue****************")
+		return nil, errors.New("queue break")
+	}
 	}
 }
 
