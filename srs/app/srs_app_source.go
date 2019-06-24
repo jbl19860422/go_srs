@@ -180,6 +180,7 @@ func (this *SrsSource) on_dvr_request_sh() error {
 	}
 
 	if this.cacheSHAudio != nil {
+		fmt.Println("on_dvr_request_sh audio len=", len(this.cacheSHAudio.GetPayload()))
 		if err := this.dvr.on_audio(this.cacheSHAudio); err != nil {
 			return err
 		}
@@ -258,7 +259,7 @@ func (this *SrsSource) RemoveConsumers() {
 func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 	isSequenceHeader := flvcodec.AudioIsSequenceHeader(msg.GetPayload())
 	if isSequenceHeader {
-		fmt.Println("***********************AudioIsSequenceHeader*************************")
+		fmt.Println("***********************AudioIsSequenceHeader len=", len(msg.GetPayload()), "*************************")
 		this.cacheSHAudio = msg
 	}
 

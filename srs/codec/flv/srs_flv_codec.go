@@ -140,6 +140,7 @@ type TagHeader struct {
 func NewTagHeader(typ byte, timestamp uint32, dataSize int32) *TagHeader {
 	s := utils.Int32ToBytes(dataSize, binary.BigEndian)
 	t := utils.UInt32ToBytes(timestamp, binary.BigEndian)
+	// fmt.Println("data size=", dataSize)
 	return &TagHeader{
 		tagType:typ, 
 		dataSize:s[1:4],
@@ -158,14 +159,16 @@ func (this *TagHeader) Data() []byte {
 }
 
 type SrsFlvEncoder struct {
-	header 	*SrsFlvHeader
-	file 	*os.File
+	header 			*SrsFlvHeader
+	file 			*os.File
+	tagCount		int32
 }
 
 func NewSrsFlvEncoder(f *os.File) *SrsFlvEncoder {
 	return &SrsFlvEncoder{
 		file:f,
 		header:NewSrsFlvHeader(true, true),
+		tagCount:0,
 	}
 }
 
@@ -201,11 +204,17 @@ func (this *SrsFlvEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, er
 }
 
 func (this *SrsFlvEncoder) writeTag(header *TagHeader, data []byte) (uint32, error) {
+	if this.tagCount >= 4 {
+		return 0, nil
+	}
+
+	fmt.Println("write tag", this.tagCount, " datasize=", len(data))
+	this.tagCount++
 	d := header.Data()
 	d = append(d, data...)
 
 	prevTagSize := int32(len(d))
-	fmt.Println(prevTagSize)
+	//fmt.Println(prevTagSize)
 	p := utils.Int32ToBytes(prevTagSize, binary.BigEndian)
 	d = append(d, p...)
 	n, err := this.file.Write(d)
