@@ -16,7 +16,7 @@ func NewSrsDvr() *SrsDvr {
 
 func (this *SrsDvr) Initialize(s *SrsSource, r *SrsRequest) error {
 	this.source = s
-	this.plan = flvcodec.NewSrsDvrPlan("./record.flv")
+	this.plan = flvcodec.NewSrsDvrPlan("./record1.flv")
 	//todo fix 
 	this.plan.Initialize()
 	return nil

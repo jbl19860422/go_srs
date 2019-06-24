@@ -197,7 +197,7 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 			} else {
 				chunk.Header.timestamp += (int64)(chunk.Header.timestamp_delta)
 			}
-			fmt.Println("chunk.Header.timestamp=", chunk.Header.timestamp)
+			// fmt.Println("chunk.Header.timestamp=", chunk.Header.timestamp)
 			// fmt.Println("chunk.Header.timestamp=", chunk.Header.timestamp)
 		}
 

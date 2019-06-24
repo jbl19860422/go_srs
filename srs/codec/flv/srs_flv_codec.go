@@ -205,6 +205,7 @@ func (this *SrsFlvEncoder) writeTag(header *TagHeader, data []byte) (uint32, err
 	d = append(d, data...)
 
 	prevTagSize := int32(len(d))
+	fmt.Println(prevTagSize)
 	p := utils.Int32ToBytes(prevTagSize, binary.BigEndian)
 	d = append(d, p...)
 	n, err := this.file.Write(d)

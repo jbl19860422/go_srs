@@ -130,7 +130,7 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 
 func (this *SrsAmf0EcmaArray) Encode(stream *utils.SrsStream) error {
 	stream.WriteByte(byte(RTMP_AMF0_EcmaArray))
-	stream.WriteInt32(0, binary.BigEndian)
+	stream.WriteInt32(int32(len(this.Properties)), binary.BigEndian)
 	for i := 0; i < len(this.Properties); i++ {
 		_ = this.Properties[i].Name.Encode(stream)
 		_ = this.Properties[i].Value.Encode(stream)
