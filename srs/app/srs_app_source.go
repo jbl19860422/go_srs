@@ -39,6 +39,10 @@ type ISrsSourceHandler interface {
 	OnUnpublish(s *SrsSource, r *SrsRequest) error
 }
 
+type SrsSHRequester interface {
+	GetSH(metaData *rtmp.SrsRtmpMessage, audioSH *rtmp.SrsRtmpMessage, videoSH *rtmp.SrsRtmpMessage)
+}
+
 type SrsSource struct {
 	handler 		ISrsSourceHandler
 	conn			*SrsRtmpConn
@@ -61,6 +65,9 @@ type SrsSource struct {
 	// TODO: FIXME: to support reload atc.
 	atc 			bool
 	jitterAlgorithm *SrsRtmpJitterAlgorithm
+
+	//record
+	dvr				*SrsDvr
 }
 
 var sourcePoolMtx sync.Mutex
@@ -78,6 +85,7 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		rtmp:c.rtmp,
 		gopCache:NewSrsGopCache(),
 		atc:false,
+		dvr:NewSrsDvr(),
 	}
 	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
 	return source
@@ -109,6 +117,8 @@ func FetchOrCreate(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) (*SrsSour
 		return s, errors.New("source already in pool")
 	}
 	source = NewSrsSource(c, r, h)
+	//todo fix return value
+	source.Initialize()
 	sourcePool[streamUrl] = source
 	return source, nil
 }
@@ -130,6 +140,53 @@ func FetchSource(r *SrsRequest) *SrsSource {
 	return source
 }
 
+// payload := this.cacheMetaData.GetPayload()
+// stream := utils.NewSrsStream(payload)
+// pkt := packet.NewSrsOnMetaDataPacket(amf0.SRS_CONSTS_RTMP_ON_METADATA)
+// err := pkt.Decode(stream)
+// if err != nil {
+// 	return err
+// }
+
+func (this *SrsSource) OnRequestSH(requester SrsSHRequester) error {
+	if this.cacheMetaData == nil {
+		return errors.New("missing metadata")
+	}
+
+	if this.cacheSHAudio == nil {
+		return errors.New("missing audio sh")
+	}
+
+	if this.cacheSHVideo == nil {
+		return errors.New("missing video sh")
+	}
+
+	requester.GetSH(this.cacheMetaData, this.cacheSHAudio, this.cacheSHVideo)
+	return nil
+}
+
+
+func (this *SrsSource) on_dvr_request_sh() error {
+	if this.cacheMetaData != nil {
+		if err := this.dvr.on_meta_data(this.cacheMetaData); err != nil {
+			return err
+		}
+	}
+
+	if this.cacheSHVideo != nil {
+		if err := this.dvr.on_video(this.cacheSHVideo); err != nil {
+			return err
+		}
+	}
+
+	if this.cacheSHAudio != nil {
+		if err := this.dvr.on_audio(this.cacheSHAudio); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
 	if msg.GetHeader().IsAmf0Command() || msg.GetHeader().IsAmf3Command() {
 		pkt, err := this.rtmp.DecodeMessage(msg)
@@ -141,6 +198,10 @@ func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
 	}
 
 	return this.ProcessPublishMessage(msg)
+}
+
+func (this *SrsSource) Initialize() {
+	this.dvr.Initialize(this, this.req)
 }
 
 func (this *SrsSource) ProcessPublishMessage(msg *rtmp.SrsRtmpMessage) error {
@@ -210,6 +271,10 @@ func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 		return err
 	}
 
+	if err := this.dvr.on_audio(msg); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -226,6 +291,10 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 	}
 
 	if err := this.gopCache.cache(msg); err != nil {
+		return err
+	}
+
+	if err := this.dvr.on_video(msg); err != nil {
 		return err
 	}
 
@@ -294,6 +363,11 @@ func (this *SrsSource) on_meta_data(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnM
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
 	}
+
+	fmt.Println("**********************on_meta_data**********************")
+	if err := this.dvr.on_meta_data(msg); err != nil {
+		return err
+    }
     // when already got metadata, drop when reduce sequence header.
     // bool drop_for_reduce = false;
     // if (cache_metadata && _srs_config->get_reduce_sequence_header(_req->vhost)) {

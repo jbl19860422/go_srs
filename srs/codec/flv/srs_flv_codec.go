@@ -2,6 +2,7 @@ package flvcodec
 
 import (
 	"os"
+	"fmt"
 	"encoding/binary"
 	"go_srs/srs/codec"
 	"go_srs/srs/protocol/rtmp"
@@ -84,8 +85,8 @@ func VideoIsAcceptable(data []byte) bool {
 
 
 const (
-	AudioTagType	=	0x09
-	VideoTagType	= 	0x08
+	AudioTagType	=	0x08
+	VideoTagType	= 	0x09
 	MetaDataTagType	= 	0x18
 )
 
@@ -98,7 +99,7 @@ type SrsFlvHeader struct {
 	signature 	[]byte  //FLV
 	version		byte
 	flags		byte	//第0位和第2位,分别表示 audio 与 video 存在的情况.(1表示存在,0表示不存在)。
-	headerSize	byte	//即自身的总长度，一直为9
+	headerSize	[]byte	//即自身的总长度，一直为9, 4字节
 }
 
 func NewSrsFlvHeader(hasAudio bool, hasVideo bool) *SrsFlvHeader {
@@ -111,11 +112,12 @@ func NewSrsFlvHeader(hasAudio bool, hasVideo bool) *SrsFlvHeader {
 		f |= 1 << 2
 	}
 
+	h := utils.Int32ToBytes(0x09, binary.BigEndian)
 	return &SrsFlvHeader{
 		signature:[]byte{'F','L','V'},
 		version:0x01,
 		flags:f,
-		headerSize:0x09,
+		headerSize:h,
 	}
 }
 
@@ -124,7 +126,7 @@ func (this *SrsFlvHeader) Data() []byte {
 	data = append(data, this.signature...)
 	data = append(data, this.version)
 	data = append(data, this.flags)
-	data = append(data, this.headerSize)
+	data = append(data, this.headerSize...)
 	return data
 }
 
@@ -136,11 +138,12 @@ type TagHeader struct {
 }
 
 func NewTagHeader(typ byte, timestamp uint32, dataSize int32) *TagHeader {
-	s := utils.Int32ToBytes(dataSize, binary.LittleEndian)
-	t := utils.UInt32ToBytes(timestamp, binary.LittleEndian)
+	s := utils.Int32ToBytes(dataSize, binary.BigEndian)
+	t := utils.UInt32ToBytes(timestamp, binary.BigEndian)
+	// fmt.Println("xxxxxxxxxxxxxxxxxxx   ", s)
 	return &TagHeader{
 		tagType:typ, 
-		dataSize:s[0:3],
+		dataSize:s[1:4],
 		timestamp:t,
 		reserved:[]byte{0,0,0},
 	}
@@ -160,12 +163,7 @@ type SrsFlvEncoder struct {
 	file 	*os.File
 }
 
-func NewSrsFlvEncoder(fname string) *SrsFlvEncoder {
-	f, err := os.Open(fname)
-	if err != nil {
-		return nil
-	}
-
+func NewSrsFlvEncoder(f *os.File) *SrsFlvEncoder {
 	return &SrsFlvEncoder{
 		file:f,
 		header:NewSrsFlvHeader(true, true),
@@ -186,16 +184,19 @@ func (this *SrsFlvEncoder) WriteHeader() error {
 }
 
 func (this *SrsFlvEncoder) WriteMetaData(data []byte) (uint32, error) {
+	fmt.Println("**************WriteMetaData******************, len=", len(data))
 	header := NewTagHeader(MetaDataTagType, 0, int32(len(data)))
 	return this.writeTag(header, data)
 }
 
 func (this *SrsFlvEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, error) {
+	fmt.Println("**************WriteAudio******************")
 	header := NewTagHeader(AudioTagType, timestamp, int32(len(data)))
 	return this.writeTag(header, data)
 }
 
 func (this *SrsFlvEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, error) {
+	fmt.Println("**************WriteVideo******************")
 	header := NewTagHeader(VideoTagType, timestamp, int32(len(data)))
 	return this.writeTag(header, data)
 }
@@ -205,7 +206,7 @@ func (this *SrsFlvEncoder) writeTag(header *TagHeader, data []byte) (uint32, err
 	d = append(d, data...)
 
 	prevTagSize := int32(len(d))
-	p := utils.Int32ToBytes(prevTagSize, binary.LittleEndian)
+	p := utils.Int32ToBytes(prevTagSize, binary.BigEndian)
 	d = append(d, p...)
 	n, err := this.file.Write(d)
 	_ = n

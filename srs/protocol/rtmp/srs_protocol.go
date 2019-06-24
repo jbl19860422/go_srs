@@ -418,17 +418,14 @@ func (s *SrsProtocol) RecvMessage() (*SrsRtmpMessage, error) {
 	for {
 		rtmp_msg, err := s.RecvInterlacedMessage()
 		if err != nil {
-			// log.Print("recv a message")
 			return nil, err
 		}
 
 		if rtmp_msg == nil {
-			// log.Print("recv a empty message")
 			continue
 		}
 
 		if rtmp_msg.size <= 0 || rtmp_msg.header.payload_length <= 0 {
-			// log.Print("ignore empty message")
 			continue
 		}
 
@@ -656,7 +653,6 @@ func (this *SrsProtocol) do_simple_send(mh *SrsMessageHeader, payload []byte) er
 }
 
 func (this *SrsProtocol) SendMessages(msgs []*SrsRtmpMessage, streamId int) error {
-	// fmt.Println("xxxxxxxxxxxxxxxxxxxxxSendMessagesxxxxxxxxxxxxxxxxxxxxx")
 	for i := 0; i < len(msgs); i++ {
 		if msgs[i] == nil {
 			continue

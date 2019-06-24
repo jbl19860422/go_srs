@@ -37,6 +37,7 @@ DONE:
 	for {
 		msg, err := this.rtmp.RecvMessage()
 		if err == nil {
+			fmt.Printf("msg[0]=%x, msg[1]=%x, msg[2]=%x, msg[3]=%x", msg.GetPayload()[0], msg.GetPayload()[1], msg.GetPayload()[2], msg.GetPayload()[3])
 			err = this.handler.Handle(msg)
 		}
 
