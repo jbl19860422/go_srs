@@ -109,12 +109,12 @@ func (this *SrsMessageQueue) Shrink() {
 	
 	this.avStartTime = this.avEndTime
 	if videoSH != nil {
-		videoSH.SetTimestamp(this.avEndTime)
+		videoSH.GetHeader().SetTimestamp(this.avEndTime)
 		this.msgs = append(this.msgs, videoSH)
 	}
 
 	if audioSH != nil {
-		audioSH.SetTimestamp(this.avEndTime)
+		audioSH.GetHeader().SetTimestamp(this.avEndTime)
 		this.msgs = append(this.msgs, audioSH)
 	}
 }

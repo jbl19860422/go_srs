@@ -4,6 +4,7 @@ import (
 	"os"
 	"fmt"
 	"errors"
+	// "encoding/binary"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/global"
@@ -105,43 +106,59 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 	off, err := this.file.Seek(0, 1)//SEEK_CUR
 	// 11B flv tag header, 3B object EOF, 8B number value, 1B number flag.
 	//todo fix me, write readable code
-	this.durationOffset = off + int64(size) + 11 - 3 - 9
-	this.filesizeOffset = this.durationOffset - (2 + int64(len("duration"))) - 9
-
+	this.durationOffset = off + int64(size) + 11 - 3 - 8
+	this.filesizeOffset = this.durationOffset - (2 + int64(len("duration"))) - 8
+	fmt.Println("durationOffset=", this.durationOffset, "&filesizeOffset=", this.filesizeOffset)
 	_, err = this.flvEncoder.WriteMetaData(writeStream.Data())
 	return err
 }
 
 func (this *SrsFlvSegment) onUpdateDuration(msg *rtmp.SrsRtmpMessage) error {
 	if this.startTime < 0 {
-		this.startTime = msg.GetTimestamp()
+		this.startTime = msg.GetHeader().GetTimestamp()
 	}
 
-	if this.previousPktTime < 0 || this.previousPktTime > msg.GetTimestamp() {
-		this.previousPktTime = msg.GetTimestamp()
+	if this.previousPktTime < 0 || this.previousPktTime > msg.GetHeader().GetTimestamp() {
+		this.previousPktTime = msg.GetHeader().GetTimestamp()
 	}
-
-	this.duration += msg.GetTimestamp() - this.previousPktTime
-	this.streamDuration += msg.GetTimestamp() - this.previousPktTime
+	// fmt.Println("msg.GetTimestamp=", msg.GetHeader().GetTimestamp())
+	this.duration += msg.GetHeader().GetTimestamp() - this.previousPktTime
+	this.streamDuration += msg.GetHeader().GetTimestamp() - this.previousPktTime
 	return nil
 }
 
 func (this *SrsFlvSegment) WriteAudio(msg *rtmp.SrsRtmpMessage) error {
-	this.flvEncoder.WriteAudio(uint32(msg.GetTimestamp()), msg.GetPayload())
-	this.onUpdateDuration(msg)
+	this.flvEncoder.WriteAudio(uint32(msg.GetHeader().GetTimestamp()), msg.GetPayload())
+	// this.onUpdateDuration(msg)
 	return nil
 }
 
 func (this *SrsFlvSegment) WriteVideo(msg *rtmp.SrsRtmpMessage) error {
-	this.flvEncoder.WriteVideo(uint32(msg.GetTimestamp()), msg.GetPayload())
+	this.flvEncoder.WriteVideo(uint32(msg.GetHeader().GetTimestamp()), msg.GetPayload())
 	this.onUpdateDuration(msg)
 	return nil
 }
 
 func (this *SrsFlvSegment) Close() error {
+	this.updateMetaData()
 	return nil
 }
 
 func (this *SrsFlvSegment) updateMetaData() error {
+	// off, _ := this.file.Seek(0, 2)
+	// fmt.Println("offset=", this.filesizeOffset, "&filesize=", off)
+	// c := utils.Float64ToBytes(float64(off), binary.BigEndian)
+	// fmt.Println("****************c.len=", len(c), "*********************")
+	// for i := 0; i < len(c); i++ {
+	// 	fmt.Printf("%x ", c[i])
+	// }
+	// fmt.Println("")
+	// this.file.WriteAt(c, this.filesizeOffset)
+
+	// fmt.Println("duration=", float64(this.duration)/1000)
+	// b := utils.Float64ToBytes(float64(this.duration)/1000, binary.BigEndian)
+	// this.file.WriteAt(b, this.durationOffset)
+
+	this.file.Close()
 	return nil
 }

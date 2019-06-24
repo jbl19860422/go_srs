@@ -121,8 +121,8 @@ func (this *SrsAmf0Object) IsMyType(stream *utils.SrsStream) (bool, error) {
 }
 
 func (this *SrsAmf0Object) Set(name string, value interface{}) {
+	this.Remove(name)
 	var p *SrsValuePair
-	// fmt.Println(reflect.TypeOf(value))
 	switch value.(type) {
 	case string:
 		p = &SrsValuePair{
@@ -152,6 +152,14 @@ func (this *SrsAmf0Object) Set(name string, value interface{}) {
 	}
 
 	this.Properties = append(this.Properties, *p)
+}
+
+func (this *SrsAmf0Object) Remove(name string) {
+	for i := 0; i < len(this.Properties); i++ {
+		if this.Properties[i].Name.Value == name {
+			this.Properties = append(this.Properties[0:i], this.Properties[i+1:]...)
+		}
+	}
 }
 
 func (this *SrsAmf0Object) Get(name string, pval interface{}) error {

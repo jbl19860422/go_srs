@@ -83,7 +83,7 @@ func (this *SrsConsumer) PlayCycle() error {
 				if flvcodec.VideoIsKeyFrame(msg.GetPayload()) {
 					// fmt.Println("send key frame")
 				}
-				fmt.Println("timestamp=", msg.GetTimestamp())
+				fmt.Println("timestamp=", msg.GetHeader().GetTimestamp())
 			} else {
 				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");
 			}

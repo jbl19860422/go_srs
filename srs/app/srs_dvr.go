@@ -33,3 +33,7 @@ func (this *SrsDvr) on_video(video *rtmp.SrsRtmpMessage) error {
 func (this *SrsDvr) on_audio(audio *rtmp.SrsRtmpMessage) error {
 	return this.plan.On_audio(audio)
 }
+
+func (this *SrsDvr) Close() {
+	this.plan.Close()
+}

@@ -105,7 +105,7 @@ func (this *SrsGopCache) startTime() int64 {
 		return 0
 	}
 
-	return this.gopCache[0].GetTimestamp()
+	return this.gopCache[0].GetHeader().GetTimestamp()
 }
 
 func (this *SrsGopCache) pureAudio() bool {

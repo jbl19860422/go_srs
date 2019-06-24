@@ -191,11 +191,13 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 			// MUST NOT be present. For values greater than or equal to 0xffffff
 			// the normal timestamp field MUST NOT be used and MUST be set to
 			// 0xffffff and the extended timestamp MUST be sent.
+			
 			if format == RTMP_FMT_TYPE0 {
 				chunk.Header.timestamp = (int64)(chunk.Header.timestamp_delta)
 			} else {
 				chunk.Header.timestamp += (int64)(chunk.Header.timestamp_delta)
 			}
+			fmt.Println("chunk.Header.timestamp=", chunk.Header.timestamp)
 			// fmt.Println("chunk.Header.timestamp=", chunk.Header.timestamp)
 		}
 

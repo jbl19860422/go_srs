@@ -38,3 +38,7 @@ func (this *SrsDvrPlan) On_meta_data(msg *rtmp.SrsRtmpMessage) error {
 	}
 	return nil
 }
+
+func (this *SrsDvrPlan) Close() {
+	this.segment.Close()
+}

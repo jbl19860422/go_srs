@@ -43,15 +43,6 @@ func (this *SrsAmf0EcmaArray) ValueAt(i int) SrsAmf0Any {
 	return nil
 }
 
-// func (this *SrsAmf0EcmaArray) Set(key string, v SrsAmf0Any) {
-// 	pair := SrsValuePair{
-// 		Name:  SrsAmf0Utf8{Value: key},
-// 		Value: v,
-// 	}
-// 	this.Properties = append(this.Properties, pair)
-// 	return
-// }
-
 func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 	marker, err := stream.ReadByte()
 	if err != nil {
@@ -132,7 +123,6 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 			Name:  pname,
 			Value: v,
 		}
-		fmt.Println("pname=", pname.GetValue().(string), "&val=", v.GetValue())
 		this.Properties = append(this.Properties, pair)
 	}
 	return nil
@@ -161,7 +151,16 @@ func (this *SrsAmf0EcmaArray) IsMyType(stream *utils.SrsStream) (bool, error) {
 	return true, nil
 }
 
+func (this *SrsAmf0EcmaArray) Remove(name string) {
+	for i := 0; i < len(this.Properties); i++ {
+		if this.Properties[i].Name.Value == name {
+			this.Properties = append(this.Properties[0:i], this.Properties[i+1:]...)
+		}
+	}
+}
+
 func (this *SrsAmf0EcmaArray) Set(name string, value interface{}) {
+	this.Remove(name)
 	var p *SrsValuePair
 	switch value.(type) {
 	case string:

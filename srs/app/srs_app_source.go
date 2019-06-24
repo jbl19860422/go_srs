@@ -472,9 +472,11 @@ func (this *SrsSource) RemoveConsumer(consumer *SrsConsumer) {
 func (this *SrsSource) CyclePublish() error {
 	this.recvThread.Start()
 	this.recvThread.Join()
+	this.StopPublish()
 	return nil
 }
 
 func (this *SrsSource) StopPublish() {
+	this.dvr.Close()
 	this.recvThread.Stop()
 }

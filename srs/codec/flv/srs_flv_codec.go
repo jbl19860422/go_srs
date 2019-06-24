@@ -134,13 +134,12 @@ type TagHeader struct {
 	tagType		byte
 	dataSize	[]byte //3byte
 	timestamp	[]byte	//4byte
-	reserved	[]byte	//3byte时间戳扩展字节+streamID 
+	reserved	[]byte	//全0
 }
 
 func NewTagHeader(typ byte, timestamp uint32, dataSize int32) *TagHeader {
 	s := utils.Int32ToBytes(dataSize, binary.BigEndian)
 	t := utils.UInt32ToBytes(timestamp, binary.BigEndian)
-	// fmt.Println("xxxxxxxxxxxxxxxxxxx   ", s)
 	return &TagHeader{
 		tagType:typ, 
 		dataSize:s[1:4],
@@ -190,13 +189,13 @@ func (this *SrsFlvEncoder) WriteMetaData(data []byte) (uint32, error) {
 }
 
 func (this *SrsFlvEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, error) {
-	fmt.Println("**************WriteAudio******************")
+	// fmt.Println("**************WriteAudio******************")
 	header := NewTagHeader(AudioTagType, timestamp, int32(len(data)))
 	return this.writeTag(header, data)
 }
 
 func (this *SrsFlvEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, error) {
-	fmt.Println("**************WriteVideo******************")
+	// fmt.Println("**************WriteVideo******************")
 	header := NewTagHeader(VideoTagType, timestamp, int32(len(data)))
 	return this.writeTag(header, data)
 }
@@ -216,9 +215,9 @@ func (this *SrsFlvEncoder) writeTag(header *TagHeader, data []byte) (uint32, err
 func (this *SrsFlvEncoder) WriteTags(msgs []*rtmp.SrsRtmpMessage) error {
 	for i := 0; i < len(msgs); i++ {
 		if msgs[i].GetHeader().IsAudio() {
-			_, _ = this.WriteAudio(uint32(msgs[i].GetTimestamp()), msgs[i].GetPayload())
+			_, _ = this.WriteAudio(uint32(msgs[i].GetHeader().GetTimestamp()), msgs[i].GetPayload())
 		} else if(msgs[i].GetHeader().IsVideo()) {
-			_, _ = this.WriteVideo(uint32(msgs[i].GetTimestamp()), msgs[i].GetPayload())
+			_, _ = this.WriteVideo(uint32(msgs[i].GetHeader().GetTimestamp()), msgs[i].GetPayload())
 		} else {
 			_, _ = this.WriteMetaData(msgs[i].GetPayload())
 		}

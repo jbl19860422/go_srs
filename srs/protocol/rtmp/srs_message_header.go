@@ -47,6 +47,14 @@ type SrsMessageHeader struct {
 	perfer_cid int32
 }
 
+func (this *SrsMessageHeader) GetTimestamp() int64 {
+	return this.timestamp
+}
+
+func (this *SrsMessageHeader) SetTimestamp(t int64) {
+	this.timestamp = t
+}
+
 func (this *SrsMessageHeader) Print() {
 	fmt.Println("perfer_cid=", this.perfer_cid)
 	fmt.Println("message_type=", this.message_type)
