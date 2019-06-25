@@ -38,6 +38,10 @@ func (this *SrsStream) Require(required_size uint32) bool {
 	return required_size <= uint32(len(this.p))
 }
 
+func (this *SrsStream) Pos() uint32 {
+	return this.pos
+}
+
 func (this *SrsStream) Skip(size uint32) {
 	this.pos += size
 	this.p = this.bytes[this.pos:]
@@ -83,6 +87,13 @@ func (this *SrsStream) ReadBytes(count uint32) ([]byte, error) {
 	b := this.p[0:count]
 	this.Skip(count)
 	return b, nil
+}
+
+func (this *SrsStream) ReadLeftBytes() []byte {
+	l := len(this.p)
+	b := this.p
+	this.Skip(l)
+	return b
 }
 
 func (this *SrsStream) WriteBytes(data []byte) {

@@ -142,7 +142,6 @@ func NewTagHeader(typ byte, timestamp uint32, dataSize int32) *TagHeader {
 	s := utils.Int32ToBytes(dataSize, binary.BigEndian)
 	t := utils.UInt32ToBytes(timestamp, binary.BigEndian)[1:]
 	t = append(t, byte((timestamp >> 24) & 0xFF))
-	// fmt.Println("data size=", dataSize)
 	return &TagHeader{
 		tagType:typ, 
 		dataSize:s[1:4],
