@@ -1,6 +1,9 @@
 package app
 
-import "go_srs/srs/utils"
+import (
+	"fmt"
+	"go_srs/srs/utils"
+)
 
 /*
 * the adaptation_field_control of ts packet
@@ -92,16 +95,26 @@ func NewSrsTsHeader() *SrsTsHeader {
 
 func (this *SrsTsHeader) Encode(stream *utils.SrsStream) {
 	stream.WriteByte(byte(this.syncByte))
+
+	var pidv int16 = 0
+	pidv = int16(this.PID) & 0x1FFF
+	pidv |= int16(this.transportPriority<<13) & 0x2000
+	pidv |= int16(int16(this.payloadUnitStartIndicator)<<14) & 0x4000
+	pidv |= int16(uint16(this.transportErrorIndicator<<15) & 0x8000)
+	fmt.Println("pidv=", pidv)
+	// stream.WriteInt16(pidv, binary.LittleEndian)
+	// var b byte = 0
+	// b |= byte(this.transportErrorIndicator) << 0
+	// b |= byte(this.payloadUnitStartIndicator) << 1
+	// b |= byte(this.transportPriority) << 2
+	// b |= byte(this.PID&0x1f) << 3
+	// // fmt.Printf("b=%x",b)
+	// stream.WriteByte(b)
+	// b = 0
+	// b |= byte(this.PID >> 3)
+	// stream.WriteByte(b)
+	// var b byte = 0
 	var b byte = 0
-	b |= byte(this.transportErrorIndicator) << 0
-	b |= byte(this.payloadUnitStartIndicator) << 1
-	b |= byte(this.transportPriority) << 2
-	b |= byte(this.PID&0x1f) << 3
-	stream.WriteByte(b)
-	b = 0
-	b |= byte(this.PID >> 3)
-	stream.WriteByte(b)
-	b = 0
 	b |= byte(this.transportScrambingControl) & 0x03
 	b |= byte((this.adatpationFieldControl & 0x03) << 2)
 	b |= byte(this.continuityCounter&0x0f) << 4
