@@ -1,3 +1,4 @@
 .vscode
 *.flv
+*.ts
 srs/main/main

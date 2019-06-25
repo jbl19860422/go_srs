@@ -24,6 +24,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
+	"os"
 	"sync"
 	"errors"
 	"fmt"
@@ -88,6 +89,14 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		dvr:NewSrsDvr(),
 	}
 	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
+	pkt := CreatePAT(nil, TS_PMT_NUMBER, TS_PMT_PID)
+	f, err := os.OpenFile("a.ts", os.O_RDWR|os.O_CREATE, 0755)
+	stream := utils.NewSrsStream([]byte{})
+	pkt.Encode(stream)
+	f.Write(stream.Data())
+	f.Close()
+	_ = pkt
+	_ = err
 	return source
 }
 

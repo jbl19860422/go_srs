@@ -129,7 +129,7 @@ func (this *SrsFlvSegment) onUpdateDuration(msg *rtmp.SrsRtmpMessage) error {
 	}
 	// fmt.Println("msg.GetTimestamp=", msg.GetHeader().GetTimestamp())
 	this.duration += msg.GetHeader().GetTimestamp() - this.previousPktTime
-	fmt.Println("msg.GetHeader().GetTimestamp()=", msg.GetHeader().GetTimestamp(), "&this.previousPktTime=", this.previousPktTime)
+	// fmt.Println("msg.GetHeader().GetTimestamp()=", msg.GetHeader().GetTimestamp(), "&this.previousPktTime=", this.previousPktTime)
 	this.streamDuration += msg.GetHeader().GetTimestamp() - this.previousPktTime
 	this.previousPktTime = msg.GetHeader().GetTimestamp()
 	return nil
