@@ -138,8 +138,10 @@ type TagHeader struct {
 }
 
 func NewTagHeader(typ byte, timestamp uint32, dataSize int32) *TagHeader {
+	timestamp &= 0x7fffffff
 	s := utils.Int32ToBytes(dataSize, binary.BigEndian)
-	t := utils.UInt32ToBytes(timestamp, binary.BigEndian)
+	t := utils.UInt32ToBytes(timestamp, binary.BigEndian)[1:]
+	t = append(t, byte((timestamp >> 24) & 0xFF))
 	// fmt.Println("data size=", dataSize)
 	return &TagHeader{
 		tagType:typ, 
@@ -204,11 +206,11 @@ func (this *SrsFlvEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, er
 }
 
 func (this *SrsFlvEncoder) writeTag(header *TagHeader, data []byte) (uint32, error) {
-	if this.tagCount >= 4 {
-		return 0, nil
-	}
+	// if this.tagCount >= 4 {
+	// 	return 0, nil
+	// }
 
-	fmt.Println("write tag", this.tagCount, " datasize=", len(data))
+	// fmt.Println("write tag", this.tagCount, " datasize=", len(data))
 	this.tagCount++
 	d := header.Data()
 	d = append(d, data...)

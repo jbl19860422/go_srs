@@ -3,9 +3,8 @@ package flvcodec
 import (
 	"os"
 	"fmt"
-	// "time"
 	"errors"
-	// "encoding/binary"
+	"encoding/binary"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/global"
@@ -130,7 +129,9 @@ func (this *SrsFlvSegment) onUpdateDuration(msg *rtmp.SrsRtmpMessage) error {
 	}
 	// fmt.Println("msg.GetTimestamp=", msg.GetHeader().GetTimestamp())
 	this.duration += msg.GetHeader().GetTimestamp() - this.previousPktTime
+	fmt.Println("msg.GetHeader().GetTimestamp()=", msg.GetHeader().GetTimestamp(), "&this.previousPktTime=", this.previousPktTime)
 	this.streamDuration += msg.GetHeader().GetTimestamp() - this.previousPktTime
+	this.previousPktTime = msg.GetHeader().GetTimestamp()
 	return nil
 }
 
@@ -152,20 +153,19 @@ func (this *SrsFlvSegment) Close() error {
 }
 
 func (this *SrsFlvSegment) updateMetaData() error {
-	// time.Sleep(1*time.Second)
-	// off, _ := this.file.Seek(0, 2)
-	// fmt.Println("offset=", this.filesizeOffset, "&filesize=", off)
-	// c := utils.Float64ToBytes(float64(off), binary.BigEndian)
-	// fmt.Println("****************c.len=", len(c), "*********************")
-	// for i := 0; i < len(c); i++ {
-	// 	fmt.Printf("%x ", c[i])
-	// }
-	// fmt.Println("")
-	// this.file.WriteAt(c, this.filesizeOffset)
+	off, _ := this.file.Seek(0, 2)
+	fmt.Println("offset=", this.filesizeOffset, "&filesize=", off)
+	c := utils.Float64ToBytes(float64(off), binary.BigEndian)
+	fmt.Println("****************c.len=", len(c), "*********************")
+	for i := 0; i < len(c); i++ {
+		fmt.Printf("%x ", c[i])
+	}
+	fmt.Println("")
+	this.file.WriteAt(c, this.filesizeOffset)
 
-	// fmt.Println("duration=", float64(this.duration)/1000)
-	// b := utils.Float64ToBytes(float64(this.duration)/1000, binary.BigEndian)
-	// this.file.WriteAt(b, this.durationOffset)
+	fmt.Println("duration=", float64(this.duration)/1000)
+	b := utils.Float64ToBytes(float64(this.duration)/1000, binary.BigEndian)
+	this.file.WriteAt(b, this.durationOffset)
 
 	this.file.Close()
 	return nil

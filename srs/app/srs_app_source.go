@@ -269,7 +269,6 @@ func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 	}
 
 	if err := this.gopCache.cache(msg); err != nil {
-		return err
 	}
 
 	if err := this.dvr.on_audio(msg); err != nil {
