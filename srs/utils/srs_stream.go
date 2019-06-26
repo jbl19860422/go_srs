@@ -226,3 +226,34 @@ func (this *SrsStream) ReadString(len uint32) (string, error) {
 func (this *SrsStream) WriteString(str string) {
 	this.WriteBytes([]byte(str))
 }
+
+type SrsBitStream struct {
+	data    []byte
+	currBit uint32
+}
+
+func NewSrsBitStream(d []byte) *SrsBitStream {
+	return &SrsBitStream{
+		data:    d,
+		currBit: 0,
+	}
+}
+
+func (this *SrsBitStream) Empty() bool {
+	bytePos := this.currBit / 8
+	if bytePos >= uint32(len(this.data)) {
+		return true
+	}
+	return false
+}
+
+func (this *SrsBitStream) ReadBit() (int8, error) {
+	bytePos := this.currBit / 8
+	if bytePos >= uint32(len(this.data)) {
+		return 0, errors.New("no enough data")
+	}
+
+	bitOff := this.currBit % 8
+	this.currBit++
+	return int8((this.data[bytePos] >> bitOff) & 0x01), nil
+}
