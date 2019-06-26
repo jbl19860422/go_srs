@@ -1,5 +1,9 @@
 package app
 
+import (
+	"go_srs/srs/codec"
+)
+
 type SrsHlsSegment struct {
 	duration           float64            // duration in seconds in m3u8.
 	sequence_no        int                // sequence number in m3u8.
@@ -13,10 +17,10 @@ type SrsHlsSegment struct {
 
 const SRS_AUTO_HLS_SEGMENT_TIMESTAMP_JUMP_MS = 300
 
-func NewSrsHlsSegment(c *SrsTsContext, ac SrsCodecAudio, vc SrsCodecVideo) *SrsHlsSegment {
+func NewSrsHlsSegment(c *SrsTsContext, ac codec.SrsCodecAudio, vc codec.SrsCodecVideo) *SrsHlsSegment {
 	w := NewSrsHlsCacheWriter()
 	return &SrsHlsSegment{
-		muxer:  NewSrsMuxer(w, ac, vc),
+		muxer:  NewSrsTsMuxer(w, ac, vc),
 		writer: w,
 	}
 }
@@ -28,5 +32,5 @@ func (this *SrsHlsSegment) update_duration(current_frame_dts int64) {
 		}
 	}
 
-	this.duration = (current_frame_dts - this.segment_start_dts) / 90000.0
+	this.duration = float64(current_frame_dts - this.segment_start_dts) / 90000.0
 }

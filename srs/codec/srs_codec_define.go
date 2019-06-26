@@ -161,31 +161,6 @@ const (
      SrsAvcNaluTypeCodedSliceExt = 20
  )
 
-type SrsCodecAudio  int
-const (
-    _ SrsCodecAudio = iota
-    // set to the max value to reserved, for array map.
-    SrsCodecAudioReserved1                = 16
-    
-    // for user to disable audio, for example, use pure video hls.
-    SrsCodecAudioDisabled                   = 17
-    
-    SrsCodecAudioLinearPCMPlatformEndian             = 0
-    SrsCodecAudioADPCM                                 = 1
-    SrsCodecAudioMP3                                 = 2
-    SrsCodecAudioLinearPCMLittleEndian                 = 3
-    SrsCodecAudioNellymoser16kHzMono                 = 4
-    SrsCodecAudioNellymoser8kHzMono                 = 5
-    SrsCodecAudioNellymoser                         = 6
-    SrsCodecAudioReservedG711AlawLogarithmicPCM        = 7
-    SrsCodecAudioReservedG711MuLawLogarithmicPCM    = 8
-    SrsCodecAudioReserved                             = 9
-    SrsCodecAudioAAC                                 = 10
-    SrsCodecAudioSpeex                                 = 11
-    SrsCodecAudioReservedMP3_8kHz                     = 14
-    SrsCodecAudioReservedDeviceSpecificSound         = 15
-)
-
 /**
 * the FLV/RTMP supported audio sample rate.
 * Sampling rate. The following values are defined:
@@ -239,35 +214,90 @@ const (
     SrsCodecAudioSoundTypeMono                      = 0
     SrsCodecAudioSoundTypeStereo                    = 1
 )
+ 
+const SRS_AAC_SAMPLE_RATE_UNSET = 15
 
-// AACPacketType IF SoundFormat == 10 UI8
-// The following values are defined:
-//     0 = AAC sequence header
-//     1 = AAC raw
-type SrsCodecAudioType int
+/**
+* the profile for avc/h.264.
+* @see Annex A Profiles and levels, H.264-AVC-ISO_IEC_14496-10.pdf, page 205.
+*/
+type SrsAvcProfile int
 const (
-    _ SrsCodecAudioType = iota
-    // set to the max value to reserved, for array map.
-    SrsCodecAudioTypeReserved                        = 2
-    SrsCodecAudioTypeSequenceHeader                 = 0
-    SrsCodecAudioTypeRawData                         = 1
+	_ SrsAvcProfile = iota
+	SrsAvcProfileReserved = 0
+    
+    // @see ffmpeg, libavcodec/avcodec.h:2713
+    SrsAvcProfileBaseline = 66
+    // FF_PROFILE_H264_CONSTRAINED  (1<<9)  // 8+1; constraint_set1_flag
+    // FF_PROFILE_H264_CONSTRAINED_BASELINE (66|FF_PROFILE_H264_CONSTRAINED)
+    SrsAvcProfileConstrainedBaseline = 578
+    SrsAvcProfileMain = 77
+    SrsAvcProfileExtended = 88
+    SrsAvcProfileHigh = 100
+    SrsAvcProfileHigh10 = 110
+    SrsAvcProfileHigh10Intra = 2158
+    SrsAvcProfileHigh422 = 122
+    SrsAvcProfileHigh422Intra = 2170
+    SrsAvcProfileHigh444 = 144
+    SrsAvcProfileHigh444Predictive = 244
+    SrsAvcProfileHigh444Intra = 2192
 )
 
 /**
-* the FLV/RTMP supported audio sample rate.
-* Sampling rate. The following values are defined:
-* 0 = 5.5 kHz = 5512 Hz
-* 1 = 11 kHz = 11025 Hz
-* 2 = 22 kHz = 22050 Hz
-* 3 = 44 kHz = 44100 Hz
+* the level for avc/h.264.
+* @see Annex A Profiles and levels, H.264-AVC-ISO_IEC_14496-10.pdf, page 207.
 */
-type SrsCodecAudioSampleRate int
+type SrsAvcLevel int
 const (
-    _ SrsCodecAudioSampleRate = iota
-    // set to the max value to reserved, for array map.
-    SrsCodecAudioSampleRateReserved                 = 4
-    SrsCodecAudioSampleRate5512                     = 0
-    SrsCodecAudioSampleRate11025                    = 1
-    SrsCodecAudioSampleRate22050                    = 2
-    SrsCodecAudioSampleRate44100                    = 3
+	_ SrsAvcLevel = iota
+	SrsAvcLevelReserved = 0
+    
+    SrsAvcLevel_1 = 10
+    SrsAvcLevel_11 = 11
+    SrsAvcLevel_12 = 12
+    SrsAvcLevel_13 = 13
+    SrsAvcLevel_2 = 20
+    SrsAvcLevel_21 = 21
+    SrsAvcLevel_22 = 22
+    SrsAvcLevel_3 = 30
+    SrsAvcLevel_31 = 31
+    SrsAvcLevel_32 = 32
+    SrsAvcLevel_4 = 40
+    SrsAvcLevel_41 = 41
+    SrsAvcLevel_5 = 50
+    SrsAvcLevel_51 = 51
+)
+
+/**
+* the avc payload format, must be ibmf or annexb format.
+* we guess by annexb first, then ibmf for the first time,
+* and we always use the guessed format for the next time.
+*/
+type SrsAvcPayloadFormat int
+const (
+	_ SrsAvcPayloadFormat = iota
+	SrsAvcPayloadFormatGuess = 0
+    SrsAvcPayloadFormatAnnexb = 1
+    SrsAvcPayloadFormatIbmf = 2
+)
+/**
+* the aac object type, for RTMP sequence header
+* for AudioSpecificConfig, @see aac-mp4a-format-ISO_IEC_14496-3+2001.pdf, page 33
+* for audioObjectType, @see aac-mp4a-format-ISO_IEC_14496-3+2001.pdf, page 23
+*/
+type SrsAacObjectType int
+const (
+	_ SrsAacObjectType = iota
+    SrsAacObjectTypeReserved = 0
+    
+    // Table 1.1 - Audio Object Type definition
+    // @see @see aac-mp4a-format-ISO_IEC_14496-3+2001.pdf, page 23
+    SrsAacObjectTypeAacMain = 1
+    SrsAacObjectTypeAacLC = 2
+    SrsAacObjectTypeAacSSR = 3
+    
+    // AAC HE = LC+SBR
+    SrsAacObjectTypeAacHE = 5
+    // AAC HEv2 = LC+SBR+PS
+    SrsAacObjectTypeAacHEV2 = 29
 )

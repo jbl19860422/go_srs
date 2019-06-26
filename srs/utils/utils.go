@@ -174,9 +174,8 @@ func TraceMemStats() {
     log.Printf("Alloc:%d(bytes) HeapIdle:%d(bytes) HeapReleased:%d(bytes), RoutineNum:%d", ms.Alloc, ms.HeapIdle, ms.HeapReleased, runtime.NumGoroutine())
 }
 
-func Srs_path_build_stream(template_path string, vhost string, app string, stream string) string
-{
-    path := template_path;
+func Srs_path_build_stream(template_path string, vhost string, app string, stream string) string {
+    path := template_path
     
     // variable [vhost]
     path = strings.Replace(path, "[vhost]", vhost, -1)

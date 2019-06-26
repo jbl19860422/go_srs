@@ -1,5 +1,13 @@
 package app
 
+import (
+	"os"
+	"path"
+	"time"
+	"go_srs/srs/codec"
+	"go_srs/srs/utils"
+)
+
 type SrsHlsMuxer struct {
 	hls_entry_prefix   string
 	hls_path           string
@@ -10,6 +18,8 @@ type SrsHlsMuxer struct {
 	hls_fragment       float64
 	hls_window         float64
 	hls_ts_floor       bool
+	hls_cleanup		   bool
+	m3u8_file		   string
 	deviation_ts       int
 	accept_floor_ts    float64
 	previous_floor_ts  float64
@@ -21,13 +31,13 @@ type SrsHlsMuxer struct {
 	should_write_file  bool
 	segments           []*SrsHlsSegment
 	current            *SrsHlsSegment
-	acodec             SrsCodecAudio
+	acodec             codec.SrsCodecAudio
 	context            *SrsTsContext
 }
 
 func NewSrsHlsMuxer() *SrsHlsMuxer {
 	return &SrsHlsMuxer{
-		context:NewSrsTsContext()
+		context:NewSrsTsContext(),
 	}
 }
 
@@ -41,6 +51,7 @@ func (this *SrsHlsMuxer) dispose() {
 		path := this.current.full_path + ".tmp"
 		//todo unlink path
 		this.current = nil
+		_ = path
 	}
 
 	//todo unlink m3u8
@@ -71,11 +82,11 @@ func (this *SrsHlsMuxer) deviation() int {
 	return this.deviation_ts
 }
 
-func (this *SrsHlsMuxer) update_config(entry_prefix string, path string
+func (this *SrsHlsMuxer) update_config(entry_prefix string, p string,
 								m3u8_file string, ts_file string, fragment float64,window float64, 
 								ts_floor bool, aof_ratio float64, cleanup bool, wait_keyframe bool) error {
 	this.hls_entry_prefix = entry_prefix
-	this.hls_path = path
+	this.hls_path = p
 	this.hls_ts_file = ts_file
 	this.hls_fragment = fragment
 	this.hls_aof_ratio = aof_ratio
@@ -86,8 +97,8 @@ func (this *SrsHlsMuxer) update_config(entry_prefix string, path string
 	this.accept_floor_ts = 0
 	this.hls_window = window
 	this.deviation_ts = 0
-	this.m3u8_url = Srs_path_build_stream(this.m3u8_file, "aaa", "app", "test")
-	this.m3u8 = path + "/" + this.m3u8_url
+	this.m3u8_url = utils.Srs_path_build_stream(this.m3u8_file, "aaa", "app", "test")
+	this.m3u8 = p + "/" + this.m3u8_url
 	//todo set max td
 	this.m3u8_dir = path.Dir(this.m3u8)
 	err := os.MkdirAll(this.m3u8_dir, os.ModePerm)
@@ -101,37 +112,38 @@ func (this *SrsHlsMuxer) segment_open(segment_start_dts int64) error {
 		return nil
 	}
 	//todo
-	default_acodec := SrsCodecAudioAAC
-	default_vcodec := SrsCodecVideoAVC
+	default_acodec := codec.SrsCodecAudio(codec.SrsCodecAudioAAC)
+	default_vcodec := codec.SrsCodecVideo(codec.SrsCodecVideoAVC)
 
 	this.current = NewSrsHlsSegment(this.context, default_acodec, default_vcodec)
-	this.current.sequence_no = this._sequence_no++
+	this.current.sequence_no = this._sequence_no
+	this._sequence_no++
 
-	this.current.segment_start_dts = this.segment_start_dts
+	this.current.segment_start_dts = segment_start_dts
 
 	ts_file := this.hls_ts_file
-	ts_file = Srs_path_build_stream(ts_file, "aaa", "app", "test")
+	ts_file = utils.Srs_path_build_stream(ts_file, "aaa", "app", "test")
 
 	if this.hls_ts_floor {
 		current_floor_ts := int64(((time.Now().UnixNano() / 1e6) / (1000 * 5)))
 
 		if this.accept_floor_ts == 0 {
-			this.accept_floor_ts = current_floor_ts - 1
+			this.accept_floor_ts = float64(current_floor_ts - 1)
 		} else {
 			this.accept_floor_ts++
 		}
 
-		if this.accept_floor_ts - current_floor_ts > SRS_JUMP_WHEN_PIECE_DEVIATION {
-            this.accept_floor_ts = current_floor_ts - 1
+		if int64(this.accept_floor_ts - float64(current_floor_ts)) > SRS_JUMP_WHEN_PIECE_DEVIATION {
+            this.accept_floor_ts = float64(current_floor_ts - 1)
 		}
 		
-		this.deviation_ts = (int)(this.accept_floor_ts - current_floor_ts)
+		this.deviation_ts = (int)(this.accept_floor_ts - float64(current_floor_ts))
 
 		// dup/jmp detect for ts in floor mode.
-        if this.previous_floor_ts != 0 && this.previous_floor_ts != current_floor_ts - 1 {
+        if int64(this.previous_floor_ts) != 0 && int64(this.previous_floor_ts) != current_floor_ts - 1 {
 
         }
-        this.previous_floor_ts = current_floor_ts;
+        this.previous_floor_ts = float64(current_floor_ts);
 		// we always ensure the piece is increase one by one.
 		//todo ts file name replace
 	}
@@ -140,13 +152,13 @@ func (this *SrsHlsMuxer) segment_open(segment_start_dts int64) error {
 	//add prefix
 
 	// open temp ts file.
-    tmp_file := this.current.full_path + ".tmp";
-	
-	if err := this.current.muxer.open(tmp_file); err != nil {
-		return err
-	}
+	tmp_file := this.current.full_path + ".tmp";
+	_ = tmp_file
+	//todo	
+	// if err := this.current.muxer.open(tmp_file); err != nil {
+	// 	return err
+	// }
 	
 	return nil
 }
-
 

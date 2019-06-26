@@ -92,7 +92,7 @@ func (this *SrsStream) ReadBytes(count uint32) ([]byte, error) {
 func (this *SrsStream) ReadLeftBytes() []byte {
 	l := len(this.p)
 	b := this.p
-	this.Skip(l)
+	this.Skip(uint32(l))
 	return b
 }
 

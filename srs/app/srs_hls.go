@@ -56,12 +56,15 @@ func (this *SrsHls) dispose() {
 }
 
 func (this *SrsHls) on_meta_data(metaData *rtmp.SrsRtmpMessage) error {
+	return nil
 }
 
 func (this *SrsHls) on_video(video *rtmp.SrsRtmpMessage) error {
+	return nil
 }
 
 func (this *SrsHls) on_audio(audio *rtmp.SrsRtmpMessage) error {
+	return nil
 }
 
 func (this *SrsHls) Close() {

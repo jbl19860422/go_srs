@@ -1,5 +1,9 @@
 package app
 
+import (
+	"errors"
+	"go_srs/srs/codec"
+)
 type SrsCodecSample struct {
 	IsVideo			bool
 	SampleUnits		[]([]byte)
@@ -12,7 +16,7 @@ type SrsCodecSample struct {
 	FrameType		codec.SrsCodecVideoAVCFrame
 	AvcPacketType	codec.SrsCodecVideoAVCType
 	//
-	IsIdr			bool
+	HasIdr			bool
 	HasAud			bool
 	HasSpsPps		bool
 
@@ -30,7 +34,7 @@ const SRS_SRS_MAX_CODEC_SAMPLE = 128
 
 func NewSrsCodecSample() *SrsCodecSample {
 	return &SrsCodecSample{
-		SampleUnits:make([]([]byte), 0)
+		SampleUnits:make([]([]byte), 0),
 	}
 }
 
@@ -41,16 +45,16 @@ func (this *SrsCodecSample) AddSampleUnit(data []byte) error {
 
 	this.SampleUnits = append(this.SampleUnits, data)
 	if this.IsVideo {
-		nalUnitType := SrsAvcNaluType(data[0] & 0x1f)
-		if nalUnitType == SrsAvcNaluTypeIDR {
+		nalUnitType := codec.SrsAvcNaluType(data[0] & 0x1f)
+		if nalUnitType == codec.SrsAvcNaluTypeIDR {
 			this.HasIdr = true
-		} else if nalUnitType == SrsAvcNaluTypeSPS || nalUnitType == SrsAvcNaluTypePPS {
+		} else if nalUnitType == codec.SrsAvcNaluTypeSPS || nalUnitType == codec.SrsAvcNaluTypePPS {
 			this.HasSpsPps = true
-		} else if nalUnitType == SrsAvcNaluTypeAccessUnitDelimiter {
+		} else if nalUnitType == codec.SrsAvcNaluTypeAccessUnitDelimiter {
 			this.HasAud = true
 		}
 
-		if this.FirstNaluType == SrsAvcNaluTypeReserved {
+		if this.FirstNaluType == codec.SrsAvcNaluTypeReserved {
 			this.FirstNaluType = nalUnitType
 		}
 	}

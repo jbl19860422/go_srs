@@ -22,6 +22,9 @@ type SrsHlsCache struct {
 
 }
 
+func NewSrsHlsCache() *SrsHlsCache {
+	return &SrsHlsCache{}
+}
 /**
 * when get sequence header, 
 * must write a #EXT-X-DISCONTINUITY to m3u8.
@@ -29,12 +32,12 @@ type SrsHlsCache struct {
 * @see: 3.4.11.  EXT-X-DISCONTINUITY
 */
 func (this *SrsHlsCache) on_sequence_header(muxer *SrsHlsMuxer) error {
-
+	return nil
 }
 
  /**
 * write audio to cache, if need to flush, flush to muxer.
 */
 func (this *SrsHlsCache) write_audio(codec *SrsAvcAacCodec, muxer *SrsHlsMuxer, pts int64, sample *SrsCodecSample) error {
-
+	return nil
 }
