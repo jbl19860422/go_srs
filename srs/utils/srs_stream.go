@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"encoding/binary"
 	"errors"
 )
@@ -35,6 +36,7 @@ func (this *SrsStream) Empty() bool {
 }
 
 func (this *SrsStream) Require(required_size uint32) bool {
+	fmt.Println("required_size=", required_size, "&len=", len(this.p))
 	return required_size <= uint32(len(this.p))
 }
 

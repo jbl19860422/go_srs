@@ -271,10 +271,11 @@ func GetNalus(stream *SrsStream) []([]byte) {
 		return nil
 	}
 
-	var i int = 0
+	var i int = prevPos
 	for (i + 4) < len(payload) {
 		if payload[i] == 0x00 && payload[i + 1] == 0x00 {
 			if payload[i + 2] == 0x01 {
+				fmt.Println("prevPos=", prevPos, "&i=",i)
 				nalus = append(nalus, payload[prevPos:i])
 				i += 3
 				prevPos = i

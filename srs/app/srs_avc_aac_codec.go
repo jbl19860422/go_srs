@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+
 	// "os"
 	// "encoding/base64"
 	"encoding/binary"
@@ -41,7 +42,7 @@ type SrsAvcAacCodec struct {
 	avcProfile codec.SrsAvcProfile
 	// level_idc, H.264-AVC-ISO_IEC_14496-10.pdf, page 45.
 	avcLevel                    codec.SrsAvcLevel
-	NALUintLength               int8
+	NalUnitLength               int8
 	sequenceParameterSetLength  int16
 	sequenceParameterSetNALUnit []byte
 	pictureParameterSetLength   int16
@@ -64,7 +65,7 @@ func NewSrsAvcAacCodec() *SrsAvcAacCodec {
 		width:         0,
 		height:        0,
 		duration:      0,
-		NALUintLength: 0,
+		NalUnitLength: 0,
 		frameRate:     0,
 		videoDataRate: 0,
 		videoCodecId:  0,
@@ -275,19 +276,72 @@ func (this *SrsAvcAacCodec) video_nalu_demux(stream *utils.SrsStream, sample *Sr
 	}
 
 	if this.payloadFormat == codec.SrsAvcPayloadFormatGuess {
+		is_annexb, _ := this.avc_demux_annexb_format(stream, sample)
+		if is_annexb {
+			this.payloadFormat = codec.SrsAvcPayloadFormatAnnexb
+		} else {
+			is_ibmf := this.avc_demux_ibmf_format(stream, sample)
+			_ = is_ibmf
+			fmt.Println("**************is_ibmf=", is_ibmf, "************")
+			if is_ibmf {
+				this.payloadFormat = codec.SrsAvcPayloadFormatIbmf
+			}
+		}
+	} else if this.payloadFormat == codec.SrsAvcPayloadFormatAnnexb {
 		_, _ = this.avc_demux_annexb_format(stream, sample)
+	} else if this.payloadFormat == codec.SrsAvcPayloadFormatIbmf {
+		_ = this.avc_demux_ibmf_format(stream, sample)
 	}
+
 	return nil
 }
 
 func (this *SrsAvcAacCodec) avc_demux_annexb_format(stream *utils.SrsStream, sample *SrsCodecSample) (bool, error) {
 	nalus := utils.GetNalus(stream)
 	if nalus == nil {
-		fmt.Println("********************avc_demux_annexb_format error********************")
-	} else {
-		fmt.Println("********************avc_demux_annexb_format len=", len(nalus), "***********************")
+		return false, nil
 	}
 	return true, nil
+}
+
+func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sample *SrsCodecSample) bool {
+	fmt.Println("***************avc_demux_ibmf_format start*****************",this.NalUnitLength)
+	pictureLength := len(stream.Data())
+	for i := 0; i < pictureLength; {
+		b, err := stream.ReadBytes(uint32(this.NalUnitLength + 1))
+		if err != nil {
+			fmt.Println("****************error 1  ", err, "&i=", i)
+			return false
+		}
+
+		var NALUnitLength int32 = 0
+		for j := 0; j < len(b); j++ {
+			NALUnitLength |= int32(int32(b[j]) << uint32((len(b)-j-1)*8))
+		}
+
+		d, err2 := stream.ReadBytes(uint32(NALUnitLength))
+		if err2 != nil {
+			fmt.Println("****************error 2")
+			return false
+		}
+		_ = d
+		
+		// for k := 0; k < len(b); k++ {
+		// 	fmt.Printf("%x ", b[k])
+		// }
+		// fmt.Println("pictureLength=",pictureLength,"&NALUnitLength=", NALUnitLength)
+		// 7.3.1 NAL unit syntax, H.264-AVC-ISO_IEC_14496-10.pdf, page 44.
+		err = sample.AddSampleUnit(d)
+		if err != nil {
+			fmt.Println("****************error 3")
+			return false
+		}
+
+		i += int(int32(this.NalUnitLength) + 1 + NALUnitLength)
+		fmt.Println("pictureLength=", pictureLength, "&i=", i, "&NALUnitLength=", NALUnitLength)
+		// fmt.Printf("*****************NALUnitLength=%x\n", NALUnitLength)
+	}
+	return true
 }
 
 func (this *SrsAvcAacCodec) avc_demux_sps_pps(stream *utils.SrsStream) error {
@@ -320,13 +374,13 @@ func (this *SrsAvcAacCodec) avc_demux_sps_pps(stream *utils.SrsStream) error {
 		return err3
 	}
 	lengthSizeMinusOne &= 0x03
-	this.NALUintLength = lengthSizeMinusOne
+	this.NalUnitLength = lengthSizeMinusOne
 	// 5.3.4.2.1 Syntax, H.264-AVC-ISO_IEC_14496-15.pdf, page 16
 	// 5.2.4.1 AVC decoder configuration record
 	// 5.2.4.1.2 Semantics
 	// The value of this field shall be one of 0, 1, or 3 corresponding to a
 	// length encoded with 1, 2, or 4 bytes, respectively.
-	if this.NALUintLength == 2 {
+	if this.NalUnitLength == 2 {
 		return errors.New("sps lengthSizeMinusOne should never be 2")
 	}
 
@@ -379,7 +433,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps() error {
 	if this.sequenceParameterSetLength <= 0 {
 		return nil
 	}
-	
+
 	stream := utils.NewSrsStream(this.sequenceParameterSetNALUnit)
 	// for NALU, 7.3.1 NAL unit syntax
 	// H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 61.
@@ -399,7 +453,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps() error {
 		return errors.New("for sps, nal_ref_idc shall be not be equal to 0.")
 	}
 	// 7.4.1 NAL unit semantics
-    // H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 61.
+	// H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 61.
 	// nal_unit_type specifies the type of RBSP data structure contained in the NAL unit as specified in Table 7-1.
 	nal_unit_type := codec.SrsAvcNaluType(nutv & 0x1f)
 	if nal_unit_type != 7 {
@@ -417,7 +471,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps() error {
 		rbsp = append(rbsp, b)
 		nb_rbsp := len(rbsp)
 		// XX 00 00 03 XX, the 03 byte should be drop.
-		if nb_rbsp > 2 && rbsp[nb_rbsp - 3] == 0x00 && rbsp[nb_rbsp - 2] == 0x00 && rbsp[nb_rbsp - 1] == 0x03 {
+		if nb_rbsp > 2 && rbsp[nb_rbsp-3] == 0x00 && rbsp[nb_rbsp-2] == 0x00 && rbsp[nb_rbsp-1] == 0x03 {
 			if stream.Empty() {
 				break
 			}
@@ -425,7 +479,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps() error {
 			if err != nil {
 				return err
 			}
-			rbsp[len(rbsp) - 1] = c
+			rbsp[len(rbsp)-1] = c
 		}
 	}
 
@@ -505,7 +559,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 			_ = separate_colour_plane_flag
 		}
 
-		fmt.Println("*****************chroma_format_idc=", chroma_format_idc , "*******************")
+		fmt.Println("*****************chroma_format_idc=", chroma_format_idc, "*******************")
 
 		bit_depth_luma_minus8, err := bs.ReadUEV()
 		if err != nil {
@@ -547,7 +601,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 					return err
 				}
 				seq_scaling_list_present_flag = append(seq_scaling_list_present_flag, b)
-				if seq_scaling_list_present_flag[len(seq_scaling_list_present_flag) - 1] == 1 {
+				if seq_scaling_list_present_flag[len(seq_scaling_list_present_flag)-1] == 1 {
 					if i < 6 {
 						//todo scaling_list
 					}
