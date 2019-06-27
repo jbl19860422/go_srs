@@ -58,29 +58,14 @@ const TS_AUDIO_MP3_PID = 0x102
 type SrsTsPayload interface {
 	Encode(stream *utils.SrsStream)
 	Decode(stream *utils.SrsStream) error
+	Size() uint32
 }
 
-type SrsTsPacket struct {
-	tsHeader        *SrsTsHeader
-	adaptationField *SrsTsAdapationField
-	payload         SrsTsPayload
+type SrsTsMessage struct {
+	channel *SrsTsChannel
+	packet 	*SrsTsPacket
 }
 
-func NewSrsTsPacket() *SrsTsPacket {
-	return &SrsTsPacket{
-		tsHeader: NewSrsTsHeader(),
-	}
-}
-
-func (this *SrsTsPacket) Decode(stream *utils.SrsStream) error {
-	return nil
-}
-
-func (this *SrsTsPacket) Encode(stream *utils.SrsStream) {
-	this.tsHeader.Encode(stream)
-	if this.tsHeader.adatpationFieldControl == SrsTsAdapationControlFieldOnly || this.tsHeader.adatpationFieldControl == SrsTsAdapationControlBoth {
-		this.adaptationField.Encode(stream)
-	}
-
-	this.payload.Encode(stream)
+func (this *SrsTsMessage) IsAudio() bool {
+	return false
 }

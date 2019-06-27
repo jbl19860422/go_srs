@@ -4,6 +4,7 @@ import "go_srs/srs/utils"
 
 //see iso-13818.pdf, page 49
 type SrsTsPayloadPES struct {
+	packet				*SrsTsPacket
 	/*
 		The packet_start_code_prefix is a 24-bit code. Together with the stream_id that follows, it
 		constitutes a packet start code that identifies the beginning of a packet. The packet_start_code_prefix is the bit string
@@ -65,7 +66,7 @@ type SrsTsPayloadPES struct {
 	 * in the PES packet header. When the PTS_DTS_flags field is set to '00' no PTS or DTS fields shall be present in the PES
 	 * packet header. The value '01' is forbidden.
 	 */
-	PTSDTSflags int8 //2bits
+	PTSDTSFlags int8 //2bits
 	/**
 	 * A 1-bit flag, which when set to '1' indicates that ESCR base and extension fields are present in the PES
 	 * packet header. When set to '0' it indicates that no ESCR fields are present.
@@ -332,14 +333,82 @@ type SrsTsPayloadPES struct {
 	paddings []byte
 }
 
-func NewSrsTsPayloadPES() *SrsTsPayloadPES {
-	return &SrsTsPayloadPES{}
+func NewSrsTsPayloadPES(p *SrsTsPacket) *SrsTsPayloadPES {
+	return &SrsTsPayloadPES{
+		packet:p,
+	}
 }
 
 func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
-
+	
 }
 
 func (this *SrsTsPayloadPES) Decode(stream *utils.SrsStream) error {
 	return nil
+}
+
+func (this *SrsTsPayloadPES) Size() uint32 {
+	return 0
+}
+
+func CreatePesFirst(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuityCounter uint8, discontinuity int8, pcr int64, dts int64, pts int64, size int) *SrsTsPacket {
+	pkt := NewSrsTsPacket()
+
+	pkt.tsHeader.syncByte = SRS_TS_SYNC_BYTE
+	pkt.tsHeader.transportErrorIndicator = 0
+	pkt.tsHeader.payloadUnitStartIndicator = 1
+	pkt.tsHeader.transportPriority = 0
+	pkt.tsHeader.PID = SrsTsPid(pid)
+	pkt.tsHeader.transportScrambingControl = SrsTsScrambledDisabled
+	pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
+	pkt.tsHeader.continuityCounter = int8(continuityCounter)
+
+    pkt.payload = NewSrsTsPayloadPES(pkt)
+    pes := pkt.payload.(*SrsTsPayloadPES)
+
+    if pcr >= 0 {//这里没明白
+		af := NewSrsTsAdaptationField(pkt)
+        pkt.adaptationField = af
+        pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
+
+        af.adaptationFieldLength = 0 // calc in size.
+        af.discontinuityIndicator = discontinuity
+        af.randomAccessIndicator = 0
+        af.elementaryStreamPriorityIndicator = 0
+        af.PCRFlag = 1
+        af.OPCRFlag = 0
+        af.splicingPointFlag = 0
+        af.transportPrivateDataFlag = 0
+        af.adaptationFieldExtensionFlag = 0
+        af.programClockReferenceBase = pcr
+        af.programClockReferenceExtension = 0
+    }
+
+    pes.packetStartCodePrefix = 0x01
+	pes.streamId = int8(sid)
+	if size > 0xFFFF {
+		pes.PESPacketLength = 0
+	} else {
+		pes.PESPacketLength = uint16(size)
+	}
+    pes.PESScramblingControl = 0
+    pes.PESPriority = 0
+    pes.dataAlignmentIndicator = 0
+    pes.copyright = 0
+	pes.originalOrCopy = 0
+	if dts == pts {
+		pes.PTSDTSFlags = 0x02
+	} else {
+		pes.PTSDTSFlags = 0x03
+	}
+    pes.ESCRFlag = 0
+    pes.ESRateFlag = 0
+    pes.DSMTrickModeFlag = 0
+    pes.additionalCopyInfoFlag = 0
+    pes.PESCRCFlag = 0
+    pes.PESExtensionFlag = 0
+    pes.PESHeaderDataLength = 0 // calc in size.
+    pes.pts = pts
+    pes.dts = dts
+    return pkt
 }

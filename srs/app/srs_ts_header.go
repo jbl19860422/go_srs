@@ -1,7 +1,8 @@
 package app
 
 import (
-	"fmt"
+	// "fmt"
+	"encoding/binary"
 	"go_srs/srs/utils"
 )
 
@@ -67,7 +68,7 @@ type SrsTsHeader struct {
 		This 2-bit field indicates whether this Transport Stream packet header is followed by an
 		adaptation field and/or payload (see Table 2-5).
 	*/
-	adatpationFieldControl SrsTsAdapationControl
+	adaptationFieldControl SrsTsAdapationControl
 
 	/*
 		The continuity_counter is a 4-bit field incrementing with each Transport Stream packet with the
@@ -88,12 +89,12 @@ func NewSrsTsHeader() *SrsTsHeader {
 		transportPriority:         0,
 		PID:                       SrsTsPidPAT,
 		transportScrambingControl: SrsTsScrambledDisabled,
-		adatpationFieldControl:    SrsTsAdapationControlPayloadOnly,
+		adaptationFieldControl:    SrsTsAdapationControlPayloadOnly,
 		continuityCounter:         0,
 	}
 }
 
-func (this *SrsTsHeader) Encode(stream *utils.SrsStream) {
+func (this *SrsTsHeader) Encode(stream *utils.SrsStream) {//4B
 	stream.WriteByte(byte(this.syncByte))
 
 	var pidv int16 = 0
@@ -101,26 +102,19 @@ func (this *SrsTsHeader) Encode(stream *utils.SrsStream) {
 	pidv |= int16(this.transportPriority<<13) & 0x2000
 	pidv |= int16(int16(this.payloadUnitStartIndicator)<<14) & 0x4000
 	pidv |= int16(uint16(this.transportErrorIndicator<<15) & 0x8000)
-	fmt.Println("pidv=", pidv)
-	// stream.WriteInt16(pidv, binary.LittleEndian)
-	// var b byte = 0
-	// b |= byte(this.transportErrorIndicator) << 0
-	// b |= byte(this.payloadUnitStartIndicator) << 1
-	// b |= byte(this.transportPriority) << 2
-	// b |= byte(this.PID&0x1f) << 3
-	// // fmt.Printf("b=%x",b)
-	// stream.WriteByte(b)
-	// b = 0
-	// b |= byte(this.PID >> 3)
-	// stream.WriteByte(b)
-	// var b byte = 0
+	stream.WriteInt16(pidv, binary.BigEndian)
+
 	var b byte = 0
-	b |= byte(this.transportScrambingControl) & 0x03
-	b |= byte((this.adatpationFieldControl & 0x03) << 2)
-	b |= byte(this.continuityCounter&0x0f) << 4
+	b |= byte(this.continuityCounter&0x0f)
+	b |= byte(this.transportScrambingControl << 6) & 0xC0
+	b |= byte((this.adaptationFieldControl << 4) & 0x30)
 	stream.WriteByte(b)
 }
 
 func (this *SrsTsHeader) Decode(stream *utils.SrsStream) error {
 	return nil
+}
+
+func (this *SrsTsHeader) Size() uint32 {
+	return 4
 }

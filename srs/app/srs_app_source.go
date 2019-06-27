@@ -89,14 +89,24 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		dvr:NewSrsDvr(),
 	}
 	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
+
+
 	pkt := CreatePAT(nil, TS_PMT_NUMBER, TS_PMT_PID)
 	f, err := os.OpenFile("a.ts", os.O_RDWR|os.O_CREATE, 0755)
 	stream := utils.NewSrsStream([]byte{})
 	pkt.Encode(stream)
 	f.Write(stream.Data())
+	
+
+	pkt1 := CreatePMT(nil, TS_PMT_NUMBER, TS_PMT_PID, TS_VIDEO_AVC_PID, SrsTsStreamVideoH264, TS_AUDIO_AAC_PID, SrsTsStreamAudioAAC)
+	stream1 := utils.NewSrsStream([]byte{})
+	pkt1.Encode(stream1)
+	f.Write(stream1.Data())
+
 	f.Close()
 	_ = pkt
 	_ = err
+
 	return source
 }
 

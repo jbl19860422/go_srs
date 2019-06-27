@@ -1,6 +1,10 @@
 package app
 
-import "go_srs/srs/utils"
+import (
+	"fmt"
+	"encoding/binary"
+	"go_srs/srs/utils"
+)
 
 /**
 * 2.4.4.4 Table_id assignments, hls-mpeg-ts-iso13818-1.pdf, page 62
@@ -36,6 +40,7 @@ const (
 )
 
 type SrsTsPayloadPSI struct {
+	packet 		*SrsTsPacket
 	/**
 	 * This is an 8-bit field whose value shall be the number of bytes, immediately following the pointer_field
 	 * until the first byte of the first section that is present in the payload of the Transport Stream packet (so a value of 0x00 in
@@ -71,26 +76,29 @@ type SrsTsPayloadPSI struct {
 	sectionLength int16 //12bits 	后面数据的长度
 }
 
-func NewSrsTsPayloadPSI() *SrsTsPayloadPSI {
+func NewSrsTsPayloadPSI(p *SrsTsPacket) *SrsTsPayloadPSI {
 	return &SrsTsPayloadPSI{
 		pointerField: 0,
+		packet:p,
 	}
 }
 
-func (this *SrsTsPayloadPSI) Encode(stream *utils.SrsStream) {
-	stream.WriteByte(byte(this.pointerField))
+func (this *SrsTsPayloadPSI) Encode(stream *utils.SrsStream) {//4B
+	if this.packet.tsHeader.payloadUnitStartIndicator == 1 {
+		stream.WriteByte(byte(this.pointerField))
+	}
+	
 	stream.WriteByte(byte(this.tableId))
-	var b byte = 0
-	b |= byte(this.sectionSyntaxIndicator)
-	this.const0Value = 0x00
-	b |= byte((this.const0Value & 0x01) << 1)
-	this.const1Value0 = 0x03
-	b |= byte((this.const1Value0 & 0x3) << 2)
-	b |= byte(this.sectionLength&0x0f) << 4
-	stream.WriteByte(b)
-	b = 0
-	b |= byte(this.sectionLength>>4) & 0xff
-	stream.WriteByte(b)
+
+	var slv int16 = 0
+	slv |= this.sectionLength & 0x0fff
+	fmt.Println("************section length=", this.sectionLength)
+	this.const1Value0 = 0x3
+	slv |= (int16(this.const1Value0) << 12) & 0x3000
+	this.const0Value = 0
+	slv |= (int16(this.const0Value) << 14) & 0x4000
+	slv |= int16(this.sectionSyntaxIndicator & 0x01) << 15
+	stream.WriteInt16(slv, binary.BigEndian)
 }
 
 func (this *SrsTsPayloadPSI) Decode(stream *utils.SrsStream) error {

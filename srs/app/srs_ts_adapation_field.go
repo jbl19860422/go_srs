@@ -3,6 +3,7 @@ package app
 import "go_srs/srs/utils"
 
 type SrsTsAdapationField struct {
+	packet 				*SrsTsPacket
 	/*
 		The adaptation_field_length is an 8-bit field specifying the number of bytes in the
 		adaptation_field immediately following the adaptation_field_length. The value 0 is for inserting a single stuffing byte in
@@ -241,10 +242,20 @@ type SrsTsAdapationField struct {
 	staffingByte []byte
 }
 
+func NewSrsTsAdaptationField(p *SrsTsPacket) *SrsTsAdapationField {
+	return &SrsTsAdapationField{
+		packet:p,
+	}
+}
+
 func (this *SrsTsAdapationField) Decode(stream *utils.SrsStream) error {
 	return nil
 }
 
 func (this *SrsTsAdapationField) Encode(stream *utils.SrsStream) {
 
+}
+
+func (this *SrsTsAdapationField) Size() uint32 {
+	return 0
 }
