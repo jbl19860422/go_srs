@@ -1,6 +1,7 @@
 package app
 
 import (
+	"os"
 	"go_srs/srs/codec"
 )
 
@@ -18,10 +19,11 @@ type SrsHlsSegment struct {
 const SRS_AUTO_HLS_SEGMENT_TIMESTAMP_JUMP_MS = 300
 
 func NewSrsHlsSegment(c *SrsTsContext, ac codec.SrsCodecAudio, vc codec.SrsCodecVideo) *SrsHlsSegment {
-	w := NewSrsHlsCacheWriter()
+	// w := NewSrsHlsCacheWriter()
+	f,_ := os.OpenFile("a.ts", os.O_RDWR|os.O_CREATE, 0755)
 	return &SrsHlsSegment{
-		muxer:  NewSrsTsMuxer(w, ac, vc),
-		writer: w,
+		muxer:  NewSrsTsMuxer(f, c, ac, vc),
+		// writer: w,
 	}
 }
 

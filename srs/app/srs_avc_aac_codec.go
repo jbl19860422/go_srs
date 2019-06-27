@@ -167,6 +167,8 @@ func (this *SrsAvcAacCodec) audio_aac_demux(data []byte, sample *SrsCodecSample)
 		}
 	}
 
+	
+
 	return nil
 }
 
@@ -262,7 +264,8 @@ func (this *SrsAvcAacCodec) video_avc_demux(data []byte, sample *SrsCodecSample)
 			return err
 		}
 	} else if avcPacketType == codec.SrsCodecVideoAVCTypeNALU {
-		err := this.video_nalu_demux(stream, sample)
+		s := utils.NewSrsStream(stream.PeekLeftBytes())
+		err := this.video_nalu_demux(s, sample)
 		if err != nil {
 			return err
 		}
@@ -326,10 +329,6 @@ func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sampl
 		}
 		_ = d
 		
-		// for k := 0; k < len(b); k++ {
-		// 	fmt.Printf("%x ", b[k])
-		// }
-		// fmt.Println("pictureLength=",pictureLength,"&NALUnitLength=", NALUnitLength)
 		// 7.3.1 NAL unit syntax, H.264-AVC-ISO_IEC_14496-10.pdf, page 44.
 		err = sample.AddSampleUnit(d)
 		if err != nil {

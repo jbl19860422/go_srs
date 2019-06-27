@@ -24,9 +24,15 @@ func NewSrsTsContext() *SrsTsContext {
 	f.Truncate(0)
 
 	return &SrsTsContext{
-		ready:false,
+		ready: false,
 		file:f,
 	}
+}
+
+func (this *SrsTsContext) Reset() {
+	this.ready = false
+	this.vcodec = codec.SrsCodecVideoReserved
+	this.acodec = codec.SrsCodecAudioReserved1
 }
 
 func (this *SrsTsContext) Get(pid int) *SrsTsChannel {
@@ -101,33 +107,55 @@ func (this *SrsTsContext) Encode(msg *SrsTsMessage, vc codec.SrsCodecVideo, ac c
 }
 
 func (this *SrsTsContext) encodePatPmt(vpid int16, vs SrsTsStream, apid int16, as SrsTsStream) error {
-    if vs != SrsTsStreamVideoH264 && as != SrsTsStreamAudioAAC && as != SrsTsStreamAudioMp3 {
+	if vs != SrsTsStreamVideoH264 && as != SrsTsStreamAudioAAC && as != SrsTsStreamAudioMp3 {
 		return errors.New("invalid video stream or audio stream type")
-    }
+	}
 
-    var pmt_number int16 = TS_PMT_NUMBER
-    var pmt_pid int16 = TS_PMT_PID
-    if true {
-        pkt := CreatePAT(this, pmt_number, pmt_pid)
-        stream := utils.NewSrsStream([]byte{})
+	var pmt_number int16 = TS_PMT_NUMBER
+	var pmt_pid int16 = TS_PMT_PID
+	if true {
+		pkt := CreatePAT(this, pmt_number, pmt_pid)
+		stream := utils.NewSrsStream([]byte{})
 		pkt.Encode(stream)
 		this.file.Write(stream.Data())
 	}
-	
+
 	if true {
 		pkt := CreatePMT(this, pmt_number, pmt_pid, vpid, vs, apid, as)
-        stream := utils.NewSrsStream([]byte{})
+		stream := utils.NewSrsStream([]byte{})
 		pkt.Encode(stream)
 		this.file.Write(stream.Data())
 	}
-    // When PAT and PMT are writen, the context is ready now.
+	// When PAT and PMT are writen, the context is ready now.
 	this.ready = true
 	return nil
-}	
-
-func (this *SrsTsContext) encodePes(msg *SrsTsMessage, pid int16, stream SrsTsStream, no_video bool) {
-
 }
 
+func (this *SrsTsContext) encodePes(msg *SrsTsMessage, pid int16, sid SrsTsStream, pure_audio bool) error {
+	// Sometimes, the context is not ready(PAT/PMT write failed), error in this situation.
+	if !this.ready {
+		return errors.New("context not ready")
+	}
+
+	if len(msg.payload) <= 0 {
+		return errors.New("msg length must not be zero")
+	}
+
+	if sid != SrsTsStreamVideoH264 && sid != SrsTsStreamAudioMp3 && sid != SrsTsStreamAudioAAC {
+		return errors.New("ts: ignore the unknown stream")
+	}
+
+	channel := this.Get(int(pid))
+	_ = channel
+	left := len(msg.payload)
 
 
+	for left > 0 {
+		var pkt *SrsTsPacket
+		if left == len(msg.payload) {
+
+		}
+		_ = pkt
+	}
+	return nil
+}

@@ -209,6 +209,33 @@ func (this *SrsSource) on_dvr_request_sh() error {
 	return nil
 }
 
+func (this *SrsSource) on_publish() error {
+	if this.hls != nil {
+		err := this.hls.on_publish(this.req, false)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (this *SrsSource) on_hls_start() error {
+	if this.cacheSHVideo != nil {
+		err := this.hls.on_video(this.cacheSHVideo)
+		if err != nil {
+			return err
+		}
+	}
+
+	if this.cacheSHAudio != nil {
+		err := this.hls.on_audio(this.cacheSHAudio)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
 	if msg.GetHeader().IsAmf0Command() || msg.GetHeader().IsAmf3Command() {
 		pkt, err := this.rtmp.DecodeMessage(msg)

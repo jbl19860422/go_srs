@@ -149,7 +149,6 @@ func (this *SrsTsPayloadPAT) Encode(stream *utils.SrsStream) {
 		this.programs[i].Encode(s)//4
 	}
 
-
 	CRC32 := utils.MpegtsCRC32(s.Data()[1:])
 	s.WriteInt32(int32(CRC32), binary.BigEndian)//4
 	stream.WriteBytes(s.Data())

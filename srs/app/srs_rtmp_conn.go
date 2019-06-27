@@ -280,6 +280,11 @@ func (this *SrsRtmpConn) publishing(s *SrsSource) error {
 
 func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 	//TODO edge process
+	
+	err := this.source.on_publish()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"time"
 	"bytes"
 	"encoding/binary"
 	"net/url"
@@ -241,6 +242,10 @@ func MpegtsCRC32(data []byte) uint32 {
 	}
 
     return crc;
+}
+
+func GetCurrentMs() int64 {
+	return time.Now().UnixNano() / 1e6
 }
 
 func GetNalus(stream *SrsStream) []([]byte) {

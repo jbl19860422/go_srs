@@ -41,6 +41,10 @@ func NewSrsHlsMuxer() *SrsHlsMuxer {
 	}
 }
 
+func (this *SrsHlsMuxer) initialize() error {
+	return nil
+}
+
 func (this *SrsHlsMuxer) dispose() {
 	for i := 0; i < len(this.segments); i++ {
 		//todo unlink segments'full_path
@@ -103,6 +107,16 @@ func (this *SrsHlsMuxer) update_config(entry_prefix string, p string,
 	this.m3u8_dir = path.Dir(this.m3u8)
 	err := os.MkdirAll(this.m3u8_dir, os.ModePerm)
 	return err
+}
+
+func (this *SrsHlsMuxer) on_sequence_header() error {
+	this.current.is_sequence_header = true
+	return nil
+}
+
+func (this *SrsHlsMuxer) update_acodec(ac codec.SrsCodecAudio) error {
+	this.acodec = ac
+	return this.current.muxer.update_acodec(ac)
 }
 
 const SRS_JUMP_WHEN_PIECE_DEVIATION = 20

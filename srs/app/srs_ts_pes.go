@@ -1,10 +1,13 @@
 package app
 
-import "go_srs/srs/utils"
+import (
+	"encoding/binary"
+	"go_srs/srs/utils"
+)
 
 //see iso-13818.pdf, page 49
 type SrsTsPayloadPES struct {
-	packet				*SrsTsPacket
+	packet *SrsTsPacket
 	/*
 		The packet_start_code_prefix is a 24-bit code. Together with the stream_id that follows, it
 		constitutes a packet start code that identifies the beginning of a packet. The packet_start_code_prefix is the bit string
@@ -335,12 +338,9 @@ type SrsTsPayloadPES struct {
 
 func NewSrsTsPayloadPES(p *SrsTsPacket) *SrsTsPayloadPES {
 	return &SrsTsPayloadPES{
-		packet:p,
+		packet:     p,
+		const2Bits: 0x02,
 	}
-}
-
-func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
-	
 }
 
 func (this *SrsTsPayloadPES) Decode(stream *utils.SrsStream) error {
@@ -363,52 +363,124 @@ func CreatePesFirst(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, cont
 	pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
 	pkt.tsHeader.continuityCounter = int8(continuityCounter)
 
-    pkt.payload = NewSrsTsPayloadPES(pkt)
-    pes := pkt.payload.(*SrsTsPayloadPES)
+	pkt.payload = NewSrsTsPayloadPES(pkt)
+	pes := pkt.payload.(*SrsTsPayloadPES)
 
-    if pcr >= 0 {//这里没明白
+	if pcr >= 0 { //这里没明白
 		af := NewSrsTsAdaptationField(pkt)
-        pkt.adaptationField = af
-        pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
+		pkt.adaptationField = af
+		pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
 
-        af.adaptationFieldLength = 0 // calc in size.
-        af.discontinuityIndicator = discontinuity
-        af.randomAccessIndicator = 0
-        af.elementaryStreamPriorityIndicator = 0
-        af.PCRFlag = 1
-        af.OPCRFlag = 0
-        af.splicingPointFlag = 0
-        af.transportPrivateDataFlag = 0
-        af.adaptationFieldExtensionFlag = 0
-        af.programClockReferenceBase = pcr
-        af.programClockReferenceExtension = 0
-    }
+		af.adaptationFieldLength = 0 // calc in size.
+		af.discontinuityIndicator = discontinuity
+		af.randomAccessIndicator = 0
+		af.elementaryStreamPriorityIndicator = 0
+		af.PCRFlag = 1
+		af.OPCRFlag = 0
+		af.splicingPointFlag = 0
+		af.transportPrivateDataFlag = 0
+		af.adaptationFieldExtensionFlag = 0
+		af.programClockReferenceBase = pcr
+		af.programClockReferenceExtension = 0
+	}
 
-    pes.packetStartCodePrefix = 0x01
+	pes.packetStartCodePrefix = 0x01
 	pes.streamId = int8(sid)
 	if size > 0xFFFF {
 		pes.PESPacketLength = 0
 	} else {
 		pes.PESPacketLength = uint16(size)
 	}
-    pes.PESScramblingControl = 0
-    pes.PESPriority = 0
-    pes.dataAlignmentIndicator = 0
-    pes.copyright = 0
+	pes.PESScramblingControl = 0
+	pes.PESPriority = 0
+	pes.dataAlignmentIndicator = 0
+	pes.copyright = 0
 	pes.originalOrCopy = 0
 	if dts == pts {
 		pes.PTSDTSFlags = 0x02
 	} else {
 		pes.PTSDTSFlags = 0x03
 	}
-    pes.ESCRFlag = 0
-    pes.ESRateFlag = 0
-    pes.DSMTrickModeFlag = 0
-    pes.additionalCopyInfoFlag = 0
-    pes.PESCRCFlag = 0
-    pes.PESExtensionFlag = 0
-    pes.PESHeaderDataLength = 0 // calc in size.
-    pes.pts = pts
-    pes.dts = dts
-    return pkt
+	pes.ESCRFlag = 0
+	pes.ESRateFlag = 0
+	pes.DSMTrickModeFlag = 0
+	pes.additionalCopyInfoFlag = 0
+	pes.PESCRCFlag = 0
+	pes.PESExtensionFlag = 0
+	pes.PESHeaderDataLength = 0 // calc in size.
+	pes.pts = pts
+	pes.dts = dts
+	return pkt
+}
+
+func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
+	//start code
+	stream.WriteByte(0x01)
+	stream.WriteByte(0x00)
+	stream.WriteByte(0x00)
+	//stream id(1B)
+	stream.WriteByte(byte(this.streamId))
+	// 2B
+	// the PES_packet_length is the actual bytes size, the pplv write to ts
+	// is the actual bytes plus the header size.
+	var pplv int32 = 0
+	if this.PESPacketLength > 0 {
+		pplv = int32(this.PESPacketLength + 3 + uint16(this.PESHeaderDataLength))
+		if pplv > 0xFFFF {
+			pplv = 0
+		}
+	}
+	stream.WriteInt16(int16(pplv), binary.BigEndian)
+
+	var oocv int8 = this.originalOrCopy & 0x01
+	oocv |= int8(int32(this.const2Bits<<6) & 0xC0)
+	oocv |= (this.PESScramblingControl << 4) & 0x30
+	oocv |= (this.PESPriority << 3) & 0x08
+	oocv |= (this.dataAlignmentIndicator << 2) & 0x04
+	oocv |= (this.copyright << 1) & 0x02
+
+	stream.WriteByte(byte(oocv))
+
+	// 1B
+	var pefv int8 = this.PESExtensionFlag & 0x01
+	pefv |= int8(int32(this.PTSDTSFlags<<6) & 0xC0)
+	pefv |= (this.ESCRFlag << 5) & 0x20
+	pefv |= (this.ESRateFlag << 4) & 0x10
+	pefv |= (this.DSMTrickModeFlag << 3) & 0x08
+	pefv |= (this.additionalCopyInfoFlag << 2) & 0x04
+	pefv |= (this.PESCRCFlag << 1) & 0x02
+	stream.WriteByte(byte(pefv))
+	// 1B
+	stream.WriteByte(this.PESHeaderDataLength)
+	var nb_required int32 = 0
+	if this.PTSDTSFlags == 0x2 {
+		nb_required += 5
+	} else if this.PTSDTSFlags == 0x03 {
+		nb_required += 10
+	}
+
+	if this.ESCRFlag == 1 {
+		nb_required += 6
+	}
+
+	if this.ESRateFlag == 1 {
+		nb_required += 3
+	}
+
+	if this.DSMTrickModeFlag == 1 {
+		nb_required += 1
+	}
+
+	if this.additionalCopyInfoFlag == 1 {
+		nb_required += 1
+	}
+
+	if this.PESCRCFlag == 1 {
+		nb_required += 2
+	}
+
+	if this.PESExtensionFlag {
+		nb_required += 1
+	}
+	
 }
