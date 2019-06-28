@@ -16,12 +16,14 @@ import (
 
 type SrsServer struct {
 	conns 		[]*SrsRtmpConn
+	flvServer 	*SrsHttpStreamServer
 	connsMtx	sync.Mutex
 }
 
 func NewSrsServer() *SrsServer {
 	return &SrsServer{
 		conns:make([]*SrsRtmpConn, 0),
+		flvServer:NewSrsHttpStreamServer(),
 	}
 }
 

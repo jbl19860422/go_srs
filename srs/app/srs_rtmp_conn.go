@@ -199,46 +199,6 @@ func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer) er
 	_ = consumer.PlayCycle()
 	fmt.Println("end playing cycle")
 	return nil
-	// for {
-	// 	// fmt.Println("*************do_playing start***************")
-	// 	//todo expired
-	// 	for !consumer.queueRecvThread.Empty() {//process signal message
-	// 		msg := consumer.queueRecvThread.GetMsg()
-	// 		if msg != nil {
-	// 			err := this.process_play_control_msg(consumer, msg)
-	// 			if err != nil {
-	// 				return err
-	// 			}
-	// 		}
-	// 	}
-	// 	//todo process trd error
-	// 	//todo process realtime stream
-	// 	if realtime {
-
-	// 	} else {
-	// 		msg, err := consumer.Wait(1, 100)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-
-	// 		if msg != nil {
-	// 			// fmt.Println("send to consumer")
-	// 			if msg.GetHeader().IsVideo() {
-	// 				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
-	// 				if flvcodec.VideoIsKeyframe(msg.GetPayload()) {
-	// 					// fmt.Println("send key frame")
-	// 				}
-	// 			} else {
-	// 				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");
-	// 			}
-				
-	// 			err := this.rtmp.SendMsg(msg, this.res.StreamId)
-	// 			_ = err
-	// 		}
-	// 	}
-	// }
-
-	// return nil
 }
 
 // func (this *SrsRtmpConn) process_play_control_msg(consumer *SrsConsumer, msg *rtmp.SrsRtmpMessage) error {
