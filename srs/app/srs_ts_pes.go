@@ -2,7 +2,7 @@ package app
 
 import (
 	// "os"
-	"fmt"	
+
 	"encoding/binary"
 	"go_srs/srs/utils"
 )
@@ -406,13 +406,13 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 		pkt.tsHeader.continuityCounter = int8(*continuityCounter)
 		*continuityCounter++
 		var spaceLeft int = 0
-		var paddingCount int = 0
+		// var paddingCount int = 0
 		if leftCount == len(payload) {
-			if pcr >= 0 { 
+			if pcr >= 0 {
 				af := NewSrsTsAdaptationField(pkt)
 				pkt.adaptationField = af
 				pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
-		
+
 				af.adaptationFieldLength = 0 // calc in size.
 				af.discontinuityIndicator = discontinuity
 				af.randomAccessIndicator = 0
@@ -434,44 +434,67 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 		}
 
 		if leftCount < spaceLeft {
-			paddingCount = spaceLeft - leftCount
+			af := NewSrsTsAdaptationField(pkt)
+			pkt.adaptationField = af
+			pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
+
+			af.adaptationFieldLength = 0 // calc in size.
+			af.discontinuityIndicator = 0
+			af.randomAccessIndicator = 0
+			af.elementaryStreamPriorityIndicator = 0
+			af.PCRFlag = 0
+			af.OPCRFlag = 0
+			af.splicingPointFlag = 0
+			af.transportPrivateDataFlag = 0
+			af.adaptationFieldExtensionFlag = 0
+			af.programClockReferenceBase = 0
+			af.programClockReferenceExtension = 0
 		}
+
+		var adaptationFieldLength int = 0
+		if pkt.adaptationField != nil {
+			adaptationFieldLength = pkt.adaptationField.Padding(leftCount)
+		}
+
+		consumed := 188 - 4 - adaptationFieldLength
+		pkt.payload1 = payload[currPos:(currPos + consumed)]
+		currPos += consumed
 
 		// if pkt.adaptationField != nil {
 		// 	paddingCount += int(pkt.adaptationField.Size())
 		// }
 
-		fmt.Println("***********leftCount=", leftCount, "&paddingCount=", paddingCount, "spaceLeft=", spaceLeft, "************")
-		consumed := spaceLeft - paddingCount
-		fmt.Println("***********consumed=", consumed)
-		pkt.payload1 = payload[currPos:(currPos+consumed)]
-		currPos += consumed
+		// fmt.Println("***********leftCount=", leftCount, "&paddingCount=", paddingCount, "spaceLeft=", spaceLeft, "************")
+		// consumed := spaceLeft - paddingCount
+		// fmt.Println("***********consumed=", consumed)
+		// pkt.payload1 = payload[currPos:(currPos+consumed)]
+		// currPos += consumed
 
-		if paddingCount > 0 {//说明需要padding
-			if pkt.adaptationField == nil {
-				af := NewSrsTsAdaptationField(pkt)
-				pkt.adaptationField = af
-				pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
-		
-				af.adaptationFieldLength = 0 // calc in size.
-				af.discontinuityIndicator = 0
-				af.randomAccessIndicator = 0
-				af.elementaryStreamPriorityIndicator = 0
-				af.PCRFlag = 0
-				af.OPCRFlag = 0
-				af.splicingPointFlag = 0
-				af.transportPrivateDataFlag = 0
-				af.adaptationFieldExtensionFlag = 0
-				af.programClockReferenceBase = 0
-				af.programClockReferenceExtension = 0
-				// fmt.Println("*********create adaptationField***************")
-				af.Padding(paddingCount)
-			} else {
-				pkt.adaptationField.Padding(paddingCount)
-			}
-		} else if pkt.adaptationField != nil {//也说明有padding
-			pkt.adaptationField.Padding(paddingCount)
-		}
+		// if paddingCount > 0 { //说明需要padding
+		// 	if pkt.adaptationField == nil {
+		// 		af := NewSrsTsAdaptationField(pkt)
+		// 		pkt.adaptationField = af
+		// 		pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
+
+		// 		af.adaptationFieldLength = 0 // calc in size.
+		// 		af.discontinuityIndicator = 0
+		// 		af.randomAccessIndicator = 0
+		// 		af.elementaryStreamPriorityIndicator = 0
+		// 		af.PCRFlag = 0
+		// 		af.OPCRFlag = 0
+		// 		af.splicingPointFlag = 0
+		// 		af.transportPrivateDataFlag = 0
+		// 		af.adaptationFieldExtensionFlag = 0
+		// 		af.programClockReferenceBase = 0
+		// 		af.programClockReferenceExtension = 0
+		// 		// fmt.Println("*********create adaptationField***************")
+		// 		af.Padding(paddingCount)
+		// 	} else {
+		// 		pkt.adaptationField.Padding(paddingCount)
+		// 	}
+		// } else if pkt.adaptationField != nil { //也说明有padding
+		// 	pkt.adaptationField.Padding(paddingCount)
+		// }
 
 		leftCount -= consumed
 		// fmt.Println("******leftCount=", leftCount, "&canConsumed=", canConsumed, "&len(payload)=", len(payload))
@@ -543,14 +566,14 @@ func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
 }
 
 func (this *SrsTsPayloadPES) encode_33bits_dts_pts(stream *utils.SrsStream, fb uint8, v int64) {
-    var val int32 = 0
-    val = int32(int64(fb) << 4 | (((v >> 30) & 0x07) << 1) | 1)
-    stream.WriteByte(byte(val))
-    
-    val = int32((((v >> 15) & 0x7fff) << 1) | 1)
-    stream.WriteByte(byte(val >> 8))
-    stream.WriteByte(byte(val))
-    
+	var val int32 = 0
+	val = int32(int64(fb)<<4 | (((v >> 30) & 0x07) << 1) | 1)
+	stream.WriteByte(byte(val))
+
+	val = int32((((v >> 15) & 0x7fff) << 1) | 1)
+	stream.WriteByte(byte(val >> 8))
+	stream.WriteByte(byte(val))
+
 	val = int32((((v) & 0x7fff) << 1) | 1)
 	stream.WriteByte(byte(val >> 8))
 	stream.WriteByte(byte(val))

@@ -7,7 +7,7 @@ import (
 )
 
 type SrsTsAdapationField struct {
-	packet 				*SrsTsPacket
+	packet *SrsTsPacket
 	/*
 		The adaptation_field_length is an 8-bit field specifying the number of bytes in the
 		adaptation_field immediately following the adaptation_field_length. The value 0 is for inserting a single stuffing byte in
@@ -248,7 +248,7 @@ type SrsTsAdapationField struct {
 
 func NewSrsTsAdaptationField(p *SrsTsPacket) *SrsTsAdapationField {
 	return &SrsTsAdapationField{
-		packet:p,
+		packet: p,
 	}
 }
 
@@ -260,7 +260,7 @@ func (this *SrsTsAdapationField) Encode(stream *utils.SrsStream) {
 	stream.WriteUInt8(this.adaptationFieldLength)
 
 	// When the adaptation_field_control value is '11', the value of the adaptation_field_length shall
-	// be in the range 0 to 182. 
+	// be in the range 0 to 182.
 	if this.packet.tsHeader.adaptationFieldControl == SrsTsAdaptationFieldTypeBoth && this.adaptationFieldLength > 182 {
 		return
 	}
@@ -268,75 +268,75 @@ func (this *SrsTsAdapationField) Encode(stream *utils.SrsStream) {
 	if this.packet.tsHeader.adaptationFieldControl == SrsTsAdaptationFieldTypeAdaptionOnly && this.adaptationFieldLength != 183 {
 		return
 	}
-	
+
 	if this.adaptationFieldLength == 0 {
 		return
 	}
 
 	var tmpv int8 = this.adaptationFieldExtensionFlag & 0x01
-    tmpv |= int8((int32(this.discontinuityIndicator) << 7) & 0x80)
-    tmpv |= (this.randomAccessIndicator << 6) & 0x40
-    tmpv |= (this.elementaryStreamPriorityIndicator << 5) & 0x20
-    tmpv |= (this.PCRFlag << 4) & 0x10
-    tmpv |= (this.OPCRFlag << 3) & 0x08
-    tmpv |= (this.splicingPointFlag << 2) & 0x04
-    tmpv |= (this.transportPrivateDataFlag << 1) & 0x02
+	tmpv |= int8((int32(this.discontinuityIndicator) << 7) & 0x80)
+	tmpv |= (this.randomAccessIndicator << 6) & 0x40
+	tmpv |= (this.elementaryStreamPriorityIndicator << 5) & 0x20
+	tmpv |= (this.PCRFlag << 4) & 0x10
+	tmpv |= (this.OPCRFlag << 3) & 0x08
+	tmpv |= (this.splicingPointFlag << 2) & 0x04
+	tmpv |= (this.transportPrivateDataFlag << 1) & 0x02
 	stream.WriteInt8(tmpv)
-	
+
 	if this.PCRFlag == 1 {
-			// @remark, use pcr base and ignore the extension
-			// @see https://github.com/ossrs/srs/issues/250#issuecomment-71349370
-			var pcrv int64 = this.programClockReferenceBase & 0x1ff
-			pcrv |= (int64(this.const1Value0) << 9) & 0x7E00
-			pcrv |= (this.programClockReferenceBase << 15) & 0xFFFFFFFF8000
-			// stream.WriteInt64(pcrv, binary.BigEndian)
-			b := byte((pcrv >> 40) & 0xff)
-			stream.WriteByte(b)
-			b = byte((pcrv >> 32) & 0xff)
-			stream.WriteByte(b)
-			b = byte((pcrv >> 24) & 0xff)
-			stream.WriteByte(b)
-			b = byte((pcrv >> 16) & 0xff)
-			stream.WriteByte(b)
-			b = byte((pcrv >> 8) & 0xff)
-			stream.WriteByte(b)
-			b = byte((pcrv) & 0xff)
-			stream.WriteByte(b)
-    }
+		// @remark, use pcr base and ignore the extension
+		// @see https://github.com/ossrs/srs/issues/250#issuecomment-71349370
+		var pcrv int64 = this.programClockReferenceBase & 0x1ff
+		pcrv |= (int64(this.const1Value0) << 9) & 0x7E00
+		pcrv |= (this.programClockReferenceBase << 15) & 0xFFFFFFFF8000
+		// stream.WriteInt64(pcrv, binary.BigEndian)
+		b := byte((pcrv >> 40) & 0xff)
+		stream.WriteByte(b)
+		b = byte((pcrv >> 32) & 0xff)
+		stream.WriteByte(b)
+		b = byte((pcrv >> 24) & 0xff)
+		stream.WriteByte(b)
+		b = byte((pcrv >> 16) & 0xff)
+		stream.WriteByte(b)
+		b = byte((pcrv >> 8) & 0xff)
+		stream.WriteByte(b)
+		b = byte((pcrv) & 0xff)
+		stream.WriteByte(b)
+	}
 
-    if this.OPCRFlag == 1{
-			stream.WriteBytes([]byte{0,0,0,0,0,0})
-    }
+	if this.OPCRFlag == 1 {
+		stream.WriteBytes([]byte{0, 0, 0, 0, 0, 0})
+	}
 
-    if this.splicingPointFlag == 1 {
+	if this.splicingPointFlag == 1 {
 		stream.WriteInt8(this.spliceDown)
-    }
-    
-    if this.transportPrivateDataFlag == 1 {
+	}
+
+	if this.transportPrivateDataFlag == 1 {
 		stream.WriteUInt8(this.transportPrivateDataLength)
 		if this.transportPrivateDataLength > 0 {
 			stream.WriteBytes(this.privateData)
-        }
-    }
-	
+		}
+	}
+
 	if this.adaptationFieldExtensionFlag == 1 {
 		stream.WriteUInt8(this.adaptationFieldExtensionLength)
 		var ltwfv int8 = this.const1Value1 & 0x1F
-        ltwfv |= int8((int16(this.ltwFlag) << 7) & 0x80)
-        ltwfv |= (this.piecewiseRateFlag << 6) & 0x40
-        ltwfv |= (this.seamlessSpliceFlag << 5) & 0x20
+		ltwfv |= int8((int16(this.ltwFlag) << 7) & 0x80)
+		ltwfv |= (this.piecewiseRateFlag << 6) & 0x40
+		ltwfv |= (this.seamlessSpliceFlag << 5) & 0x20
 		stream.WriteInt8(ltwfv)
-		
+
 		if this.ltwFlag == 1 {
-			stream.WriteBytes([]byte{0xff,0xff})
+			stream.WriteBytes([]byte{0xff, 0xff})
 		}
 
 		if this.piecewiseRateFlag == 1 {
-			stream.WriteBytes([]byte{0xff,0xff,0xff})
+			stream.WriteBytes([]byte{0xff, 0xff, 0xff})
 		}
 
 		if this.seamlessSpliceFlag == 1 {
-			stream.WriteBytes([]byte{0xff,0xff,0xff,0xff,0xff})
+			stream.WriteBytes([]byte{0xff, 0xff, 0xff, 0xff, 0xff})
 		}
 	}
 
@@ -345,7 +345,7 @@ func (this *SrsTsAdapationField) Encode(stream *utils.SrsStream) {
 	}
 }
 
-func (this *SrsTsAdapationField) Padding(paddingCount int) {
+func (this *SrsTsAdapationField) Padding(leftCount int) int {
 	sz := 2
 	if this.PCRFlag == 1 {
 		sz += 6
@@ -367,7 +367,13 @@ func (this *SrsTsAdapationField) Padding(paddingCount int) {
 		sz += 2 + int(this.adaptationFieldExtensionLength)
 	}
 
-	staffingCount := paddingCount - sz
+	var staffingCount int = 0
+	if (4 + sz + leftCount) <= 188 {
+		staffingCount = 188 - (4 + sz + leftCount)
+	} else {
+		staffingCount = 0
+	}
+	// staffingCount := paddingCount - sz
 	this.staffingByte = make([]byte, 0)
 	if staffingCount > 0 {
 		for i := 0; i < staffingCount; i++ {
@@ -377,8 +383,44 @@ func (this *SrsTsAdapationField) Padding(paddingCount int) {
 	}
 
 	this.adaptationFieldLength = uint8(sz - 1)
+	return sz
 	// fmt.Println("************paddingCount=", paddingCount, "&this.adaptationFieldLength=", this.adaptationFieldLength, "**************")
 }
+
+// func (this *SrsTsAdapationField) Padding(paddingCount int) {
+// 	sz := 2
+// 	if this.PCRFlag == 1 {
+// 		sz += 6
+// 	}
+
+// 	if this.OPCRFlag == 1 {
+// 		sz += 6
+// 	}
+
+// 	if this.splicingPointFlag == 1 {
+// 		sz += 1
+// 	}
+
+// 	if this.transportPrivateDataFlag == 1 {
+// 		sz += 1 + int(this.transportPrivateDataLength)
+// 	}
+
+// 	if this.adaptationFieldExtensionFlag == 1 {
+// 		sz += 2 + int(this.adaptationFieldExtensionLength)
+// 	}
+
+// 	staffingCount := paddingCount - sz
+// 	this.staffingByte = make([]byte, 0)
+// 	if staffingCount > 0 {
+// 		for i := 0; i < staffingCount; i++ {
+// 			this.staffingByte = append(this.staffingByte, 0xff)
+// 		}
+// 		sz += staffingCount
+// 	}
+
+// 	this.adaptationFieldLength = uint8(sz - 1)
+// 	// fmt.Println("************paddingCount=", paddingCount, "&this.adaptationFieldLength=", this.adaptationFieldLength, "**************")
+// }
 
 func (this *SrsTsAdapationField) Size() uint32 {
 	// return 0
@@ -400,7 +442,7 @@ func (this *SrsTsAdapationField) Size() uint32 {
 	}
 
 	if this.adaptationFieldExtensionFlag == 1 {
-		sz += 2 + uint32(this.adaptationFieldExtensionLength)	
+		sz += 2 + uint32(this.adaptationFieldExtensionLength)
 	}
 
 	return sz

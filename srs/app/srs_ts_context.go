@@ -105,7 +105,7 @@ func (this *SrsTsContext) Encode(msg *SrsTsMessage, vc codec.SrsCodecVideo, ac c
 	
 	if msg.IsAudio() {
 		// fmt.Println("****************encodePes audio****************")
-		// this.encodePes(msg, audioPid, as, -1, noVideo)
+		this.encodePes(msg, audioPid, as, -1, noVideo)
 	} else {
 		// fmt.Println("****************encodePes video****************")
 		this.encodePes(msg, videoPid, vs, msg.dts, noVideo)
