@@ -45,7 +45,7 @@ type SrsConsumer struct {
 	queueRecvThread *SrsQueueRecvThread
 }
 
-func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) *SrsConsumer {
+func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) Consumer {
 	//todo
 	consumer := &SrsConsumer{
 		queue:  NewSrsMessageQueue(),

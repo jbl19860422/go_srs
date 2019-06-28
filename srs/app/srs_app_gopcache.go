@@ -112,7 +112,7 @@ func (this *SrsGopCache) pureAudio() bool {
 	return this.cachedVideoCount == 0
 }
 
-func (this *SrsGopCache) dump(consumer *SrsConsumer, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) error {
+func (this *SrsGopCache) dump(consumer Consumer, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) error {
 	for i:= 0; i < len(this.gopCache); i++ {
 		consumer.Enqueue(this.gopCache[i], atc, jitterAlgorithm)
 	}

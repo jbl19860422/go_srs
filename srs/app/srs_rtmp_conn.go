@@ -192,7 +192,7 @@ func (this *SrsRtmpConn) OnRecvError(err error) {
 	this.server.OnRecvError(err, this)
 }
 
-func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer *SrsConsumer) error {
+func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer Consumer) error {
 	//todo refer check
 	//todo srsprint
 	// realtime := false

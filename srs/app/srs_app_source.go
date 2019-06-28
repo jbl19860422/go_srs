@@ -52,7 +52,7 @@ type SrsSource struct {
 	recvThread		*SrsRecvThread
 
 	consumersMtx 	sync.Mutex
-	consumers 		[]*SrsConsumer
+	consumers 		[]Consumer
 	gopCache		*SrsGopCache
 	cacheSHVideo 	*rtmp.SrsRtmpMessage
 	cacheSHAudio 	*rtmp.SrsRtmpMessage
@@ -500,7 +500,7 @@ func (this *SrsSource) SetCache(cache bool) {
 * @param dg, whether dumps the gop cache.
 */
 	
-func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bool) *SrsConsumer {
+func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bool) Consumer {
 	this.consumersMtx.Lock()
 	consumer := NewSrsConsumer(this, conn)
 	this.consumers = append(this.consumers, consumer)
@@ -532,7 +532,35 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 	return consumer
 }
 
-func (this *SrsSource) RemoveConsumer(consumer *SrsConsumer) {
+func (this *SrsSource) AppendConsumer(consumer Consumer) error {
+	this.consumersMtx.Lock()
+	this.consumers = append(this.consumers, consumer)
+	this.consumersMtx.Unlock()
+	//todo set queue size
+	//todo process atc
+	//todo copy meta data
+	//todo cppy sequence header
+	//todo copy gop to consumers queue
+	//many things todo 
+	if this.cacheMetaData != nil {
+		consumer.Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
+	}
+
+	if this.cacheSHVideo != nil {
+		consumer.Enqueue(this.cacheSHVideo, false, this.jitterAlgorithm)
+	}
+	
+	if this.cacheSHAudio != nil {
+		consumer.Enqueue(this.cacheSHAudio, false, this.jitterAlgorithm)
+	}
+
+	if err := this.gopCache.dump(consumer, false, this.jitterAlgorithm); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (this *SrsSource) RemoveConsumer(consumer Consumer) {
 	this.consumersMtx.Lock()
 	defer this.consumersMtx.Unlock()
 	for i := 0; i < len(this.consumers); i++ {

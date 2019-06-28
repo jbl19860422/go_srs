@@ -57,8 +57,10 @@ func (this *SrsServer) StartProcess(port int) error {
 		return err
 	}
 
-	http.Handle("/", &SrsHttpStreamServer{})
-	http.ListenAndServe(":8080", nil)
+	go func() {
+		http.Handle("/", this.flvServer)
+		http.ListenAndServe(":8080", nil)
+	}()
 
 	go func() {
 		for {
@@ -69,6 +71,7 @@ func (this *SrsServer) StartProcess(port int) error {
 	}()
 
 	for {
+		
 		conn, _ := ln.Accept()
 		go this.HandleConnection(conn)
 	}
@@ -86,7 +89,7 @@ func (this *SrsServer) HandleConnection(conn net.Conn) {
 }
 
 func (this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
-
+	this.flvServer.Mount(r, s)
 	fmt.Println("*********************server onpublishxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	return nil
 }
