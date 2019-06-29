@@ -6,6 +6,7 @@ import (
 	"io"
 	"go_srs/srs/utils"
 	"errors"
+	"fmt"
 )
 
 type SrsTsMuxer struct {
@@ -51,6 +52,7 @@ func (this *SrsTsMuxer) convertACodecToTsStream(ac codec.SrsCodecAudio) {
 	if astream != this.as {
 		this.wrotePatPmt = false 	//rewrite pat pmt
 	}
+	this.as = astream
 }
 
 func (this *SrsTsMuxer) convertVCodecToTsStream(vc codec.SrsCodecVideo) {
@@ -80,6 +82,7 @@ func (this *SrsTsMuxer) WriteAudio(audio *SrsTsMessage) error {
 }
 
 func (this *SrsTsMuxer) WriteVideo(video *SrsTsMessage) error {
+	//fmt.Println("WriteVideo")
 	if err := this.Encode(video); err != nil {
 		return err
 	}
@@ -109,6 +112,7 @@ func (this *SrsTsMuxer) Encode(msg *SrsTsMessage) error {
 	}
 
 	if msg.IsAudio() {
+		//todo pure audio must write pcr
 		this.encodePes(msg, this.audioPid, this.as, -1)
 	} else {
 		this.encodePes(msg, this.videoPid, this.vs, msg.dts)
@@ -167,9 +171,9 @@ func (this *SrsTsMuxer) encodePes(msg *SrsTsMessage, pid int16, sid SrsTsStream,
 		n, err := this.writer.Write(s.Data())
 		_ = err
 		_ = n
-		//if len(s.Data()) != 188 {
-		//	fmt.Println("errrrrrrrrrrrrrrrrrrrrrrrrrrrpayload_len=", len(msg.payload), "&pkts_count=", len(pkts), "&data_len=", len(s.Data()))
-		//}
+		if len(s.Data()) != 188 {
+			fmt.Println("errrrrrrrrrrrrrrrrrrrrrrrrrrrpayload_len=", len(msg.payload), "&pkts_count=", len(pkts), "&data_len=", len(s.Data()))
+		}
 	}
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
 	"io"
+	"os"
 )
 
 type SrsTsContext struct {
@@ -15,16 +16,16 @@ type SrsTsContext struct {
 	pure_audio 	bool
 	vcodec     	codec.SrsCodecVideo
 	acodec     	codec.SrsCodecAudio
-	//file 	   	*os.File
+	file 	   	*os.File
 	writer		io.Writer
 }
 
 func NewSrsTsContext() *SrsTsContext {
-	//f, err := os.OpenFile("c.ts", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
-	//if err != nil {
-	//	return nil
-	//}
-	//f.Truncate(0)
+	f, err := os.OpenFile("c.ts", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
+	if err != nil {
+		return nil
+	}
+	f.Truncate(0)
 	//fmt.Println("*************************NewSrsTsContext********************************")
 	return &SrsTsContext{
 		ready: false,

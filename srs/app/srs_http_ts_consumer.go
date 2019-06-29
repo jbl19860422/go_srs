@@ -32,19 +32,6 @@ func (this *SrsHttpTsConsumer) PlayCycle() error {
 	}()
 
 	for {
-		// fmt.Println("***********SrsHttpTsConsumer playing")
-		//todo process http message
-		// for !this.queueRecvThread.Empty() {//process signal message
-		// 	msg := this.queueRecvThread.GetMsg()
-		// 	if msg != nil {
-		// 		err := this.process_play_control_msg(msg)
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 	}
-		// }
-		//todo process trd error
-		//todo process realtime stream
 		msg, err := this.queue.Wait()
 		if err != nil {
 			return err
@@ -56,11 +43,7 @@ func (this *SrsHttpTsConsumer) PlayCycle() error {
 			} else if msg.GetHeader().IsAudio() {
 				this.tsEncoder.WriteAudio(uint32(msg.GetHeader().GetTimestamp()), msg.GetPayload())
 			} else {
-				//this.tsEncoder.WriteMetaData(msg.GetPayload())
 			}
-			//todo send msg to response writer
-			// err := this.conn.rtmp.SendMsg(msg, this.StreamId)
-			// _ = err
 		}
 	}
 }

@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
-	"io"
 	"net/http"
+	"strings"
 )
 
 type SrsHttpStreamServer struct {
@@ -31,7 +31,7 @@ func (this *SrsHttpStreamServer) CreateFlvConsumer(s *SrsSource, w http.Response
 }
 
 func (this *SrsHttpStreamServer) CreateTsConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request) Consumer {
-	c := NewSrsHttpFlvConsumer(s, w, r)
+	c := NewSrsHttpTsConsumer(s, w, r)
 	if err := s.AppendConsumer(c); err != nil {
 		return nil
 	}
@@ -40,18 +40,27 @@ func (this *SrsHttpStreamServer) CreateTsConsumer(s *SrsSource, w http.ResponseW
 
 func (this *SrsHttpStreamServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("url=", r.URL.Path)
-	source, ok := this.sources[r.URL.Path]
-	if !ok {
-		fmt.Println("not find for", r.URL.Path)
-		for k, _ := range this.sources {
-			fmt.Println("k=", k)
+	if strings.HasSuffix(r.URL.Path, ".ts") {
+		s := strings.Replace(r.URL.Path, ".ts", "", -1)
+		source, ok := sourcePool[s]
+		if !ok {
+			return
 		}
-		io.WriteString(w, "404")
+		fmt.Println("Create Ts Consumer)")
+		consumer := this.CreateTsConsumer(source, w, r)
+		err := consumer.PlayCycle()
+		_ = err
+		return
+	} else if strings.HasSuffix(r.URL.Path, ".flv") {
+		s := strings.Replace(r.URL.Path, ".flv", "", -1)
+		source, ok := sourcePool[s]
+		if !ok {
+			return
+		}
+		fmt.Println("Create flv Consumer)")
+		consumer := this.CreateFlvConsumer(source, w, r)
+		err := consumer.PlayCycle()
+		_ = err
 		return
 	}
-
-	fmt.Println("*****************create consumer for", r.URL.Path)
-	consumer := this.CreateFlvConsumer(source, w, r)
-	err := consumer.PlayCycle()
-	_ = err
 }

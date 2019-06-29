@@ -3,6 +3,7 @@ package app
 import (
 	"go_srs/srs/codec"
 	"errors"
+	"fmt"
 )
 type SrsTsCache struct {
 	audio *SrsTsMessage
@@ -112,6 +113,7 @@ func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sample *SrsCodecSample) 
 					this.video.payload = append(this.video.payload, []byte{0x00, 0x00, 0x00, 0x01}...)
 					audInserted = true
 				}
+				fmt.Println("append sps")
 				this.video.payload = append(this.video.payload, c.sequenceParameterSetNALUnit...)
 			}
 
@@ -122,10 +124,13 @@ func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sample *SrsCodecSample) 
 					this.video.payload = append(this.video.payload, []byte{0x00, 0x00, 0x00, 0x01}...)
 					audInserted = true
 				}
+				fmt.Println("append pps")
 				this.video.payload = append(this.video.payload, c.pictureParameterSetNALUnit...)
 			}
 			isSpsPpsAppend = true
 		}
+		this.video.payload = append(this.video.payload, []byte{0x00, 0x00, 0x01}...)
+		this.video.payload = append(this.video.payload, sample.SampleUnits[i]...)
 	}
 	return nil
 }

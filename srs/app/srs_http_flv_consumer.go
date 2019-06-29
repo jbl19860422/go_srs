@@ -32,21 +32,8 @@ func (this *SrsHttpFlvConsumer) PlayCycle() error {
 		<- notify
 		this.StopPlay()
 	}()
-
+	this.writer.Header().Set("Content-Type", "video/x-flv")
 	for {
-		// fmt.Println("***********SrsHttpFlvConsumer playing")
-		//todo process http message
-		// for !this.queueRecvThread.Empty() {//process signal message
-		// 	msg := this.queueRecvThread.GetMsg()
-		// 	if msg != nil {
-		// 		err := this.process_play_control_msg(msg)
-		// 		if err != nil {
-		// 			return err
-		// 		}
-		// 	}
-		// }
-		//todo process trd error
-		//todo process realtime stream
 		msg, err := this.queue.Wait()
 		if err != nil {
 			return err
@@ -63,9 +50,6 @@ func (this *SrsHttpFlvConsumer) PlayCycle() error {
 			} else {
 				this.flvEncoder.WriteMetaData(msg.GetPayload())
 			}
-			//todo send msg to response writer
-			// err := this.conn.rtmp.SendMsg(msg, this.StreamId)
-			// _ = err
 		}
 	}
 }
