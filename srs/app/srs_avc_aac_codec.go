@@ -275,29 +275,23 @@ func (this *SrsAvcAacCodec) video_nalu_demux(stream *utils.SrsStream, sample *Sr
 	}
 
 	if this.payloadFormat == codec.SrsAvcPayloadFormatGuess {
-
+		_, _ = this.avc_demux_annexb_format(stream, sample)
 	}
 	return nil
 }
 
 func (this *SrsAvcAacCodec) avc_demux_annexb_format(stream *utils.SrsStream, sample *SrsCodecSample) (bool, error) {
-	var startCodeCount int = 0
-	if !utils.AvcStartswithAnnexb(stream, &startCodeCount) {
-		return false, nil
+	nalus := utils.GetNalus(stream)
+	if nalus == nil {
+		fmt.Println("********************avc_demux_annexb_format error********************")
+	} else {
+		fmt.Println("********************avc_demux_annexb_format len=", len(nalus), "***********************")
 	}
-
-	for !stream.Empty() {
-		if !utils.AvcStartswithAnnexb(stream, &startCodeCount) {
-			return false, nil
-		}
-
-		
-	}
-
+	return true, nil
 }
 
 func (this *SrsAvcAacCodec) avc_demux_sps_pps(stream *utils.SrsStream) error {
-	this.avcExtraData = stream.PeekLeftBytes()
+	this.avcExtraData = stream.CopyLeftBytes()
 	//int8_t configurationVersion = stream->read_1bytes();
 	_, err := stream.ReadByte()
 	if err != nil {

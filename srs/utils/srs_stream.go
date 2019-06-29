@@ -55,13 +55,13 @@ func (this *SrsStream) PeekByte() (byte, error) {
 	return this.p[0], nil
 }
 
-func (this *SrsStream) PeekBytes(count uint32) ([]byte, error) {
-	if !this.Require(count) {
-		err := errors.New("SrsStream not have enough data")
-		return nil, err
-	}
-	return this.p[:count], nil
-}
+// func (this *SrsStream) PeekBytes(count uint32) ([]byte, error) {
+// 	if !this.Require(count) {
+// 		err := errors.New("SrsStream not have enough data")
+// 		return nil, err
+// 	}
+// 	return this.p[:count], nil
+// }
 
 func (this *SrsStream) ReadByte() (byte, error) {
 	if !this.Require(1) {
@@ -96,10 +96,14 @@ func (this *SrsStream) ReadLeftBytes() []byte {
 	return b
 }
 
-func (this *SrsStream) PeekLeftBytes() []byte {
+func (this *SrsStream) CopyLeftBytes() []byte {
 	b := make([]byte, len(this.p))
 	copy(b, this.p)
 	return b
+}
+
+func (this *SrsStream) PeekLeftBytes() []byte {
+	return this.p
 }
 
 func (this *SrsStream) PeekBytes(count uint32) ([]byte, error) {
