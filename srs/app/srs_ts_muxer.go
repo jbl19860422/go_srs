@@ -82,7 +82,6 @@ func (this *SrsTsMuxer) WriteAudio(audio *SrsTsMessage) error {
 }
 
 func (this *SrsTsMuxer) WriteVideo(video *SrsTsMessage) error {
-	//fmt.Println("WriteVideo")
 	if err := this.Encode(video); err != nil {
 		return err
 	}

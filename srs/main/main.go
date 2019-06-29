@@ -1,8 +1,10 @@
 package main
 
 import (
-	"flag"
-	"go_srs/srs/app"
+    "flag"
+    "fmt"
+    "go_srs/srs/app"
+    "go_srs/srs/app/config"
 	"net/http"
 	// "log"
 	"bytes"
@@ -12,7 +14,7 @@ import (
 )
 
 var (
-	port = flag.Int("p", 1935, "set port `port`")
+	conf = flag.String("c", "./conf/srs.conf", "set conf `conf`")
 )
 
 func main() {
@@ -21,9 +23,14 @@ func main() {
     // 	log.Fatal(http.ListenAndServe(":9876", nil))
 	// }()
 
-	flag.Parse()
+    flag.Parse()
+    if err := config.GetInstance().Init(*conf); err != nil {
+        fmt.Println(err)
+        return
+    }
+
 	server := app.NewSrsServer()
-	_ = server.StartProcess(*port)
+	_ = server.StartProcess(config.GetInstance().ListenPort)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {

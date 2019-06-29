@@ -1,5 +1,10 @@
 package app
 
+import (
+	"fmt"
+	"go_srs/srs/codec"
+)
+
 /**
 * hls stream cache,
 * use to cache hls stream and flush to hls muxer.
@@ -19,15 +24,21 @@ package app
  */
 
 type SrsHlsCache struct {
+	cache *SrsTsCache
 }
 
 func NewSrsHlsCache() *SrsHlsCache {
-	return &SrsHlsCache{}
+	return &SrsHlsCache{
+		cache: NewSrsTsCache(),
+	}
 }
 
 func (this *SrsHlsCache) on_publish(muxer *SrsHlsMuxer, req *SrsRequest, segment_start_dts int64) error {
 	//todo vhost
 	// this.muxer
+	muxer.update_config("test", ".", "", "", 5, 360, false, 0.0, true, true)
+
+	muxer.segment_open(segment_start_dts)
 	return nil
 }
 
@@ -38,16 +49,60 @@ func (this *SrsHlsCache) on_publish(muxer *SrsHlsMuxer, req *SrsRequest, segment
 * @see: 3.4.11.  EXT-X-DISCONTINUITY
  */
 func (this *SrsHlsCache) on_sequence_header(muxer *SrsHlsMuxer) error {
+
 	return muxer.on_sequence_header()
 }
 
 /**
 * write audio to cache, if need to flush, flush to muxer.
  */
-func (this *SrsHlsCache) write_audio(codec *SrsAvcAacCodec, muxer *SrsHlsMuxer, pts int64, sample *SrsCodecSample) error {
+func (this *SrsHlsCache) write_audio(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sample *SrsCodecSample) error {
+	if err := this.cache.cache_audio(c, dts, sample); err != nil {
+		return err
+	}
+
+	if err := muxer.flush_audio(this.cache); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (this *SrsHlsCache) WriteVideo(codec *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sample *SrsCodecSample) error {
+func (this *SrsHlsCache) WriteVideo(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sample *SrsCodecSample) error {
+	if err := this.cache.cache_video(c, dts, sample); err != nil {
+		return err
+	}
+
+	if muxer.is_segment_overflow() {
+		fmt.Println("is_segment_overflow ", !muxer.hls_wait_keyframe, sample.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame)
+		if !muxer.hls_wait_keyframe || sample.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame {
+			if err := this.reap_segment("video", muxer, this.cache.video.dts); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := muxer.flush_video(this.cache); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (this *SrsHlsCache) reap_segment(log_desc string, muxer *SrsHlsMuxer, segment_start_dts int64) error {
+	fmt.Println("reap_segment")
+	if err := muxer.segment_close(); err != nil {
+		return err
+	}
+
+	if err := muxer.segment_open(segment_start_dts); err != nil {
+		return err
+	}
+
+	if err := muxer.flush_video(this.cache); err != nil {
+		return err
+	}
+
+	if err := muxer.flush_audio(this.cache); err != nil {
+		return err
+	}
 	return nil
 }

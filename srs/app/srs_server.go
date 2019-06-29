@@ -51,8 +51,8 @@ func (this *SrsServer) AddConn(c *SrsRtmpConn) {
 	this.connsMtx.Unlock()
 }
 
-func (this *SrsServer) StartProcess(port int) error {
-	ln, err := net.Listen("tcp", ":"+strconv.Itoa(port))
+func (this *SrsServer) StartProcess(port uint32) error {
+	ln, err := net.Listen("tcp", ":"+strconv.Itoa(int(port)))
 	if err != nil {
 		return err
 	}

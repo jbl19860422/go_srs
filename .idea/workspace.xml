@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="24e48443-8b9d-44bc-a1fd-8014226adb29" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="01cfa9f3-37b6-4c17-895a-4a3f4c528cf6" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/go_srs.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/go_srs.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/config.json" afterDir="false" />
@@ -26,7 +29,9 @@
       <change beforePath="$PROJECT_DIR$/srs/app/srs_hls_cache_writer.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_hls_cache_writer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_hls_muxer.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_hls_muxer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_hls_segment.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_hls_segment.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/srs/app/srs_http_flv_consumer.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_http_flv_consumer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_http_stream_server.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_http_stream_server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/srs/app/srs_http_ts_consumer.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_http_ts_consumer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_kernel_ts.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_kernel_ts.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_live_stream.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_live_stream.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_message_queue.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_message_queue.go" afterDir="false" />
@@ -38,6 +43,7 @@
       <change beforePath="$PROJECT_DIR$/srs/app/srs_ts_cache.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_ts_cache.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_ts_channel.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_ts_channel.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_ts_context.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_ts_context.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/srs/app/srs_ts_encoder.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_ts_encoder.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_ts_header.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_ts_header.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_ts_message.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_ts_message.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/app/srs_ts_muxer.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/app/srs_ts_muxer.go" afterDir="false" />
@@ -51,10 +57,9 @@
       <change beforePath="$PROJECT_DIR$/srs/codec/flv/srs_flv_segment.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/codec/flv/srs_flv_segment.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/codec/flv/srs_flv_writer.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/codec/flv/srs_flv_writer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/codec/srs_codec_define.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/codec/srs_codec_define.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/srs/codec/srs_codec_utils.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/codec/srs_codec_utils.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/global/srs_define.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/global/srs_define.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/srs/main/a.txt" beforeDir="false" afterPath="$PROJECT_DIR$/srs/main/a.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/main/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/main/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/srs/main/s.txt" beforeDir="false" afterPath="$PROJECT_DIR$/srs/main/s.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/protocol/amf0/srs_amf0_any.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/protocol/amf0/srs_amf0_any.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/protocol/amf0/srs_amf0_bool.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/protocol/amf0/srs_amf0_bool.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/srs/protocol/amf0/srs_amf0_define.go" beforeDir="false" afterPath="$PROJECT_DIR$/srs/protocol/amf0/srs_amf0_define.go" afterDir="false" />
@@ -108,14 +113,99 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="main.go" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/srs/main/main.go">
+      <file leaf-file-name="srs_ts_muxer.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_ts_muxer.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="198">
-              <caret line="11" column="1" lean-forward="true" selection-start-line="11" selection-start-column="1" selection-end-line="11" selection-end-column="1" />
+            <state relative-caret-position="-151">
+              <caret line="89" selection-start-line="89" selection-end-line="89" />
               <folding>
-                <element signature="e#14#133#0" expanded="true" />
-                <element signature="n#!!block;n#handler#0" />
+                <element signature="e#13#87#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="srs_ts_cache.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_ts_cache.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="437">
+              <caret line="23" column="5" selection-start-line="23" selection-start-column="5" selection-end-line="23" selection-end-column="5" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="srs_hls_muxer.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_hls_muxer.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="274">
+              <caret line="163" column="23" selection-start-line="163" selection-start-column="12" selection-end-line="163" selection-end-column="23" />
+              <folding>
+                <element signature="e#13#85#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="srs_http_flv_consumer.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_http_flv_consumer.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="529">
+              <caret line="34" column="42" selection-start-line="34" selection-start-column="38" selection-end-line="34" selection-end-column="42" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="srs_config.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/config/srs_config.go">
+          <provider selected="true" editor-type-id="text-editor" />
+        </entry>
+      </file>
+      <file leaf-file-name="srs_hls.go" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_hls.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="506">
+              <caret line="188" selection-start-line="188" selection-end-line="188" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="srs_hls_cache.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_hls_cache.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="251">
+              <caret line="35" column="22" selection-start-line="35" selection-start-column="22" selection-end-line="35" selection-end-column="22" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="srs_app_source.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_app_source.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="264">
+              <caret line="90" column="18" selection-start-line="90" selection-start-column="18" selection-end-line="90" selection-end-column="18" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="srs_hls_segment.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_hls_segment.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="448">
+              <caret line="52" column="14" selection-start-line="52" selection-start-column="14" selection-end-line="52" selection-end-column="14" />
+              <folding>
+                <element signature="e#13#49#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="srs_http_stream_server.go" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/srs/app/srs_http_stream_server.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="723">
+              <caret line="48" column="42" selection-start-line="48" selection-start-column="42" selection-end-line="48" selection-end-column="42" />
+              <folding>
+                <element signature="e#13#48#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -123,9 +213,35 @@
       </file>
     </leaf>
   </component>
-  <component name="GOROOT" path="D:\go" />
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>update_config</find>
+      <find>update_acodec</find>
+      <find>current = nil</find>
+      <find>NewSrsHls</find>
+      <find>dispose</find>
+    </findStrings>
+  </component>
+  <component name="GOROOT" path="E:\Go" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/srs/app/srs_ts_context.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_ts_encoder.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_ts_cache.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_http_stream_server.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_http_flv_consumer.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_http_ts_consumer.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_ts_muxer.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_hls_cache.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_hls_segment.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_hls_muxer.go" />
+        <option value="$PROJECT_DIR$/srs/app/srs_hls.go" />
+      </list>
+    </option>
   </component>
   <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
   <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
@@ -160,6 +276,12 @@
               <item name="go_srs" type="b2602c69:ProjectViewProjectNode" />
               <item name="go_srs" type="462c0819:PsiDirectoryNode" />
               <item name="srs" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="go_srs" type="b2602c69:ProjectViewProjectNode" />
+              <item name="go_srs" type="462c0819:PsiDirectoryNode" />
+              <item name="srs" type="462c0819:PsiDirectoryNode" />
               <item name="codec" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
@@ -169,25 +291,6 @@
               <item name="codec" type="462c0819:PsiDirectoryNode" />
               <item name="flv" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="go_srs" type="b2602c69:ProjectViewProjectNode" />
-              <item name="go_srs" type="462c0819:PsiDirectoryNode" />
-              <item name="srs" type="462c0819:PsiDirectoryNode" />
-              <item name="main" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="go_srs" type="b2602c69:ProjectViewProjectNode" />
-              <item name="go_srs" type="462c0819:PsiDirectoryNode" />
-              <item name="srs" type="462c0819:PsiDirectoryNode" />
-              <item name="protocol" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="go_srs" type="b2602c69:ProjectViewProjectNode" />
-              <item name="go_srs" type="462c0819:PsiDirectoryNode" />
-              <item name="srs" type="462c0819:PsiDirectoryNode" />
-              <item name="protocol" type="462c0819:PsiDirectoryNode" />
-              <item name="rtmp" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
@@ -196,13 +299,14 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
+    <property name="SearchEverywhereHistoryKey" value="update_config&#9;null&#9;null&#10;NewSrsHlsSegment&#9;null&#9;null&#10;on_publish&#9;null&#9;null&#10;NewSrsTsEncoder&#9;null&#9;null" />
     <property name="configurable.Global.GOPATH.is.expanded" value="true" />
     <property name="configurable.Module.GOPATH.is.expanded" value="false" />
     <property name="configurable.Project.GOPATH.is.expanded" value="true" />
     <property name="go.gopath.indexing.explicitly.defined" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/srs/main" />
-    <property name="settings.editor.selected.configurable" value="editor.preferences.fonts.default" />
+    <property name="settings.editor.selected.configurable" value="com.goide.configuration.GoLibrariesConfigurableProvider" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -244,13 +348,14 @@
     </recent_temporary>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1874" height="1096" extended-state="6" />
+    <frame x="-8" y="-8" width="1840" height="1096" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.21636169" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.21600877" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
+      <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" visible="true" weight="0.13163266" />
       <window_info anchor="right" id="Database" order="3" />
+      <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.32925585" />
@@ -264,7 +369,6 @@
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Find" order="1" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -279,13 +383,28 @@
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/srs/main/main.go</url>
           <line>28</line>
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/srs/app/srs_hls_segment.go</url>
+          <line>2</line>
           <properties />
+          <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
-      <option name="time" value="1" />
+      <option name="time" value="2" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_ts_muxer.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1035">
+          <caret line="45" column="40" selection-start-line="45" selection-start-column="40" selection-end-line="45" selection-end-column="40" />
+          <folding>
+            <element signature="e#13#87#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/srs/app/srs_app_consumer.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="2415">
@@ -297,9 +416,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="368">
           <caret line="24" column="5" selection-start-line="24" selection-start-column="5" selection-end-line="24" selection-end-column="5" />
-          <folding>
-            <element signature="e#18#137#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -325,9 +441,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="966">
           <caret line="50" column="20" lean-forward="true" selection-start-line="50" selection-start-column="20" selection-end-line="50" selection-end-column="20" />
-          <folding>
-            <element signature="e#18#137#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -342,9 +455,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="483">
           <caret line="29" lean-forward="true" selection-start-line="29" selection-end-line="29" />
-          <folding>
-            <element signature="e#18#137#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -362,16 +472,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/srs/codec/flv/srs_flv_codec.go">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="18">
-          <caret line="24" column="5" selection-start-line="24" selection-start-column="5" selection-end-line="24" selection-end-column="5" />
-          <folding>
-            <element signature="e#18#137#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/srs/main/main.go">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="198">
@@ -380,6 +480,115 @@
             <element signature="e#14#133#0" expanded="true" />
             <element signature="n#!!block;n#handler#0" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/codec/flv/srs_flv_codec.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1196">
+          <caret line="49" column="22" selection-start-line="49" selection-start-column="22" selection-end-line="49" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_ts_context.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="552">
+          <caret line="32" column="41" selection-start-line="32" selection-start-column="41" selection-end-line="32" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_ts_encoder.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="539">
+          <caret line="26" column="16" selection-start-line="26" selection-start-column="16" selection-end-line="26" selection-end-column="16" />
+          <folding>
+            <element signature="e#13#59#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_http_ts_consumer.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="391">
+          <caret line="32" column="42" selection-start-line="32" selection-start-column="42" selection-end-line="32" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_http_flv_consumer.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="529">
+          <caret line="34" column="42" selection-start-line="34" selection-start-column="38" selection-end-line="34" selection-end-column="42" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/config/srs_config.go">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_app_source.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="264">
+          <caret line="90" column="18" selection-start-line="90" selection-start-column="18" selection-end-line="90" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_ts_muxer.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-151">
+          <caret line="89" selection-start-line="89" selection-end-line="89" />
+          <folding>
+            <element signature="e#13#87#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_http_stream_server.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="723">
+          <caret line="48" column="42" selection-start-line="48" selection-start-column="42" selection-end-line="48" selection-end-column="42" />
+          <folding>
+            <element signature="e#13#48#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_hls_segment.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="448">
+          <caret line="52" column="14" selection-start-line="52" selection-start-column="14" selection-end-line="52" selection-end-column="14" />
+          <folding>
+            <element signature="e#13#49#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_hls_cache.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="251">
+          <caret line="35" column="22" selection-start-line="35" selection-start-column="22" selection-end-line="35" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_ts_cache.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="437">
+          <caret line="23" column="5" selection-start-line="23" selection-start-column="5" selection-end-line="23" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_hls_muxer.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="274">
+          <caret line="163" column="23" selection-start-line="163" selection-start-column="12" selection-end-line="163" selection-end-column="23" />
+          <folding>
+            <element signature="e#13#85#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/srs/app/srs_hls.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="506">
+          <caret line="188" selection-start-line="188" selection-end-line="188" />
         </state>
       </provider>
     </entry>

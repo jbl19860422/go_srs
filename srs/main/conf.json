@@ -1,0 +1,10 @@
+{
+	"hls":{
+		"record":{
+			"path":"aaaa",
+			"time":12345
+		},
+		"public":false,
+		"url_prefix":"http://172.19.5.107/"
+	}
+}

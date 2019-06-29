@@ -3,4 +3,5 @@
 *.flv
 *.ts
 *.exe
+*.tmp
 srs/main/main
