@@ -30,7 +30,7 @@ func (this *SrsHttpTsConsumer) PlayCycle() error {
 		<- notify
 		this.StopPlay()
 	}()
-
+	this.writer.Header().Set("Content-Type", "video/MP2T")
 	for {
 		msg, err := this.queue.Wait()
 		if err != nil {
