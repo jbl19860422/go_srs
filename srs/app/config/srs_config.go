@@ -40,6 +40,19 @@ func (this *SrsConfig) amendDefault() {
 	}
 }
 
+func (this *SrsConfig) GetChunkSize(vhost string) uint32 {
+	h, ok := this.VHosts[vhost]
+	if !ok {
+		return this.ChunkSize
+	}
+
+	if h.Enabled != "on" {
+		return this.ChunkSize
+	}
+
+	return h.ChunkSize
+}
+
 type HeartBeatConf struct {
 	Enabled   string  `json:"enabled"`
 	Interval  float64 `json:"interval"`
@@ -256,7 +269,7 @@ func (this *HlsConf) amendDefault() {
 		this.HlsM3u8File = "[app]/[stream].m3u8"
 	}
 
-	if this.HlsTsFile == ""  {
+	if this.HlsTsFile == "" {
 		this.HlsTsFile = "[app]/[stream]-[seq].ts"
 	}
 

@@ -3,6 +3,7 @@ package app
 import (
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/protocol/packet"
+	"go_srs/srs/app/config"
 	// "go_srs/srs/codec/flv"
 	"go_srs/srs/utils"
 	"net"
@@ -36,9 +37,7 @@ func NewSrsRtmpConn(c net.Conn, s *SrsServer) *SrsRtmpConn {
 }
 
 func (this *SrsRtmpConn) Start() error {
-	// ctx, cancel := context.WithCancel(context.Background())
-	// this.cancelFun = cancel
-	return this.do_cycle()
+	return this.doCycle()
 }
 
 func (this *SrsRtmpConn) Stop() {
@@ -49,8 +48,6 @@ func (this *SrsRtmpConn) Stop() {
 		this.source.RemoveConsumers()
 		RemoveSrsSource(this.source)
 	}
-
-	fmt.Println("remove source conn")
 }
 
 /*
@@ -60,7 +57,7 @@ func (this *SrsRtmpConn) Close() {
 	this.rtmp.Close()
 }
 
-func (this *SrsRtmpConn) do_cycle() error {
+func (this *SrsRtmpConn) doCycle() error {
 	if err := this.rtmp.HandShake(); err != nil {
 		return err
 	}
@@ -75,16 +72,9 @@ func (this *SrsRtmpConn) do_cycle() error {
 		return err
 	}
 
-	err = pkt.(*packet.SrsConnectAppPacket).CommandObj.Get("tcUrl", &this.req.pageUrl)
-	if err != nil {
-		return err
-	}
-
-	err = pkt.(*packet.SrsConnectAppPacket).CommandObj.Get("tcUrl", &this.req.swfUrl)
-	if err != nil {
-		return err
-	}
-
+	_ = pkt.(*packet.SrsConnectAppPacket).CommandObj.Get("pageUrl", &this.req.pageUrl)
+	_ = pkt.(*packet.SrsConnectAppPacket).CommandObj.Get("swfUrl", &this.req.swfUrl)
+	_ = pkt.(*packet.SrsConnectAppPacket).CommandObj.Get("objectEncoding", &this.req.objectEncoding)
 	u, err := url.Parse(this.req.tcUrl)
 	this.req.schema = u.Scheme
 	this.req.host = u.Host
@@ -98,44 +88,44 @@ func (this *SrsRtmpConn) do_cycle() error {
 	}
 
 	m, _ := url.ParseQuery(u.RawQuery)
-	// fmt.Println(this.req.tcUrl)
-	// log.Print(m)
+	this.req.vhost = this.req.host
 	vhost, ok := m["vhost"]
 	if ok {
 		this.req.vhost = vhost[0]
 	}
 
-	this.service_cycle()
+	this.serviceCycle()
 	return nil
 }
 
-func (this *SrsRtmpConn) service_cycle() error {
+func (this *SrsRtmpConn) serviceCycle() error {
 	err := this.rtmp.SetWindowAckSize((int32)(1000000))
 	if err != nil {
-		// log.Print("set_window_ack_size failed")
 		return err
 	}
 
 	err = this.rtmp.SetPeerBandwidth(1000*1000, 2)
 	if err != nil {
-		// log.Print("set_peer_bandwidth failed")
 		return err
 	}
 
 	this.req.ip = this.rtmp.GetClientIP()
 
-	err = this.rtmp.SetChunkSize(4096)
+	err = this.rtmp.SetChunkSize(config.GetInstance().GetChunkSize(this.req.vhost))
 	if err != nil {
-		// log.Print("set_chunk_size failed")
 		return err
 	}
 
-	err = this.rtmp.ResponseConnectApp()
+	err = this.rtmp.ResponseConnectApp(this.req.objectEncoding)
 	if err != nil {
-		// log.Print("response_connect_app error")
 		return err
 	}
 
+	err = this.rtmp.OnBwDone()
+	if err != nil {
+		return err
+	}
+	
 	return this.stream_service_cycle()
 }
 
