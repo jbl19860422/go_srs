@@ -20,6 +20,7 @@ func NewSrsHls(fname string) *SrsHls {
 		muxer:    NewSrsHlsMuxer(),
 		hlsCache: NewSrsHlsCache(),
 		sample:   NewSrsCodecSample(),
+		codec:	  NewSrsAvcAacCodec(),
 		exit:     make(chan bool),
 		done:     make(chan bool),
 	}
@@ -60,6 +61,8 @@ func (this *SrsHls) on_meta_data(metaData *rtmp.SrsRtmpMessage) error {
 }
 
 func (this *SrsHls) on_video(video *rtmp.SrsRtmpMessage) error {
+	this.sample.Clear()
+	this.codec.video_avc_demux(video.GetPayload(), this.sample)
 	return nil
 }
 

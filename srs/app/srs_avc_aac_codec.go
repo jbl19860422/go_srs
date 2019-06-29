@@ -3,6 +3,8 @@ package app
 import (
 	"errors"
 	"fmt"
+	// "os"
+	// "encoding/base64"
 	"encoding/binary"
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
@@ -50,10 +52,7 @@ type SrsAvcAacCodec struct {
 	aacSampleRateIndex int8
 	aacChannels        int8
 
-	avcExtraSize int
 	avcExtraData []byte
-
-	aacExtraSize int
 	aacExtraData []byte
 
 	avcParseSps bool
@@ -77,8 +76,6 @@ func NewSrsAvcAacCodec() *SrsAvcAacCodec {
 		aacObject:          codec.SrsAacObjectTypeReserved,
 		aacSampleRateIndex: codec.SRS_AAC_SAMPLE_RATE_UNSET,
 		aacChannels:        0,
-		avcExtraSize:       0,
-		aacExtraSize:       0,
 
 		sequenceParameterSetLength: 0,
 		pictureParameterSetLength:  0,
@@ -88,11 +85,11 @@ func NewSrsAvcAacCodec() *SrsAvcAacCodec {
 }
 
 func (this *SrsAvcAacCodec) is_avc_codec_ok() bool {
-	return this.avcExtraSize > 0 && this.avcExtraData != nil
+	return this.avcExtraData != nil && len(this.avcExtraData) > 0
 }
 
 func (this *SrsAvcAacCodec) is_aac_codec_ok() bool {
-	return this.aacExtraSize > 0 && this.aacExtraData != nil
+	return this.aacExtraData != nil && len(this.aacExtraData) > 0
 }
 
 func (this *SrsAvcAacCodec) audio_aac_demux(data []byte, sample *SrsCodecSample) error {
@@ -131,7 +128,6 @@ func (this *SrsAvcAacCodec) audio_aac_demux(data []byte, sample *SrsCodecSample)
 	sample.AacPacketType = codec.SrsCodecAudioType(aacPacketType)
 	if aacPacketType == codec.SrsCodecAudioTypeSequenceHeader {
 		this.aacExtraData = stream.ReadLeftBytes()
-		this.aacExtraSize = len(this.aacExtraData)
 		if err := this.audio_aac_sequence_header_demux(this.aacExtraData); err != nil {
 			return err
 		}
@@ -259,17 +255,49 @@ func (this *SrsAvcAacCodec) video_avc_demux(data []byte, sample *SrsCodecSample)
 	sample.AvcPacketType = codec.SrsCodecVideoAVCType(avcPacketType)
 
 	if avcPacketType == codec.SrsCodecVideoAVCTypeSequenceHeader {
+		fmt.Println("*****************is SrsCodecVideoAVCTypeSequenceHeader***************")
+		err := this.avc_demux_sps_pps(stream)
+		if err != nil {
+			return err
+		}
+	} else if avcPacketType == codec.SrsCodecVideoAVCTypeNALU {
+		err := this.video_nalu_demux(stream, sample)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (this *SrsAvcAacCodec) video_nalu_demux(stream *utils.SrsStream, sample *SrsCodecSample) error {
+	if !this.is_avc_codec_ok() {
+		return nil
+	}
+
+	if this.payloadFormat == codec.SrsAvcPayloadFormatGuess {
 
 	}
 	return nil
 }
 
-func (this *SrsAvcAacCodec) avc_demux_sps_pps(stream *utils.SrsStream) error {
-	sps_pps := stream.ReadLeftBytes()
-	if len(sps_pps) <= 0 {
-		return errors.New("the length of sps and pps must big than 0")
+func (this *SrsAvcAacCodec) avc_demux_annexb_format(stream *utils.SrsStream, sample *SrsCodecSample) (bool, error) {
+	var startCodeCount int = 0
+	if !utils.AvcStartswithAnnexb(stream, &startCodeCount) {
+		return false, nil
 	}
 
+	for !stream.Empty() {
+		if !utils.AvcStartswithAnnexb(stream, &startCodeCount) {
+			return false, nil
+		}
+
+		
+	}
+
+}
+
+func (this *SrsAvcAacCodec) avc_demux_sps_pps(stream *utils.SrsStream) error {
+	this.avcExtraData = stream.PeekLeftBytes()
 	//int8_t configurationVersion = stream->read_1bytes();
 	_, err := stream.ReadByte()
 	if err != nil {
@@ -349,14 +377,15 @@ func (this *SrsAvcAacCodec) avc_demux_sps_pps(stream *utils.SrsStream) error {
 			return err
 		}
 	}
-	return nil
+
+	return this.avc_demux_sps()
 }
 
 func (this *SrsAvcAacCodec) avc_demux_sps() error {
 	if this.sequenceParameterSetLength <= 0 {
 		return nil
 	}
-
+	
 	stream := utils.NewSrsStream(this.sequenceParameterSetNALUnit)
 	// for NALU, 7.3.1 NAL unit syntax
 	// H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 61.
@@ -394,7 +423,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps() error {
 		rbsp = append(rbsp, b)
 		nb_rbsp := len(rbsp)
 		// XX 00 00 03 XX, the 03 byte should be drop.
-		if nb_rbsp > 2 && rbsp[nb_rbsp - 2] == 0 && rbsp[nb_rbsp - 1] == 0 && rbsp[nb_rbsp] == 3 {
+		if nb_rbsp > 2 && rbsp[nb_rbsp - 3] == 0x00 && rbsp[nb_rbsp - 2] == 0x00 && rbsp[nb_rbsp - 1] == 0x03 {
 			if stream.Empty() {
 				break
 			}
@@ -405,6 +434,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps() error {
 			rbsp[len(rbsp) - 1] = c
 		}
 	}
+
 	return this.avc_demux_sps_rbsp(rbsp)
 }
 
@@ -415,15 +445,22 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 		return nil
 	}
 
+	// fmt.Print("rbsp= ")
+	// for i := 0; i < len(rbsp); i++ {
+	// 	fmt.Printf("%x ", rbsp[i])
+	// }
+	// fmt.Println("")
+
 	stream := utils.NewSrsStream(rbsp)
 	// for SPS, 7.3.2.1.1 Sequence parameter set data syntax
 	// H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 62.
-	prifile_idc, err := stream.ReadInt8()
+	profile_idc, err := stream.ReadUInt8()
 	if err != nil {
 		return err
 	}
+	fmt.Println("**************profile_idc=", profile_idc, "*****************")
 
-	if prifile_idc == 0 {
+	if profile_idc == 0 {
 		return errors.New("sps the profile_idc invalid")
 	}
 
@@ -445,49 +482,164 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 		return errors.New("sps the level_idc invalid.")
 	}
 
+	fmt.Println("***************level_idc=", level_idc, "*****************")
+
 	bs := utils.NewSrsBitStream(stream.ReadLeftBytes())
 	_ = bs
-	var seq_parameter_set_id int32 = -1
-	_ = seq_parameter_set_id
-	return nil
-}
-
-func srs_avc_nalu_read_uev(bs *utils.SrsBitStream, v *int32) error {
-	if bs.Empty() {
-		return errors.New("no enougth data")
+	seq_parameter_set_id, err := bs.ReadUEV()
+	if err != nil {
+		return err
+	}
+	fmt.Println("**********seq_parameter_set_id=", seq_parameter_set_id, "****************")
+	if seq_parameter_set_id < 0 {
+		return errors.New("sps the seq_parameter_set_id invalid")
 	}
 
-	// ue(v) in 9.1 Parsing process for Exp-Golomb codes
-    // H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 227.
-    // Syntax elements coded as ue(v), me(v), or se(v) are Exp-Golomb-coded.
-    //      leadingZeroBits = -1;
-    //      for( b = 0; !b; leadingZeroBits++ )
-    //          b = read_bits( 1 )
-    // The variable codeNum is then assigned as follows:
-	//      codeNum = (2<<leadingZeroBits) - 1 + read_bits( leadingZeroBits )
-	
-	var leadingZeroBits int = -1
-	var b int8 = 0
-	var err error
-	
-	for b = 0; b == 0 && !bs.Empty(); leadingZeroBits++ {
-		b, err = bs.ReadBit()
+	if profile_idc == 100 || profile_idc == 110 || profile_idc == 122 ||
+		profile_idc == 244 || profile_idc == 44 || profile_idc == 83 ||
+		profile_idc == 86 || profile_idc == 118 || profile_idc == 128 {
+		chroma_format_idc, err := bs.ReadUEV()
 		if err != nil {
 			return err
 		}
-	}
 
-	if leadingZeroBits >= 31 {
-		return errors.New("")
-	}
+		if chroma_format_idc == 3 {
+			separate_colour_plane_flag, err := bs.ReadBit()
+			if err != nil {
+				return err
+			}
+			_ = separate_colour_plane_flag
+		}
 
-	*v = (1 << uint(leadingZeroBits)) - 1
-	for i := 0; i < leadingZeroBits; i++ {
-		b, err = bs.ReadBit()
+		fmt.Println("*****************chroma_format_idc=", chroma_format_idc , "*******************")
+
+		bit_depth_luma_minus8, err := bs.ReadUEV()
 		if err != nil {
 			return err
 		}
-		*v += int32(b) << uint(leadingZeroBits - 1 - i)
+		_ = bit_depth_luma_minus8
+		fmt.Println("*****************bit_depth_luma_minus8=", bit_depth_luma_minus8, "*******************")
+
+		bit_depth_chroma_minus8, err := bs.ReadUEV()
+		if err != nil {
+			return err
+		}
+		_ = bit_depth_chroma_minus8
+		fmt.Println("*****************bit_depth_chroma_minus8=", bit_depth_chroma_minus8, "*******************")
+
+		qpprime_y_zero_transform_bypass_flag, err := bs.ReadBit()
+		if err != nil {
+			return err
+		}
+		_ = qpprime_y_zero_transform_bypass_flag
+
+		seq_scaling_matrix_present_flag, err := bs.ReadBit()
+		if err != nil {
+			return err
+		}
+		fmt.Println("***************seq_scaling_matrix_present_flag=", seq_scaling_matrix_present_flag, "*******************")
+		if seq_scaling_matrix_present_flag == 1 {
+			var nb_scmpfs int = 0
+			if chroma_format_idc != 3 {
+				nb_scmpfs = 8
+			} else {
+				nb_scmpfs = 12
+			}
+
+			seq_scaling_list_present_flag := make([]int8, 0)
+			for i := 0; i < nb_scmpfs; i++ {
+				b, err := bs.ReadBit()
+				if err != nil {
+					return err
+				}
+				seq_scaling_list_present_flag = append(seq_scaling_list_present_flag, b)
+				if seq_scaling_list_present_flag[len(seq_scaling_list_present_flag) - 1] == 1 {
+					if i < 6 {
+						//todo scaling_list
+					}
+				}
+			}
+		}
 	}
+
+	log2_max_frame_num_minus4, err := bs.ReadUEV()
+	if err != nil {
+		return err
+	}
+	_ = log2_max_frame_num_minus4
+
+	pic_order_cnt_type, err := bs.ReadUEV()
+	if err != nil {
+		return err
+	}
+	fmt.Println("*************pic_order_cnt_type=", pic_order_cnt_type, "******************")
+	if pic_order_cnt_type == 0 {
+		log2_max_pic_order_cnt_lsb_minus4, err := bs.ReadUEV()
+		if err != nil {
+			return err
+		}
+		_ = log2_max_pic_order_cnt_lsb_minus4
+	} else if pic_order_cnt_type == 1 {
+		delta_pic_order_always_zero_flag, err := bs.ReadBit()
+		if err != nil {
+			return err
+		}
+		_ = delta_pic_order_always_zero_flag
+
+		offset_for_non_ref_pic, err := bs.ReadSEV()
+		if err != nil {
+			return err
+		}
+		_ = offset_for_non_ref_pic
+
+		offset_for_top_to_bottom_field, err := bs.ReadSEV()
+		if err != nil {
+			return err
+		}
+		_ = offset_for_top_to_bottom_field
+
+		num_ref_frames_in_pic_order_cnt_cycle, err := bs.ReadUEV()
+		if err != nil {
+			return err
+		}
+
+		if num_ref_frames_in_pic_order_cnt_cycle < 0 {
+			return errors.New("sps the num_ref_frames_in_pic_order_cnt_cycle invalid")
+		}
+		fmt.Println("******************num_ref_frames_in_pic_order_cnt_cycle=", num_ref_frames_in_pic_order_cnt_cycle, "**********************")
+		for i := 0; i < int(num_ref_frames_in_pic_order_cnt_cycle); i++ {
+			offset_for_ref_frame_i, err := bs.ReadSEV()
+			_ = offset_for_ref_frame_i
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	max_num_ref_frames, err := bs.ReadUEV()
+	if err != nil {
+		return err
+	}
+	_ = max_num_ref_frames
+
+	gaps_in_frame_num_value_allowed_flag, err := bs.ReadBit()
+	if err != nil {
+		return err
+	}
+	_ = gaps_in_frame_num_value_allowed_flag
+
+	pic_width_in_mbs_minus1, err := bs.ReadUEV()
+	if err != nil {
+		return err
+	}
+
+	pic_height_in_map_units_minus1, err := bs.ReadUEV()
+	if err != nil {
+		return err
+	}
+
+	width := (pic_width_in_mbs_minus1 + 1) * 16
+	height := (pic_height_in_map_units_minus1 + 1) * 16
+	fmt.Println("***************sps width=", width, "&height=", height)
 	return nil
 }

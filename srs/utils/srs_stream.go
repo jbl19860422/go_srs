@@ -96,6 +96,23 @@ func (this *SrsStream) ReadLeftBytes() []byte {
 	return b
 }
 
+func (this *SrsStream) PeekLeftBytes() []byte {
+	b := make([]byte, len(this.p))
+	copy(b, this.p)
+	return b
+}
+
+func (this *SrsStream) PeekBytes(count uint32) ([]byte, error) {
+	if !this.Require(count) {
+		err := errors.New("SrsStream not have enough data")
+		return nil, err
+	}
+
+	b := make([]byte, count)
+	copy(b, this.p[0:count])
+	return b, nil
+}
+
 func (this *SrsStream) WriteBytes(data []byte) {
 	this.bytes = append(this.bytes, data...)
 }
@@ -133,6 +150,21 @@ func (this *SrsStream) ReadInt8() (int8, error) {
 }
 
 func (this *SrsStream) WriteInt8(d int8) error {
+	this.WriteByte(byte(d))
+	return nil
+}
+
+func (this *SrsStream) ReadUInt8() (uint8, error) {
+	var b byte
+	var err error
+	if b, err = this.ReadByte(); err != nil {
+		return 0, err
+	}
+
+	return uint8(b), nil
+}
+
+func (this *SrsStream) WriteUInt8(d uint8) error {
 	this.WriteByte(byte(d))
 	return nil
 }
@@ -225,35 +257,4 @@ func (this *SrsStream) ReadString(len uint32) (string, error) {
 
 func (this *SrsStream) WriteString(str string) {
 	this.WriteBytes([]byte(str))
-}
-
-type SrsBitStream struct {
-	data    []byte
-	currBit uint32
-}
-
-func NewSrsBitStream(d []byte) *SrsBitStream {
-	return &SrsBitStream{
-		data:    d,
-		currBit: 0,
-	}
-}
-
-func (this *SrsBitStream) Empty() bool {
-	bytePos := this.currBit / 8
-	if bytePos >= uint32(len(this.data)) {
-		return true
-	}
-	return false
-}
-
-func (this *SrsBitStream) ReadBit() (int8, error) {
-	bytePos := this.currBit / 8
-	if bytePos >= uint32(len(this.data)) {
-		return 0, errors.New("no enough data")
-	}
-
-	bitOff := this.currBit % 8
-	this.currBit++
-	return int8((this.data[bytePos] >> bitOff) & 0x01), nil
 }

@@ -61,6 +61,24 @@ func (this *SrsCodecSample) AddSampleUnit(data []byte) error {
 	return nil
 }
 
+func (this *SrsCodecSample) Clear() {
+	this.IsVideo = false
+	this.SampleUnits = this.SampleUnits[0:0]
+    this.Cts = 0
+    this.FrameType = codec.SrsCodecVideoAVCFrameReserved
+	this.AvcPacketType = codec.SrsCodecVideoAVCTypeReserved
+	this.HasIdr = false
+	this.HasAud  = false
+	this.HasSpsPps = false
+	this.FirstNaluType = codec.SrsAvcNaluTypeReserved
+    
+    this.ACodec = codec.SrsCodecAudioReserved1
+    this.SoundRate = codec.SrsCodecAudioSampleRateReserved
+    this.SoundSize = codec.SrsCodecAudioSampleSizeReserved
+    this.SoundType = codec.SrsCodecAudioSoundTypeReserved
+    this.AacPacketType = codec.SrsCodecAudioTypeReserved
+}
+
 func (this *SrsCodecSample) SetIsVideo(v bool) {
 	this.IsVideo = v
 }

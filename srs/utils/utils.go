@@ -241,3 +241,55 @@ func MpegtsCRC32(data []byte) uint32 {
 
     return crc;
 }
+
+
+func GetNalu(stream *SrsStream) ([]([]byte), error) {
+	payload := stream.GetPayload()
+	var i := 0
+	nalus := make([]([]byte), 0)
+	for (i + 3) < len(payload) {
+		if payload[i] != 0x00 || payload[i + 1] != 0x00 {
+			return nalus, nil
+		}
+
+		if payload[i + 2] == 0x01 {
+			
+		}
+	}
+}
+
+func FindAnnexbStartCodePos(stream *SrsStream, start int, startCodePos *int, startCodeCount *int) error {
+	p := stream.GetPayload()
+	payload := p[start:]
+	var i int := 0
+	for (i + 3 ) < len(payload) {
+		if payload[i] == 0x00 && payload[i + 1] == 0x00 {
+			if payload[i + 2] == 0x01 {
+				*startCodePos = start + i
+				*startCodeCount = 3
+				return nil
+			} else if payload[i + 2] == 0x00 {
+				*startcodePos = start + i
+				*startCodeCount = 4
+				return nil
+			}
+		}
+	}
+	return len(payload)
+}
+
+func AvcStartswithAnnexb(stream *SrsStream, startCodeByteCount *int) bool {
+	b, err := stream.PeekBytes(4)
+	if err != nil {
+		return false
+	}
+
+	if b[0] == 0x00 && b[1] == 0x00 && b[2] == 0x00 && b[3] == 0x01 {
+		*startCodeByteCount = 4
+		return true
+	} else if b[0] == 0x00 && b[1] == 0x00 && b[2] == 0x01 {
+		*startCodeByteCount = 3
+		return true	
+	}
+	return false
+}

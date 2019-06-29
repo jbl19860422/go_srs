@@ -69,6 +69,7 @@ type SrsSource struct {
 
 	//record
 	dvr				*SrsDvr
+	hls				*SrsHls
 }
 
 var sourcePoolMtx sync.Mutex
@@ -87,6 +88,7 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		gopCache:NewSrsGopCache(),
 		atc:false,
 		dvr:NewSrsDvr(),
+		hls:NewSrsHls("333.ts"),
 	}
 	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
 
@@ -314,6 +316,11 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 	}
 
 	if err := this.dvr.on_video(msg); err != nil {
+		return err
+	}
+
+	if err := this.hls.on_video(msg); err != nil {
+		fmt.Println(err)
 		return err
 	}
 
