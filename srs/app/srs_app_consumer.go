@@ -24,13 +24,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	// "fmt"
-	"go_srs/srs/protocol/rtmp"
-	"go_srs/srs/codec/flv"
-	"go_srs/srs/protocol/packet"
-	// "context"
-	// "time"
 	"errors"
+	"go_srs/srs/protocol/rtmp"
+	"go_srs/srs/protocol/packet"
 )
 
 type ConsumerStopListener interface {
@@ -63,13 +59,12 @@ func (this *SrsConsumer) PlayCycle() error {
 		for !this.queueRecvThread.Empty() {//process signal message
 			msg := this.queueRecvThread.GetMsg()
 			if msg != nil {
-				err := this.process_play_control_msg(msg)
+				err := this.processPlayControlMsg(msg)
 				if err != nil {
 					return err
 				}
 			}
 		}
-		//todo process trd error
 		//todo process realtime stream
 		msg, err := this.queue.Wait()
 		if err != nil {
@@ -77,15 +72,6 @@ func (this *SrsConsumer) PlayCycle() error {
 		}
 
 		if msg != nil {
-			// fmt.Println("send to consumer")
-			if msg.GetHeader().IsVideo() {
-				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
-				if flvcodec.VideoIsKeyFrame(msg.GetPayload()) {
-					// fmt.Println("send key frame")
-				}
-				// fmt.Println("timestamp=", msg.GetHeader().GetTimestamp())
-			} else {
-			}
 			err := this.conn.rtmp.SendMsg(msg, this.StreamId)
 			_ = err
 		}
@@ -106,7 +92,7 @@ func (this *SrsConsumer) OnRecvError(err error) {
 	this.StopPlay()
 }
 
-func (this *SrsConsumer) process_play_control_msg(msg *rtmp.SrsRtmpMessage) error {
+func (this *SrsConsumer) processPlayControlMsg(msg *rtmp.SrsRtmpMessage) error {
 	if !msg.GetHeader().IsAmf0Command() && !msg.GetHeader().IsAmf3Command() {
 		//ignore 
 		return nil
@@ -124,6 +110,7 @@ func (this *SrsConsumer) process_play_control_msg(msg *rtmp.SrsRtmpMessage) erro
 		return errors.New("get close stream packet")
 	}
 	case *packet.SrsPausePacket:{
+		//todo pause stream
 		return nil
 	}
 	}

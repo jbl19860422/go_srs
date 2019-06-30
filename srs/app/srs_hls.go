@@ -105,7 +105,7 @@ func (this *SrsHls) on_publish(req *SrsRequest, fetch_sequence_header bool) erro
 	}
 
 	if fetch_sequence_header {
-		err = this.source.on_hls_start() 
+		err = this.source.onHlsStart() 
 		if err != nil {
 			return err
 		}

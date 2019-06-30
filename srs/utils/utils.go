@@ -121,7 +121,7 @@ func MinUInt32(a uint32, b uint32) uint32 {
 	return b
 }
 
-func SrsDiscoveryTCUrl(tcUrl string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
+func SrsDiscoveryTcUrl(tcUrl string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
 	var err1 error
 	u, err1 := url.Parse(tcUrl)
 	if err1 != nil {

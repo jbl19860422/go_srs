@@ -94,25 +94,6 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		tsContext: tsCtx,
 	}
 	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
-
-	// pkt := CreatePAT(source.tsContext, TS_PMT_NUMBER, TS_PMT_PID)
-	// f, err := os.OpenFile("a.ts", os.O_RDWR|os.O_CREATE, 0755)
-	// f.Truncate(0)
-	// stream := utils.NewSrsStream([]byte{})
-	// pkt.Encode(stream)
-	// f.Write(stream.Data())
-	
-
-	// pkt1 := CreatePMT(source.tsContext, TS_PMT_NUMBER, TS_PMT_PID, TS_VIDEO_AVC_PID, SrsTsStreamVideoH264, TS_AUDIO_AAC_PID, SrsTsStreamAudioAAC)
-	// stream1 := utils.NewSrsStream([]byte{})
-	// pkt1.Encode(stream1)
-	// fmt.Println("stream1.datalen=****************", len(stream1.Data()))
-	// f.Write(stream1.Data())
-
-	// f.Close()
-	// _ = pkt
-	// _ = err
-
 	return source
 }
 
@@ -213,7 +194,7 @@ func (this *SrsSource) on_dvr_request_sh() error {
 	return nil
 }
 
-func (this *SrsSource) on_publish() error {
+func (this *SrsSource) onPublish() error {
 	if this.hls != nil {
 		err := this.hls.on_publish(this.req, false)
 		if err != nil {
@@ -230,7 +211,7 @@ func (this *SrsSource) on_publish() error {
 	return nil
 }
 
-func (this *SrsSource) on_hls_start() error {
+func (this *SrsSource) onHlsStart() error {
 	if this.cacheSHVideo != nil {
 		err := this.hls.on_video(this.cacheSHVideo)
 		if err != nil {

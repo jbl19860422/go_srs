@@ -1,19 +1,14 @@
 package app
 
 import (
-	"go_srs/srs/protocol/rtmp"
-	"go_srs/srs/protocol/packet"
-	"go_srs/srs/app/config"
-	// "go_srs/srs/codec/flv"
-	"go_srs/srs/utils"
 	"net"
 	"strings"
 	"net/url"
-	// "log"
-	// "time"
-	"fmt"
-	// "context"
 	"errors"
+	"go_srs/srs/protocol/rtmp"
+	"go_srs/srs/protocol/packet"
+	"go_srs/srs/app/config"
+	"go_srs/srs/utils"
 )
 
 type SrsRtmpConn struct {
@@ -23,7 +18,6 @@ type SrsRtmpConn struct {
 	server					*SrsServer
 	source					*SrsSource
 	clientType 				rtmp.SrsRtmpConnType
-	// publishThread 			*SrsAppPublishRecvThread
 }
 
 func NewSrsRtmpConn(c net.Conn, s *SrsServer) *SrsRtmpConn {
@@ -42,9 +36,7 @@ func (this *SrsRtmpConn) Start() error {
 
 func (this *SrsRtmpConn) Stop() {
 	this.rtmp.Close()
-	fmt.Println("typ=", this.req.typ)
 	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
-		fmt.Println("RemoveConsumers")
 		this.source.RemoveConsumers()
 		RemoveSrsSource(this.source)
 	}
@@ -125,28 +117,34 @@ func (this *SrsRtmpConn) serviceCycle() error {
 	if err != nil {
 		return err
 	}
-	
-	return this.stream_service_cycle()
+
+	return this.streamServiceCycle()
 }
 
-func (this *SrsRtmpConn) stream_service_cycle() error {
-	var dur float64
-	this.req.typ, this.req.stream, dur, _ = this.rtmp.IdentifyClient(this.res.StreamId)
-	_ = dur
+func (this *SrsRtmpConn) streamServiceCycle() error {
 	var err error
-	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTCUrl(this.req.tcUrl)
+	this.req.typ, this.req.stream, this.req.duration, err = this.rtmp.IdentifyClient(this.res.StreamId)
+	if err != nil {
+		return err
+	}
+
+	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTcUrl(this.req.tcUrl)
 	if err != nil {
 		return errors.New("srs_discovery_tc_url failed")
 	}
-	// fmt.Println("Srs_discovery_tc_url succeed, stream_name=", this.req.stream)
+	//todo check edge vhost
+	//todo security check
+
+	if this.req.stream == "" {
+		return errors.New("RTMP: Empty stream name not allowed")
+	}
+
 	this.source, err = FetchOrCreate(this, this.req, this.server)
 	if err != nil {
-		fmt.Println("FetchOrCreate failed")
 		return err
 	}
 
 	this.clientType = this.req.typ
-	// fmt.Println("*************clientType=", this.clientType, "*************")
 
 	switch(this.req.typ) {
 	case rtmp.SrsRtmpConnPlay:{
@@ -154,22 +152,65 @@ func (this *SrsRtmpConn) stream_service_cycle() error {
 			return err
 		}
 
-		//todo http_hooks_on_play
+		if err := this.httpHooksOnPlay(); err != nil {
+			return err
+		}
+		
+		if err := this.playing(this.source); err != nil {
+			return err
+		}
 
-		return this.playing(this.source)
+		if err := this.httpHooksOnStop(); err != nil {
+			return err
+		}
+
+		return nil
 	}
 	case rtmp.SrsRtmpConnFMLEPublish:{
-		// log.Print("******************start SrsRtmpConnFMLEPublish*******************")
-		this.rtmp.Start_fmle_publish(0)
+		if err := this.rtmp.StartFmlePublish(0); err != nil {
+			return err
+		}
 		return this.publishing(this.source)
 	}
+	default:{
+		return errors.New("invalid client type")
+	}
+	//todo SrsRtmpConnHaivisionPublish,SrsRtmpConnFlashPublish
+	}
+	return nil
+}
+
+func (this *SrsRtmpConn) httpHooksOnPlay() error {
+	vhost := config.GetInstance().GetVHost(this.req.vhost)
+	if vhost == nil {
+		return nil
+	}
+
+	if vhost.HttpHooks != nil && vhost.HttpHooks.Enabled == "on" {
+		if err := OnPlay(vhost.HttpHooks.OnPlay, this.req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (this *SrsRtmpConn) httpHooksOnStop() error {
+	vhost := config.GetInstance().GetVHost(this.req.vhost)
+	if vhost == nil {
+		return nil
+	}
+
+	if vhost.HttpHooks != nil && vhost.HttpHooks.Enabled == "on" {
+		if err := OnStop(vhost.HttpHooks.OnStop, this.req); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (this *SrsRtmpConn) playing( source *SrsSource) error {
 	consumer := source.CreateConsumer(this, true, true, true)
-	return this.do_playing(source, consumer)
+	return this.doPlaying(source, consumer)
 }
 
 func (this *SrsRtmpConn) RemoveSelf() {
@@ -182,56 +223,69 @@ func (this *SrsRtmpConn) OnRecvError(err error) {
 	this.server.OnRecvError(err, this)
 }
 
-func (this *SrsRtmpConn) do_playing(source *SrsSource, consumer Consumer) error {
+func (this *SrsRtmpConn) doPlaying(source *SrsSource, consumer Consumer) error {
 	//todo refer check
 	//todo srsprint
 	// realtime := false
-	_ = consumer.PlayCycle()
-	fmt.Println("end playing cycle")
+	if err := consumer.PlayCycle(); err != nil {
+		return err
+	}
 	return nil
 }
-
-// func (this *SrsRtmpConn) process_play_control_msg(consumer *SrsConsumer, msg *rtmp.SrsRtmpMessage) error {
-// 	if !msg.GetHeader().IsAmf0Command() && !msg.GetHeader().IsAmf3Command() {
-// 		//ignore 
-// 		return nil
-// 	}
-	
-// 	pkt, err := this.rtmp.DecodeMessage(msg)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	//todo add callpacket 
-// 	//todo process pause message
-// 	switch pkt.(type) {
-// 	case *packet.SrsCloseStreamPacket:{
-// 		//todo fix close stream action
-// 		return errors.New("get close stream packet")
-// 	}
-// 	case *packet.SrsPausePacket:{
-// 		return nil
-// 	}
-// 	}
-// 	return nil
-// }
 
 func (this *SrsRtmpConn) publishing(s *SrsSource) error {
 	//TODO
 	//refer.check
-	//http_hooks_on_publish
+	if err := this.httpHooksOnPublish(); err != nil {
+		return err
+	}
 	//judge edge host
 	if err := this.acquirePublish(s, false); err != nil {
 		return err
 	}
 
 	err := this.doPublishing(s)
+	//todo release publish
+	if err := this.httpHooksOnUnpublish(); err != nil {
+		return err
+	}
 	return err
 }
+
+func (this *SrsRtmpConn) httpHooksOnPublish() error {
+	vhost := config.GetInstance().GetVHost(this.req.vhost)
+	if vhost == nil {
+		return nil
+	}
+
+	if vhost.HttpHooks != nil && vhost.HttpHooks.Enabled == "on" {
+		if err := OnPublish(vhost.HttpHooks.OnPublish, this.req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (this *SrsRtmpConn) httpHooksOnUnpublish() error {
+	vhost := config.GetInstance().GetVHost(this.req.vhost)
+	if vhost == nil {
+		return nil
+	}
+
+	if vhost.HttpHooks != nil && vhost.HttpHooks.Enabled == "on" {
+		if err := OnPublish(vhost.HttpHooks.OnUnpublish, this.req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+
 
 func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 	//TODO edge process
 	
-	err := this.source.on_publish()
+	err := this.source.onPublish()
 	if err != nil {
 		return err
 	}
@@ -239,66 +293,8 @@ func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 }
 
 func (this *SrsRtmpConn) doPublishing(source *SrsSource) error {
-	// fmt.Println("******************doPublishing*******************")
-	// this.publishThread = NewSrsAppPublishRecvThread(this.rtmp, this.req, this, source, false, false)
-	// this.publishThread.Start()
-
-	// return nil
 	return source.CyclePublish()
 }
-
-// func (this *SrsRtmpConn) HandlePublishMessage(source *SrsSource, msg *rtmp.SrsRtmpMessage, isFmle bool, isEdge bool) error {
-// 	if msg.GetHeader().IsAmf0Command() || msg.GetHeader().IsAmf3Command() {
-// 		pkt, err := this.rtmp.DecodeMessage(msg)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		_ = pkt
-// 		//todo isfmle process
-// 	}
-
-// 	return this.ProcessPublishMessage(source, msg, isEdge)
-// }
-
-// func (this *SrsRtmpConn) ProcessPublishMessage(source *SrsSource, msg *rtmp.SrsRtmpMessage, isEdge bool) error {
-// 	//todo fix edge process
-// 	if msg.GetHeader().IsAudio() {
-// 		//process audio
-// 		// fmt.Println("onaudio*******************")
-// 		if err := source.OnAudio(msg); err != nil {
-
-// 		}
-// 	}
-
-// 	if msg.GetHeader().IsVideo() {
-// 		// fmt.Println("onvideo******************")
-// 		if err := source.OnVideo(msg); err != nil {
-			
-// 		}
-// 		//process video
-// 	}
-// 	//todo fix aggregate message
-// 	//todo fix amf0 or amf3 data
-
-// 	// process onMetaData
-//     if (msg.GetHeader().IsAmf0Data() || msg.GetHeader().IsAmf3Data()) {
-// 		pkt, err := this.rtmp.DecodeMessage(msg)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		switch pkt.(type) {
-// 			case *packet.SrsOnMetaDataPacket: {
-// 				// fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxmetadata")
-// 				err := source.on_meta_data(msg, pkt.(*packet.SrsOnMetaDataPacket))
-// 				if err != nil {
-// 					return err
-// 				}
-// 			}
-// 		}
-//     }
-// 	return nil
-// }
 
 func (this *SrsRtmpConn) Playing(source *SrsSource) {
 	//todo

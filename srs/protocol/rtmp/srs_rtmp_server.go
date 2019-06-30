@@ -302,7 +302,7 @@ func (this *SrsRtmpServer) OnBwDone() error {
 	return err
 }
 
-func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
+func (this *SrsRtmpServer) StartFmlePublish(streamId int) error {
 	// FCPublish
 	var fc_publish_tid float64 = 0
 	{
@@ -326,7 +326,7 @@ func (this *SrsRtmpServer) Start_fmle_publish(stream_id int) error {
 			return err
 		}
 		create_stream_tid = createPkt.TransactionId.Value
-		createResPkt := packet.NewSrsCreateStreamResPacket(create_stream_tid, float64(stream_id))
+		createResPkt := packet.NewSrsCreateStreamResPacket(create_stream_tid, float64(streamId))
 		err := this.Protocol.SendPacket(createResPkt, 0)
 		if err != nil {
 			return err
