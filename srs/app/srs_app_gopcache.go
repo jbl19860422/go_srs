@@ -34,7 +34,7 @@ const SRS_PURE_AUDIO_GUESS_COUNT = 115
 
 type SrsGopCache struct {
 	enabled                  bool
-	gopCache                    []*rtmp.SrsRtmpMessage
+	gopCache                 []*rtmp.SrsRtmpMessage
 	cachedVideoCount         uint32
 	audioAfterLastVideoCount uint32
 }

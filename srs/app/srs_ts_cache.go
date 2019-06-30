@@ -1,10 +1,32 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2013-2015 GOSRS(gosrs)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 package app
 
 import (
-	"go_srs/srs/codec"
 	"errors"
-	"fmt"
+	"go_srs/srs/codec"
 )
+
 type SrsTsCache struct {
 	audio *SrsTsMessage
 	video *SrsTsMessage
@@ -23,7 +45,7 @@ func (this *SrsTsCache) cache_audio(c *SrsAvcAacCodec, dts int64, sample *SrsCod
 		this.audio.startPts = dts
 	}
 
-	this.audio.sid = SrsTsPESStreamIdAudioCommon	//used in ts stream_id field
+	this.audio.sid = SrsTsPESStreamIdAudioCommon //used in ts stream_id field
 	acodec := codec.SrsCodecAudio(c.audioCodecId)
 	if acodec == codec.SrsCodecAudioAAC {
 		if err := this.do_cache_aac(c, sample); err != nil {
@@ -46,7 +68,7 @@ func (this *SrsTsCache) cache_video(c *SrsAvcAacCodec, dts int64, sample *SrsCod
 
 	this.video.dts = dts
 	this.video.pts = this.video.dts + int64(sample.Cts)*90
-	this.video.sid = SrsTsPESStreamIdVideoCommon	//this is the hint to judge the SrsTsMessage is audio or video
+	this.video.sid = SrsTsPESStreamIdVideoCommon //this is the hint to judge the SrsTsMessage is audio or video
 	if err := this.do_cache_avc(c, sample); err != nil {
 		return err
 	}
@@ -102,7 +124,7 @@ func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sample *SrsCodecSample) 
 			return errors.New("sample unit must not be nil or empty")
 		}
 
-		naluUnitType := codec.SrsAvcNaluType(sample.SampleUnits[i][0]&0x0f)
+		naluUnitType := codec.SrsAvcNaluType(sample.SampleUnits[i][0] & 0x0f)
 		// Insert sps/pps before IDR when there is no sps/pps in samples.
 		// The sps/pps is parsed from sequence header(generally the first flv packet).
 		if naluUnitType == codec.SrsAvcNaluTypeIDR && !sample.HasSpsPps && !isSpsPpsAppend {
@@ -113,7 +135,6 @@ func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sample *SrsCodecSample) 
 					this.video.payload = append(this.video.payload, []byte{0x00, 0x00, 0x00, 0x01}...)
 					audInserted = true
 				}
-				fmt.Println("append sps")
 				this.video.payload = append(this.video.payload, c.sequenceParameterSetNALUnit...)
 			}
 
@@ -124,7 +145,6 @@ func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sample *SrsCodecSample) 
 					this.video.payload = append(this.video.payload, []byte{0x00, 0x00, 0x00, 0x01}...)
 					audInserted = true
 				}
-				fmt.Println("append pps")
 				this.video.payload = append(this.video.payload, c.pictureParameterSetNALUnit...)
 			}
 			isSpsPpsAppend = true

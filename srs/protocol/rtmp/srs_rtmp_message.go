@@ -17,13 +17,6 @@ type SrsRtmpMessage struct {
 	 *       video/audio packet use raw bytes, no video/audio packet.
 	 */
 	payload []byte
-	// /**
-	//  * Four-byte field that contains a timestamp of the message.
-	//  * The 4 bytes are packed in the big-endian order.
-	//  * @remark, used as calc timestamp when decode and encode time.
-	//  * @remark, we use 64bits for large time for jitter detect and hls.
-	//  */
-	// timestamp int64
 }
 
 func NewSrsRtmpMessage() *SrsRtmpMessage {

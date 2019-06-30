@@ -1,10 +1,29 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2013-2015 GOSRS(gosrs)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 package app
 
 import (
-	// log "github.com/sirupsen/logrus"
-	// "go_srs/srs/protocol"
 	"net/http"
-	"fmt"
 	"sync"
 	_ "log"
 	"net"
@@ -36,9 +55,7 @@ func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 	defer this.connsMtx.Unlock()
 	for i := 0; i < len(this.conns); i++ {
 		if this.conns[i] == c {
-			fmt.Println("remove conn len=", len(this.conns))
 			this.conns = append(this.conns[:i], this.conns[i+1:]...)
-			fmt.Println("conns.len=", len(this.conns))
 			break
 		}
 	}
@@ -47,7 +64,6 @@ func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 func (this *SrsServer) AddConn(c *SrsRtmpConn) {
 	this.connsMtx.Lock()
 	this.conns = append(this.conns, c)
-	fmt.Println("xxxxxxxxxxxxxxxxxxxconns.len=", len(this.conns), "xxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	this.connsMtx.Unlock()
 }
 
@@ -84,13 +100,9 @@ func (this *SrsServer) HandleConnection(conn net.Conn) {
 	err := rtmpConn.Start()
 	_ = err
 	this.RemoveConn(rtmpConn)
-
-	fmt.Println("HandleConnection done")
 }
 
 func (this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
-	this.flvServer.Mount(r, s)
-	fmt.Println("*********************server onpublishxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	return nil
 }
 	

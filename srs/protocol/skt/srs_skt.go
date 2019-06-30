@@ -45,8 +45,6 @@ func (this *SrsIOReadWriter) ReadWithTimeout(b []byte, timeoutms uint32) (int, e
 }
 
 func (this *SrsIOReadWriter) ReadFully(b []byte, timeoutms uint32) (int, error) {
-	// fmt.Println("ReadFully len=", len(b))
-	// return io.ReadFull(this.conn, b)
 	count := len(b)
 	left := count
 	for {

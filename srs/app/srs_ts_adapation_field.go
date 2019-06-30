@@ -1,8 +1,28 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2013-2015 GOSRS(gosrs)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 package app
 
 import (
-	// "fmt"
-	// "encoding/binary"
 	"go_srs/srs/utils"
 )
 
@@ -384,46 +404,9 @@ func (this *SrsTsAdapationField) Padding(leftCount int) int {
 
 	this.adaptationFieldLength = uint8(sz - 1)
 	return sz
-	// fmt.Println("************paddingCount=", paddingCount, "&this.adaptationFieldLength=", this.adaptationFieldLength, "**************")
 }
 
-// func (this *SrsTsAdapationField) Padding(paddingCount int) {
-// 	sz := 2
-// 	if this.PCRFlag == 1 {
-// 		sz += 6
-// 	}
-
-// 	if this.OPCRFlag == 1 {
-// 		sz += 6
-// 	}
-
-// 	if this.splicingPointFlag == 1 {
-// 		sz += 1
-// 	}
-
-// 	if this.transportPrivateDataFlag == 1 {
-// 		sz += 1 + int(this.transportPrivateDataLength)
-// 	}
-
-// 	if this.adaptationFieldExtensionFlag == 1 {
-// 		sz += 2 + int(this.adaptationFieldExtensionLength)
-// 	}
-
-// 	staffingCount := paddingCount - sz
-// 	this.staffingByte = make([]byte, 0)
-// 	if staffingCount > 0 {
-// 		for i := 0; i < staffingCount; i++ {
-// 			this.staffingByte = append(this.staffingByte, 0xff)
-// 		}
-// 		sz += staffingCount
-// 	}
-
-// 	this.adaptationFieldLength = uint8(sz - 1)
-// 	// fmt.Println("************paddingCount=", paddingCount, "&this.adaptationFieldLength=", this.adaptationFieldLength, "**************")
-// }
-
 func (this *SrsTsAdapationField) Size() uint32 {
-	// return 0
 	var sz uint32 = 2
 	if this.PCRFlag == 1 {
 		sz += 6
