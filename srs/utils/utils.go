@@ -142,7 +142,7 @@ func MinUInt32(a uint32, b uint32) uint32 {
 	return b
 }
 
-func SrsDiscoveryTcUrl(tcUrl string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
+func SrsDiscoveryTcUrl(tcUrl string, s string) (schema string, host string, vhost string, app string, stream string, port string, param string, err error) {
 	var err1 error
 	u, err1 := url.Parse(tcUrl)
 	if err1 != nil {
@@ -158,9 +158,9 @@ func SrsDiscoveryTcUrl(tcUrl string) (schema string, host string, vhost string, 
 	}
 
 	m, _ := url.ParseQuery(u.RawQuery)
-	vhost_params, ok := m["vhost"]
+	vHostParams, ok := m["vhost"]
 	if ok {
-		vhost = vhost_params[0]
+		vhost = vHostParams[0]
 	}
 
 	p := strings.Split(u.Path, "/")
@@ -183,30 +183,30 @@ func SrsGenerateStreamUrl(vhost string, app string, stream string) string {
 		url += vhost
 	}
 
-    url += "/"
-    url += app
-    url += "/"
-    url += stream
+	url += "/"
+	url += app
+	url += "/"
+	url += stream
 
-    return url
+	return url
 }
 
 func TraceMemStats() {
-    var ms runtime.MemStats
-    runtime.ReadMemStats(&ms)
-    // log.Printf("Alloc:%d(bytes) HeapIdle:%d(bytes) HeapReleased:%d(bytes), RoutineNum:%d", ms.Alloc, ms.HeapIdle, ms.HeapReleased, runtime.NumGoroutine())
+	var ms runtime.MemStats
+	runtime.ReadMemStats(&ms)
+	// log.Printf("Alloc:%d(bytes) HeapIdle:%d(bytes) HeapReleased:%d(bytes), RoutineNum:%d", ms.Alloc, ms.HeapIdle, ms.HeapReleased, runtime.NumGoroutine())
 }
 
 func Srs_path_build_stream(template_path string, vhost string, app string, stream string) string {
-    path := template_path
-    
-    // variable [vhost]
-    path = strings.Replace(path, "[vhost]", vhost, -1)
-    // variable [app]
-    path = strings.Replace(path, "[app]", app, -1)
-    // variable [stream]
-    path = strings.Replace(path, "[stream]", stream, -1)
-    return path
+	path := template_path
+
+	// variable [vhost]
+	path = strings.Replace(path, "[vhost]", vhost, -1)
+	// variable [app]
+	path = strings.Replace(path, "[app]", app, -1)
+	// variable [stream]
+	path = strings.Replace(path, "[stream]", stream, -1)
+	return path
 }
 
 var CRCTable = [256]uint32{
@@ -257,12 +257,12 @@ var CRCTable = [256]uint32{
 
 func MpegtsCRC32(data []byte) uint32 {
 	var crc uint32 = 0xffffffff
-	
+
 	for i := 0; i < len(data); i++ {
-		crc = (crc << 8) ^ CRCTable[((crc >> 24) ^ uint32(data[i])) & 0xff]
+		crc = (crc << 8) ^ CRCTable[((crc>>24)^uint32(data[i]))&0xff]
 	}
 
-    return crc;
+	return crc;
 }
 
 func GetCurrentMs() int64 {
@@ -271,7 +271,7 @@ func GetCurrentMs() int64 {
 
 func GetNalus(stream *SrsStream) []([]byte) {
 	payload := stream.PeekLeftBytes()
-	
+
 	var prevPos int = 0
 	nalus := make([]([]byte), 0)
 	//起始判断
@@ -294,14 +294,14 @@ func GetNalus(stream *SrsStream) []([]byte) {
 
 	var i int = prevPos
 	for (i + 4) < len(payload) {
-		if payload[i] == 0x00 && payload[i + 1] == 0x00 {
-			if payload[i + 2] == 0x01 {
-				fmt.Println("prevPos=", prevPos, "&i=",i)
+		if payload[i] == 0x00 && payload[i+1] == 0x00 {
+			if payload[i+2] == 0x01 {
+				fmt.Println("prevPos=", prevPos, "&i=", i)
 				nalus = append(nalus, payload[prevPos:i])
 				i += 3
 				prevPos = i
 				continue
-			} else if payload[i + 2] == 0x00 && payload[i + 3] == 0x01 {
+			} else if payload[i+2] == 0x00 && payload[i+3] == 0x01 {
 				nalus = append(nalus, payload[prevPos:i])
 				i += 4
 				prevPos = i

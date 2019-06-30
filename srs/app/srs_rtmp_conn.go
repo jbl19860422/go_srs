@@ -150,7 +150,21 @@ func (this *SrsRtmpConn) streamServiceCycle() error {
 		return err
 	}
 
-	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTcUrl(this.req.tcUrl)
+
+	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTcUrl(this.req.tcUrl, this.req.stream)
+
+	if strings.Contains(this.req.stream, "?") {
+
+		i := strings.Index(this.req.stream, "?")
+		param := this.req.stream[i+1:]
+		m, _ := url.ParseQuery(param)
+		vhost_params, ok := m["vhost"]
+		if ok {
+			this.req.vhost = vhost_params[0]
+		}
+		this.req.stream = this.req.stream[0:i]
+	}
+
 	if err != nil {
 		return errors.New("srs_discovery_tc_url failed")
 	}

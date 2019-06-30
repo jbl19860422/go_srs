@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"net/url"
 )
 
 type SrsHttpStreamServer struct {
@@ -64,7 +65,13 @@ func (this *SrsHttpStreamServer) ServeHTTP(w http.ResponseWriter, r *http.Reques
 	fmt.Println("url=", r.URL.Path)
 	if strings.HasSuffix(r.URL.Path, ".ts") {
 		s := strings.Replace(r.URL.Path, ".ts", "", -1)
-		source, ok := sourcePool[s]
+		m, _ := url.ParseQuery(r.URL.RawQuery)
+		vHostParams, ok := m["vhost"]
+		vhost := "__defaultVhost__"
+		if ok {
+			vhost = vHostParams[0]
+		}
+		source, ok := sourcePool[vhost + s]
 		if !ok {
 			return
 		}
@@ -75,7 +82,14 @@ func (this *SrsHttpStreamServer) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		return
 	} else if strings.HasSuffix(r.URL.Path, ".flv") {
 		s := strings.Replace(r.URL.Path, ".flv", "", -1)
-		source, ok := sourcePool[s]
+		m, _ := url.ParseQuery(r.URL.RawQuery)
+		vHostParams, ok := m["vhost"]
+		vhost := "__defaultVhost__"
+		if ok {
+			vhost = vHostParams[0]
+		}
+
+		source, ok := sourcePool[vhost + s]
 		if !ok {
 			return
 		}

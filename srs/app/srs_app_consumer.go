@@ -27,6 +27,7 @@ import (
 	"errors"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/protocol/packet"
+	"fmt"
 )
 
 type ConsumerStopListener interface {
@@ -68,6 +69,7 @@ func (this *SrsConsumer) PlayCycle() error {
 		//todo process realtime stream
 		msg, err := this.queue.Wait()
 		if err != nil {
+			fmt.Println("************remove because", err, "**************8")
 			return err
 		}
 

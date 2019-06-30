@@ -115,6 +115,7 @@ func FetchOrCreate(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) (*SrsSour
 	}
 
 	streamUrl := r.GetStreamUrl()
+	fmt.Println("create source url=", streamUrl)
 	vhost := r.vhost
 	_ = vhost
 	sourcePoolMtx.Lock()
@@ -321,7 +322,7 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 		fmt.Println("***********************VideoIsSequenceHeader*************************")
 		this.cacheSHVideo = msg
 	}
-
+	//fmt.Println("*************onVideo", len(this.consumers))
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].Enqueue(msg, false, this.jitterAlgorithm)
 		// fmt.Println("***********************************************send video**************************************")
@@ -441,7 +442,7 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 	//todo cppy sequence header
 	//todo copy gop to consumers queue
 	//many things todo 
-	fmt.Println("CreateConsumer")
+	fmt.Println("CreateConsumer len=", len(this.consumers))
 	if this.cacheMetaData != nil {
 		consumer.Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
 	}
