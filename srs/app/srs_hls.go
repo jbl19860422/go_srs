@@ -154,7 +154,7 @@ func (this *SrsHls) Stop() {
 	<-this.done
 }
 
-func (this *SrsHls) on_meta_data(metaData *rtmp.SrsRtmpMessage) error {
+func (this *SrsHls) onMetaData(metaData *rtmp.SrsRtmpMessage) error {
 	return nil
 }
 

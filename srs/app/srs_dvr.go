@@ -44,8 +44,8 @@ func (this *SrsDvr) Initialize(s *SrsSource, r *SrsRequest) error {
 	return nil
 }
 
-func (this *SrsDvr) on_meta_data(metaData *rtmp.SrsRtmpMessage) error {
-	return this.plan.On_meta_data(metaData)
+func (this *SrsDvr) OnMetaData(metaData *rtmp.SrsRtmpMessage) error {
+	return this.plan.OnMetaData(metaData)
 }
 
 func (this *SrsDvr) on_video(video *rtmp.SrsRtmpMessage) error {

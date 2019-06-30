@@ -1,9 +1,29 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2013-2015 GOSRS(gosrs)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
 package flvcodec
 
 import (
-	// "os"
 	"io"
-	"fmt"
 	"encoding/binary"
 	"go_srs/srs/codec"
 	"go_srs/srs/protocol/rtmp"
@@ -188,35 +208,26 @@ func (this *SrsFlvEncoder) WriteHeader() error {
 }
 
 func (this *SrsFlvEncoder) WriteMetaData(data []byte) (uint32, error) {
-	fmt.Println("**************WriteMetaData******************, len=", len(data))
 	header := NewTagHeader(MetaDataTagType, 0, int32(len(data)))
 	return this.writeTag(header, data)
 }
 
 func (this *SrsFlvEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, error) {
-	// fmt.Println("**************WriteAudio******************")
 	header := NewTagHeader(AudioTagType, timestamp, int32(len(data)))
 	return this.writeTag(header, data)
 }
 
 func (this *SrsFlvEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, error) {
-	// fmt.Println("**************WriteVideo******************")
 	header := NewTagHeader(VideoTagType, timestamp, int32(len(data)))
 	return this.writeTag(header, data)
 }
 
 func (this *SrsFlvEncoder) writeTag(header *TagHeader, data []byte) (uint32, error) {
-	// if this.tagCount >= 4 {
-	// 	return 0, nil
-	// }
-
-	// fmt.Println("write tag", this.tagCount, " datasize=", len(data))
 	this.tagCount++
 	d := header.Data()
 	d = append(d, data...)
 
 	prevTagSize := int32(len(d))
-	//fmt.Println(prevTagSize)
 	p := utils.Int32ToBytes(prevTagSize, binary.BigEndian)
 	d = append(d, p...)
 	n, err := this.writer.Write(d)

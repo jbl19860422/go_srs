@@ -278,7 +278,6 @@ func (this *SrsAvcAacCodec) video_avc_demux(data []byte, sample *SrsCodecSample)
 	sample.AvcPacketType = codec.SrsCodecVideoAVCType(avcPacketType)
 
 	if avcPacketType == codec.SrsCodecVideoAVCTypeSequenceHeader {
-		fmt.Println("*****************is SrsCodecVideoAVCTypeSequenceHeader***************")
 		err := this.avc_demux_sps_pps(stream)
 		if err != nil {
 			return err
@@ -305,7 +304,6 @@ func (this *SrsAvcAacCodec) video_nalu_demux(stream *utils.SrsStream, sample *Sr
 		} else {
 			is_ibmf := this.avc_demux_ibmf_format(stream, sample)
 			_ = is_ibmf
-			fmt.Println("**************is_ibmf=", is_ibmf, "************")
 			if is_ibmf {
 				this.payloadFormat = codec.SrsAvcPayloadFormatIbmf
 			}
@@ -328,12 +326,10 @@ func (this *SrsAvcAacCodec) avc_demux_annexb_format(stream *utils.SrsStream, sam
 }
 
 func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sample *SrsCodecSample) bool {
-	// fmt.Println("***************avc_demux_ibmf_format start*****************",this.NalUnitLength)
 	pictureLength := len(stream.Data())
 	for i := 0; i < pictureLength; {
 		b, err := stream.ReadBytes(uint32(this.NalUnitLength + 1))
 		if err != nil {
-			fmt.Println("****************error 1  ", err, "&i=", i)
 			return false
 		}
 
@@ -344,7 +340,6 @@ func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sampl
 
 		d, err2 := stream.ReadBytes(uint32(NALUnitLength))
 		if err2 != nil {
-			fmt.Println("****************error 2")
 			return false
 		}
 		_ = d
@@ -352,12 +347,10 @@ func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sampl
 		// 7.3.1 NAL unit syntax, H.264-AVC-ISO_IEC_14496-10.pdf, page 44.
 		err = sample.AddSampleUnit(d)
 		if err != nil {
-			fmt.Println("****************error 3")
 			return false
 		}
 
 		i += int(int32(this.NalUnitLength) + 1 + NALUnitLength)
-		// fmt.Println("pictureLength=", pictureLength, "&i=", i, "&NALUnitLength=", NALUnitLength)
 	}
 	return true
 }
@@ -519,7 +512,6 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("**************profile_idc=", profile_idc, "*****************")
 
 	if profile_idc == 0 {
 		return errors.New("sps the profile_idc invalid")
@@ -543,15 +535,13 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 		return errors.New("sps the level_idc invalid.")
 	}
 
-	fmt.Println("***************level_idc=", level_idc, "*****************")
-
 	bs := utils.NewSrsBitStream(stream.ReadLeftBytes())
 	_ = bs
 	seq_parameter_set_id, err := bs.ReadUEV()
 	if err != nil {
 		return err
 	}
-	fmt.Println("**********seq_parameter_set_id=", seq_parameter_set_id, "****************")
+
 	if seq_parameter_set_id < 0 {
 		return errors.New("sps the seq_parameter_set_id invalid")
 	}
@@ -572,14 +562,11 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 			_ = separate_colour_plane_flag
 		}
 
-		fmt.Println("*****************chroma_format_idc=", chroma_format_idc, "*******************")
-
 		bit_depth_luma_minus8, err := bs.ReadUEV()
 		if err != nil {
 			return err
 		}
 		_ = bit_depth_luma_minus8
-		fmt.Println("*****************bit_depth_luma_minus8=", bit_depth_luma_minus8, "*******************")
 
 		bit_depth_chroma_minus8, err := bs.ReadUEV()
 		if err != nil {
@@ -633,7 +620,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("*************pic_order_cnt_type=", pic_order_cnt_type, "******************")
+
 	if pic_order_cnt_type == 0 {
 		log2_max_pic_order_cnt_lsb_minus4, err := bs.ReadUEV()
 		if err != nil {
@@ -667,7 +654,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 		if num_ref_frames_in_pic_order_cnt_cycle < 0 {
 			return errors.New("sps the num_ref_frames_in_pic_order_cnt_cycle invalid")
 		}
-		fmt.Println("******************num_ref_frames_in_pic_order_cnt_cycle=", num_ref_frames_in_pic_order_cnt_cycle, "**********************")
+		
 		for i := 0; i < int(num_ref_frames_in_pic_order_cnt_cycle); i++ {
 			offset_for_ref_frame_i, err := bs.ReadSEV()
 			_ = offset_for_ref_frame_i
@@ -701,6 +688,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 
 	width := (pic_width_in_mbs_minus1 + 1) * 16
 	height := (pic_height_in_map_units_minus1 + 1) * 16
-	fmt.Println("***************sps width=", width, "&height=", height)
+	_ = width
+	_ = height
 	return nil
 }

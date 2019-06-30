@@ -1,8 +1,30 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2013-2015 GOSRS(gosrs)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 package flvcodec
 
 import (
 	"os"
-	"fmt"
 	"errors"
 	"encoding/binary"
 	"go_srs/srs/protocol/amf0"
@@ -110,7 +132,6 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 	//todo fix me, write readable code
 	this.durationOffset = off + int64(size) + 11 - 3 - 8
 	this.filesizeOffset = this.durationOffset - 1 - (2 + int64(len("duration"))) - 8
-	fmt.Println("durationOffset=", this.durationOffset, "&filesizeOffset=", this.filesizeOffset)
 	_, err = this.flvEncoder.WriteMetaData(writeStream.Data())
 	return err
 }
@@ -123,9 +144,7 @@ func (this *SrsFlvSegment) onUpdateDuration(msg *rtmp.SrsRtmpMessage) error {
 	if this.previousPktTime < 0 || this.previousPktTime > msg.GetHeader().GetTimestamp() {
 		this.previousPktTime = msg.GetHeader().GetTimestamp()
 	}
-	// fmt.Println("msg.GetTimestamp=", msg.GetHeader().GetTimestamp())
 	this.duration += msg.GetHeader().GetTimestamp() - this.previousPktTime
-	// fmt.Println("msg.GetHeader().GetTimestamp()=", msg.GetHeader().GetTimestamp(), "&this.previousPktTime=", this.previousPktTime)
 	this.streamDuration += msg.GetHeader().GetTimestamp() - this.previousPktTime
 	this.previousPktTime = msg.GetHeader().GetTimestamp()
 	return nil
@@ -150,11 +169,8 @@ func (this *SrsFlvSegment) Close() error {
 
 func (this *SrsFlvSegment) updateMetaData() error {
 	off, _ := this.file.Seek(0, 2)
-	fmt.Println("offset=", this.filesizeOffset, "&filesize=", off)
 	c := utils.Float64ToBytes(float64(off), binary.BigEndian)
 	this.file.WriteAt(c, this.filesizeOffset)
-
-	fmt.Println("duration=", float64(this.duration)/1000)
 	b := utils.Float64ToBytes(float64(this.duration)/1000, binary.BigEndian)
 	this.file.WriteAt(b, this.durationOffset)
 

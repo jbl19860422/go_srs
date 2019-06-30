@@ -174,7 +174,7 @@ func (this *SrsSource) OnRequestSH(requester SrsSHRequester) error {
 
 func (this *SrsSource) on_dvr_request_sh() error {
 	if this.cacheMetaData != nil {
-		if err := this.dvr.on_meta_data(this.cacheMetaData); err != nil {
+		if err := this.dvr.OnMetaData(this.cacheMetaData); err != nil {
 			return err
 		}
 	}
@@ -271,7 +271,7 @@ func (this *SrsSource) ProcessPublishMessage(msg *rtmp.SrsRtmpMessage) error {
 
 		switch pkt.(type) {
 			case *packet.SrsOnMetaDataPacket: {
-				err := this.on_meta_data(msg, pkt.(*packet.SrsOnMetaDataPacket))
+				err := this.OnMetaData(msg, pkt.(*packet.SrsOnMetaDataPacket))
 				if err != nil {
 					return err
 				}
@@ -355,7 +355,7 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 	return nil
 }
 
-func (this *SrsSource) on_meta_data(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMetaDataPacket) error {
+func (this *SrsSource) OnMetaData(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMetaDataPacket) error {
     // SrsAmf0Any* prop = NULL;
 	
 	//todo
@@ -418,53 +418,9 @@ func (this *SrsSource) on_meta_data(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnM
 		this.consumers[i].Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
 	}
 
-	fmt.Println("**********************on_meta_data**********************")
-	if err := this.dvr.on_meta_data(msg); err != nil {
+	if err := this.dvr.OnMetaData(msg); err != nil {
 		return err
     }
-    // when already got metadata, drop when reduce sequence header.
-    // bool drop_for_reduce = false;
-    // if (cache_metadata && _srs_config->get_reduce_sequence_header(_req->vhost)) {
-    //     drop_for_reduce = true;
-    //     srs_warn("drop for reduce sh metadata, size=%d", msg->size);
-    // }
-    
-    // create a shared ptr message.
-    // srs_freep(cache_metadata);
-    // cache_metadata = new SrsSharedPtrMessage();
-    
-    // dump message to shared ptr message.
-    // the payload/size managed by cache_metadata, user should not free it.
-    // if ((ret = cache_metadata->create(&msg->header, payload, size)) != ERROR_SUCCESS) {
-    //     srs_error("initialize the cache metadata failed. ret=%d", ret);
-    //     return ret;
-    // }
-    
-	// copy to all consumer
-	//todo
-    // if (!drop_for_reduce) {
-    //     std::vector<SrsConsumer*>::iterator it;
-    //     for (it = consumers.begin(); it != consumers.end(); ++it) {
-    //         SrsConsumer* consumer = *it;
-    //         if ((ret = consumer->enqueue(cache_metadata, atc, jitter_algorithm)) != ERROR_SUCCESS) {
-    //             srs_error("dispatch the metadata failed. ret=%d", ret);
-    //             return ret;
-    //         }
-    //     }
-    // }
-	
-	//todo
-    // copy to all forwarders
-    // if (true) {
-    //     std::vector<SrsForwarder*>::iterator it;
-    //     for (it = forwarders.begin(); it != forwarders.end(); ++it) {
-    //         SrsForwarder* forwarder = *it;
-    //         if ((ret = forwarder->on_meta_data(cache_metadata)) != ERROR_SUCCESS) {
-    //             srs_error("forwarder process onMetaData message failed. ret=%d", ret);
-    //             return ret;
-    //         }
-    //     }
-    // }
     return nil
 }
 
