@@ -269,7 +269,7 @@ func (this *SrsFlvSegment) onUpdateDuration(msg *rtmp.SrsRtmpMessage) error {
 
 func (this *SrsFlvSegment) WriteAudio(msg *rtmp.SrsRtmpMessage) error {
 	this.flvEncoder.WriteAudio(uint32(msg.GetHeader().GetTimestamp()), msg.GetPayload())
-	// this.onUpdateDuration(msg)
+	this.onUpdateDuration(msg)
 	return nil
 }
 
