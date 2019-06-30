@@ -1,7 +1,6 @@
 package rtmp
 
 import (
-	"fmt"
 	"go_srs/srs/global"
 )
 
@@ -12,13 +11,13 @@ type SrsMessageHeader struct {
 	 * Three-byte field that contains a timestamp delta of the message.
 	 * @remark, only used for decoding message from chunk stream.
 	 */
-	timestamp_delta int32
+	timestampDelta int32
 	/**
 	 * 3bytes.
 	 * Three-byte field that represents the size of the payload in bytes.
 	 * It is set in big-endian format.
 	 */
-	payload_length int32
+	payloadLength int32
 	/**
 	 * 1byte.
 	 * One byte field to represent the message type. A range of type IDs
@@ -56,9 +55,6 @@ func (this *SrsMessageHeader) SetTimestamp(t int64) {
 }
 
 func (this *SrsMessageHeader) Print() {
-	fmt.Println("perfer_cid=", this.perfer_cid)
-	fmt.Println("message_type=", this.message_type)
-	fmt.Println("payload_length=", this.payload_length)
 }
 
 func (s *SrsMessageHeader) IsAudio() bool {
@@ -110,5 +106,5 @@ func (s *SrsMessageHeader) IsAggregate() bool {
 }
 
 func (this *SrsMessageHeader) SetLength(len int32) {
-	this.payload_length = len
+	this.payloadLength = len
 }

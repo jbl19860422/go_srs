@@ -1,7 +1,5 @@
 package rtmp
 
-// "fmt"
-
 const (
 	RTMP_FMT_TYPE0 = 0
 	RTMP_FMT_TYPE1 = 1
