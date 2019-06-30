@@ -75,6 +75,7 @@ func (this *SrsServer) StartProcess(port uint32) error {
 
 	go func() {
 		http.Handle("/", this.flvServer)
+		http.Handle("/hls/", http.StripPrefix("/hls/", http.FileServer(http.Dir("./html"))))
 		http.ListenAndServe(":8080", nil)
 	}()
 
@@ -84,11 +85,6 @@ func (this *SrsServer) StartProcess(port uint32) error {
 			runtime.GC()
 			utils.TraceMemStats()
 		}
-	}()
-
-	go func() {
-		http.Handle("/hls/", http.StripPrefix("/hls/", http.FileServer(http.Dir("./html"))))
-		http.ListenAndServe(":8082",nil)
 	}()
 
 	for {

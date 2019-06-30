@@ -293,7 +293,7 @@ func (this *SrsHlsMuxer) _refresh_m3u8(m3u8_file string) error {
 
 	f.WriteString("#EXTM3U\n")
 	f.WriteString("#EXT-X-VERSION:3\n")
-	f.WriteString("#EXT-X-ALLOW-CACHE:YES")
+	f.WriteString("#EXT-X-ALLOW-CACHE:YES\n")
 
 	segment := this.segments[0]
 	f.WriteString("#EXT-X-MEDIA-SEQUENCE:" + strconv.Itoa(segment.sequence_no) + "\n")
@@ -353,7 +353,6 @@ func (this *SrsHlsMuxer) segment_close() error {
 	var removeIndex = 0
 	for i := len(this.segments) - 1; i >= 0; i-- {
 		duration += this.segments[i].duration
-		fmt.Println("duration=", duration, "&hls_window=", this.hls_window)
 		if duration > this.hls_window {
 			removeIndex = i
 			break
