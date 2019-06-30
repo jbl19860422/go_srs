@@ -25,6 +25,7 @@ package app
 import (
 	"go_srs/srs/app/config"
 	"go_srs/srs/protocol/rtmp"
+	"fmt"
 )
 
 type SrsDvrPlan interface {
@@ -37,9 +38,11 @@ type SrsDvrPlan interface {
 
 func NewSrsDvrPlan(req *SrsRequest) SrsDvrPlan {
 	dvrPlan := config.GetDvrPlan(req.vhost)
+	fmt.Println("dvrplan=", dvrPlan)
 	if dvrPlan == "session" {
 		return NewSrsSessionDvrPlan(req)
 	} else if dvrPlan == "append" {
+		fmt.Println("****************append dvr********************")
 		return NewSrsAppendDvrPlan(req)
 	}
 	return nil
@@ -89,6 +92,7 @@ func NewSrsSessionDvrPlan(req *SrsRequest) *SrsSessionDvrPlan {
 
 func (this *SrsSessionDvrPlan) OnPublish() error {
 	if err := this.segment.Open(true); err != nil {
+		fmt.Println("open error =", err)
 		return err
 	}
 	return nil

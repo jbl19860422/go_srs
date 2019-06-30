@@ -70,7 +70,7 @@ func (this *SrsFlvSegment) Open(useTmpFile bool) error {
 	}
 
 	this.path = this.generatePath()
-	fmt.Println("*******************dvr file=", this.path, "******************")
+		fmt.Println("*******************dvr file=", this.path, "******************")
 	var freshFlvFile bool = false
 	if _, err := os.Stat(this.path); os.IsExist(err) {
 		freshFlvFile = false
@@ -110,14 +110,16 @@ func (this *SrsFlvSegment) Open(useTmpFile bool) error {
 
 func (this *SrsFlvSegment) generatePath() string {
 	dvrPath := config.GetDvrPath(this.req.vhost)
+
 	if !strings.Contains(dvrPath, ".flv") {
-		dvrPath += "/[stream].[timestamp].flv"
+		dvrPath += "/[app]/[stream].[timestamp].flv"
 	}
 
 	flvPath := dvrPath
 	flvPath = utils.Srs_path_build_stream(flvPath, this.req.vhost, this.req.app, this.req.stream)
 	//todo build timestamp path
 	flvPath = strings.Replace(flvPath, "[timestamp]", strconv.Itoa(int(utils.GetCurrentMs())), -1)
+
 	return flvPath
 }
 

@@ -26,6 +26,7 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	"fmt"
 )
 
 type SrsConfig struct {
@@ -192,10 +193,12 @@ const SRS_CONF_DEFAULT_DVR_PLAN = SRS_CONF_DEFAULT_DVR_PLAN_SESSION
 func GetDvrPlan(vhost string) string {
 	h := GetInstance().GetVHost(vhost)
 	if h == nil {
+		fmt.Println("*******************1111111******************")
 		return SRS_CONF_DEFAULT_DVR_PLAN
 	}
 
 	if h.Enabled != "on" || h.Dvr == nil || h.Dvr.Enabled != "on" {
+		fmt.Println("*******************222222******************", h.Dvr)
 		return SRS_CONF_DEFAULT_DVR_PLAN
 	}
 
