@@ -9,7 +9,7 @@ type SrsRtmpMessage struct {
 	 *       size <= header.payload_length
 	 * for the payload maybe sent in multiple chunks.
 	 */
-	size int32
+	recvedSize int32
 	/**
 	 * the payload of message, the SrsCommonMessage never know about the detail of payload,
 	 * user must use SrsProtocol.decode_message to get concrete packet.
@@ -32,8 +32,8 @@ func NewSrsRtmpMessage() *SrsRtmpMessage {
 
 func (this *SrsRtmpMessage) DeepCopy() *SrsRtmpMessage {
 	msg := &SrsRtmpMessage{
-		header: this.header,
-		size:   this.size,
+		header:     this.header,
+		recvedSize: this.recvedSize,
 	}
 
 	msg.payload = make([]byte, len(this.payload))
@@ -58,20 +58,12 @@ func (this *SrsRtmpMessage) GetPayload() []byte {
 	return this.payload
 }
 
-// func (this *SrsRtmpMessage) SetTimestamp(t int64) {
-// 	this.timestamp = t
-// }
-
-// func (this *SrsRtmpMessage) GetTimestamp() int64 {
-// 	return this.timestamp
-// }
-
 func (this *SrsRtmpMessage) ChunkHeader(c0 bool) ([]byte, error) {
 	if c0 {
-		d, err := srs_chunk_header_c0(this.header.perfer_cid, int32(this.header.timestamp), this.header.payloadLength, this.header.message_type, this.header.stream_id)
+		d, err := srs_chunk_header_c0(this.header.perferCid, int32(this.header.timestamp), this.header.payloadLength, this.header.messageType, this.header.streamId)
 		return d, err
 	} else {
-		d, err := srs_chunk_header_c3(this.header.perfer_cid, int32(this.header.timestamp))
+		d, err := srs_chunk_header_c3(this.header.perferCid, int32(this.header.timestamp))
 		return d, err
 	}
 }

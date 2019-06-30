@@ -3,8 +3,6 @@ package rtmp
 import (
 	"errors"
 	"go_srs/srs/protocol/skt"
-	"log"
-	// "fmt"
 )
 
 type HandShaker interface {
@@ -31,7 +29,6 @@ func (this *SrsSimpleHandShake) HandShakeWithClient() error {
 	}
 
 	if this.HSBytes.C0C1[0] != 0x03 {
-		log.Printf("only support rtmp plain text.")
 		return errors.New("only support rtmp plain text.")
 	}
 
@@ -39,26 +36,20 @@ func (this *SrsSimpleHandShake) HandShakeWithClient() error {
 		return err
 	}
 
-	// fmt.Println("this.HSBytes.S0S1S2=", len(this.HSBytes.S0S1S2))
 	n, err := this.io.Write(this.HSBytes.S0S1S2)
 	if err != nil {
-		log.Printf("write s0s1s2 failed")
-	} else {
-		log.Printf("write s0s1s2 succeed, count=", len(this.HSBytes.S0S1S2))
+		return err
 	}
 
 	if 0 != this.HSBytes.ReadC2() {
-		log.Printf("HandShake ReadC2 failed")
 		return errors.New("HandShake ReadC2 failed")
 	}
 
 	if !this.HSBytes.CheckC2() {
-		log.Printf("HandShake CheckC2 failed")
+		return errors.New("HandShake CheckC2 failed")
 	}
 
-	log.Printf("HandShake Succeed")
 	_ = n
-
 	return nil
 }
 
