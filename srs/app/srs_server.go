@@ -86,6 +86,11 @@ func (this *SrsServer) StartProcess(port uint32) error {
 		}
 	}()
 
+	go func() {
+		http.Handle("/hls/", http.StripPrefix("/hls/", http.FileServer(http.Dir("./html"))))
+		http.ListenAndServe(":8082",nil)
+	}()
+
 	for {
 		
 		conn, _ := ln.Accept()

@@ -31,9 +31,12 @@ import (
 	"go_srs/srs/utils"
 	"strconv"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 type SrsHlsMuxer struct {
+	req *SrsRequest
 	hls_entry_prefix   string
 	hls_path           string
 	hls_ts_file        string
@@ -129,11 +132,12 @@ func (this *SrsHlsMuxer) deviation() int {
 	return this.deviation_ts
 }
 
-func (this *SrsHlsMuxer) update_config(entry_prefix string, p string,
+func (this *SrsHlsMuxer) UpdateConfig(req *SrsRequest, entry_prefix string, hls_path string,
 								m3u8_file string, ts_file string, fragment float64,window float64, 
 								ts_floor bool, aof_ratio float64, cleanup bool, wait_keyframe bool) error {
+									this.req = req
 	this.hls_entry_prefix = entry_prefix
-	this.hls_path = p
+	this.hls_path = hls_path
 	this.hls_ts_file = ts_file
 	this.hls_fragment = fragment
 	this.hls_aof_ratio = aof_ratio
@@ -144,9 +148,12 @@ func (this *SrsHlsMuxer) update_config(entry_prefix string, p string,
 	this.accept_floor_ts = 0
 	this.hls_window = window
 	this.deviation_ts = 0
-	this.m3u8_url = utils.Srs_path_build_stream(this.m3u8_file, "aaa", "app", "test")
-	this.m3u8 = p + "/" + this.m3u8_url
+	this.m3u8_file = m3u8_file
+	fmt.Println("xxxxxxxxxxxxxxxxxxxm3u8_file=", this.m3u8_file, "xxxxxxxxxxxxxxxxx")
+	this.m3u8_url = utils.Srs_path_build_stream(this.m3u8_file, req.vhost, req.app, req.stream)
+	this.m3u8 = hls_path + "/" + this.m3u8_url
 	//todo set max td
+	fmt.Println("??????????????????????mu38=", this.m3u8, "********************, app=", req.app)
 	this.max_td = 10000
 	this.m3u8_dir = path.Dir(this.m3u8)
 	err := os.MkdirAll(this.m3u8_dir, os.ModePerm)
@@ -194,7 +201,7 @@ func (this *SrsHlsMuxer) update_acodec(ac codec.SrsCodecAudio) error {
 
 const SRS_JUMP_WHEN_PIECE_DEVIATION = 20
 
-func (this *SrsHlsMuxer) segment_open(segment_start_dts int64) error {
+func (this *SrsHlsMuxer) SegmentOpen(segment_start_dts int64) error {
 	if this.current != nil {
 		return nil
 	}
@@ -236,9 +243,15 @@ func (this *SrsHlsMuxer) segment_open(segment_start_dts int64) error {
 	//}
 	////todo tsfile append seq suffix
 	ts_file := strconv.FormatInt(int64(((time.Now().UnixNano() / 1e6) / (1000 * 5))), 10) + ".ts"
-	this.current.full_path = this.hls_path + "/" + ts_file
+	tsFile := utils.Srs_path_build_stream(this.hls_ts_file, this.req.vhost, this.req.app, this.req.stream)
+	tsFile = strings.Replace(tsFile, "[seq]", strconv.Itoa(this._sequence_no), -1)
+	this.current.full_path = this.hls_path + "/" + tsFile
 	//add prefix
-	this.current.uri = this.hls_entry_prefix + "/" + ts_file
+	if this.hls_entry_prefix != "" {
+		this.current.uri = this.hls_entry_prefix + "/" + tsFile
+	} else {
+		this.current.uri = ts_file
+	}
 	// open temp ts file.
 	tmp_file := this.current.full_path + ".tmp";
 	if err := this.current.Open(tmp_file, default_acodec, default_vcodec); err != nil {
@@ -257,7 +270,59 @@ func (this *SrsHlsMuxer) segment_open(segment_start_dts int64) error {
 	return nil
 }
 
+func (this *SrsHlsMuxer) refresh_m3u8() {
+	if len(this.segments) == 0 {
+		return
+	}
+
+	tempM3u8 := this.m3u8 + ".temp"
+	if err := this._refresh_m3u8(tempM3u8); err != nil {
+		return
+	}
+
+	os.Rename(tempM3u8, this.m3u8)
+	os.Remove(tempM3u8)
+}
+
+func (this *SrsHlsMuxer) _refresh_m3u8(m3u8_file string) error {
+	fmt.Println("m3u8_file=", this.m3u8_file)
+	f, err := os.OpenFile(m3u8_file, os.O_RDWR | os.O_CREATE, 0755)
+	if err != nil {
+		return err
+	}
+
+	f.WriteString("#EXTM3U\n")
+	f.WriteString("#EXT-X-VERSION:3\n")
+	f.WriteString("#EXT-X-ALLOW-CACHE:YES")
+
+	segment := this.segments[0]
+	f.WriteString("#EXT-X-MEDIA-SEQUENCE:" + strconv.Itoa(segment.sequence_no) + "\n")
+	var targetDuration = 0
+	for i := 0; i < len(this.segments); i++ {
+		if int(this.segments[i].duration) > targetDuration {
+			targetDuration = int(this.segments[i].duration)
+		}
+	}
+
+	if targetDuration < this.max_td {
+		targetDuration = this.max_td
+	}
+
+	f.WriteString("#EXT-X-TARGETDURATION:" + strconv.Itoa(targetDuration) + "\n")
+	for i := 0; i < len(this.segments); i++ {
+		if this.segments[i].is_sequence_header {
+			f.WriteString("#EXT-X-DISCONTINUITY\n")
+		}
+
+		f.WriteString("#EXTINF:" + strconv.FormatFloat(this.segments[i].duration, 'f',3, 64) + "\n")
+		f.WriteString(this.segments[i].uri + "\n")
+	}
+	f.Close()
+	return nil
+}
+
 func (this *SrsHlsMuxer) segment_close() error {
+	fmt.Println("segment_close")
 	if this.current == nil {
 		return nil
 	}
@@ -288,6 +353,7 @@ func (this *SrsHlsMuxer) segment_close() error {
 	var removeIndex = 0
 	for i := len(this.segments) - 1; i >= 0; i-- {
 		duration += this.segments[i].duration
+		fmt.Println("duration=", duration, "&hls_window=", this.hls_window)
 		if duration > this.hls_window {
 			removeIndex = i
 			break
@@ -307,6 +373,8 @@ func (this *SrsHlsMuxer) segment_close() error {
 			}
 		}
 	}
+
+	this.refresh_m3u8()
 	return nil
 }
 

@@ -71,6 +71,92 @@ func (this *SrsConfig) amendDefault() {
 	}
 }
 
+const SRS_CONF_DEFAULT_HLS_FRAGMENT = 10
+
+func GetHlsFragment(vname string) uint32 {
+	vhost := GetInstance().GetVHost(vname)
+	if vhost == nil {
+		return SRS_CONF_DEFAULT_HLS_FRAGMENT
+	}
+
+	return vhost.Hls.HlsFragment
+}
+
+const SRS_CONF_DEFAULT_HLS_WINDOW = 60
+
+func GetHlsWindow(vname string) uint32 {
+	vhost := GetInstance().GetVHost(vname)
+	if vhost == nil {
+		return SRS_CONF_DEFAULT_HLS_FRAGMENT
+	}
+
+	return vhost.Hls.HlsWindow
+}
+
+func GetHlsEntryPrefix(vname string) string {
+	vhost := GetInstance().GetVHost(vname)
+	if vhost == nil {
+		return ""
+	}
+
+	return vhost.Hls.HlsEntryPrefix
+}
+
+const SRS_CONF_DEFAULT_HLS_PATH = "./html"
+
+func GetHlsPath(vname string) string {
+	vhost := GetInstance().GetVHost(vname)
+	if vhost == nil {
+		return SRS_CONF_DEFAULT_HLS_PATH
+	}
+
+	return vhost.Hls.HlsPath
+}
+
+const SRS_CONF_DEFAULT_HLS_M3U8_FILE = "[app]/[stream].m3u8"
+
+func GetHlsM3u8File(vname string) string {
+	vhost := GetInstance().GetVHost(vname)
+	if vhost == nil {
+		return SRS_CONF_DEFAULT_HLS_M3U8_FILE
+	}
+
+	return vhost.Hls.HlsM3u8File
+}
+
+const SRS_CONF_DEFAULT_HLS_TS_FILE = "[app]/[stream]-[seq].ts"
+
+func GetHlsTsFile(vname string) string {
+	vhost := GetInstance().GetVHost(vname)
+	if vhost == nil {
+		return SRS_CONF_DEFAULT_HLS_TS_FILE
+	}
+
+	return vhost.Hls.HlsTsFile
+}
+
+const SRS_CONF_DEFAULT_HLS_CLEANUP = true
+
+func GetHlsCleanup(vname string) bool {
+	vhost := GetInstance().GetVHost(vname)
+	if vhost == nil {
+		return SRS_CONF_DEFAULT_HLS_CLEANUP
+	}
+
+	return vhost.Hls.HlsCleanup == "on"
+}
+
+const SRS_CONF_DEFAULT_HLS_WAIT_KEYFRAME = true
+
+func GetHlsWaitKeyframe(vname string) bool {
+	vhost := GetInstance().GetVHost(vname)
+	if vhost == nil {
+		return SRS_CONF_DEFAULT_HLS_WAIT_KEYFRAME
+	}
+
+	return vhost.Hls.HlsWaitKeyframe == "on"
+}
+
 func (this *SrsConfig) GetChunkSize(vhost string) uint32 {
 	h, ok := this.VHosts[vhost]
 	if !ok {
@@ -428,17 +514,49 @@ func (this *VHostConf) amendDefault() {
 		this.AtcAuto = "on"
 	}
 
-	this.HeartBeat.amendDefault()
-	this.Stats.amendDefault()
-	this.HttpApi.amendDefault()
-	this.HttpServer.amendDefault()
-	this.Security.amendDefault()
-	this.Dvr.amendDefault()
-	this.HttpStatic.amendDefault()
-	this.HttpRemux.amendDefault()
-	this.Hls.amendDefault()
-	this.HttpHooks.amendDefault()
-	this.Publish.amendDefault()
+	if this.HeartBeat != nil {
+		this.HeartBeat.amendDefault()
+	}
+
+	if this.Stats != nil {
+		this.Stats.amendDefault()
+	}
+
+	if this.HttpApi != nil {
+		this.HttpApi.amendDefault()
+	}
+
+	if this.HttpServer != nil {
+		this.HttpServer.amendDefault()
+	}
+
+	if this.Security != nil {
+		this.Security.amendDefault()
+	}
+
+	if this.Dvr != nil {
+		this.Dvr.amendDefault()
+	}
+
+	if this.HttpStatic != nil {
+		this.HttpStatic.amendDefault()
+	}
+
+	if this.HttpRemux != nil {
+		this.HttpRemux.amendDefault()
+	}
+
+	if this.Hls != nil {
+		this.Hls.amendDefault()
+	}
+
+	if this.HttpHooks != nil {
+		this.HttpHooks.amendDefault()
+	}
+
+	if this.Publish != nil {
+		this.Publish.amendDefault()
+	}
 }
 
 var config *SrsConfig

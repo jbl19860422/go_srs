@@ -146,14 +146,6 @@ func FetchSource(r *SrsRequest) *SrsSource {
 	return source
 }
 
-// payload := this.cacheMetaData.GetPayload()
-// stream := utils.NewSrsStream(payload)
-// pkt := packet.NewSrsOnMetaDataPacket(amf0.SRS_CONSTS_RTMP_ON_METADATA)
-// err := pkt.Decode(stream)
-// if err != nil {
-// 	return err
-// }
-
 func (this *SrsSource) OnRequestSH(requester SrsSHRequester) error {
 	if this.cacheMetaData == nil {
 		return errors.New("missing metadata")
@@ -196,7 +188,7 @@ func (this *SrsSource) on_dvr_request_sh() error {
 
 func (this *SrsSource) onPublish() error {
 	if this.hls != nil {
-		err := this.hls.on_publish(this.req, false)
+		err := this.hls.onPublish(this.req, false)
 		if err != nil {
 			return err
 		}
@@ -243,6 +235,7 @@ func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
 
 func (this *SrsSource) Initialize() {
 	this.dvr.Initialize(this, this.req)
+	this.hls.Initialize(this, this.req)
 }
 
 func (this *SrsSource) ProcessPublishMessage(msg *rtmp.SrsRtmpMessage) error {

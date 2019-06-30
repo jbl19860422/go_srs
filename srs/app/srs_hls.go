@@ -75,12 +75,6 @@ func NewSrsHls(c *SrsTsContext) *SrsHls {
 	}
 }
 
-func (this *SrsHls) Initialize() error {
-	this.streamDts = 0
-	//todo fix
-	return nil
-}
-
 func (this *SrsHls) dispose() {
 	//this.muxer.dispose()
 }
@@ -105,7 +99,7 @@ func (this *SrsHls) cycle() error {
 	return nil
 }
 
-func (this *SrsHls) initialize(s *SrsSource, r *SrsRequest) error {
+func (this *SrsHls) Initialize(s *SrsSource, r *SrsRequest) error {
 	this.source = s
 	this.req = r
 	err := this.muxer.initialize()
@@ -115,11 +109,11 @@ func (this *SrsHls) initialize(s *SrsSource, r *SrsRequest) error {
 	return nil
 }
 
-func (this *SrsHls) on_publish(req *SrsRequest, fetch_sequence_header bool) error {
+func (this *SrsHls) onPublish(req *SrsRequest, fetch_sequence_header bool) error {
 	//todo 
 	this.lastUpdateTime = utils.GetCurrentMs()
 
-	err := this.hlsCache.on_publish(this.muxer, this.req, this.streamDts) 
+	err := this.hlsCache.onPublish(this.muxer, this.req, this.streamDts) 
 	if err != nil {
 		return err
 	}

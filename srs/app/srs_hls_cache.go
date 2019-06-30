@@ -24,6 +24,8 @@ package app
 
 import (
 	"go_srs/srs/codec"
+	"go_srs/srs/app/config"
+	"fmt"
 )
 
 /**
@@ -54,12 +56,22 @@ func NewSrsHlsCache() *SrsHlsCache {
 	}
 }
 
-func (this *SrsHlsCache) on_publish(muxer *SrsHlsMuxer, req *SrsRequest, segment_start_dts int64) error {
+func (this *SrsHlsCache) onPublish(muxer *SrsHlsMuxer, req *SrsRequest, segment_start_dts int64) error {
 	//todo vhost
+	vhostName := req.vhost
+	hlsFragment := config.GetHlsFragment(vhostName)
+	hlsWindow := config.GetHlsWindow(vhostName)
+	entryPrefix := config.GetHlsEntryPrefix(vhostName)
+	m3u8File := config.GetHlsM3u8File(vhostName)
+	hlsPath := config.GetHlsPath(vhostName)
+	tsFile := config.GetHlsTsFile(vhostName)
+	cleanUp := config.GetHlsCleanup(vhostName)
+	hlsWaitKeyframe := config.GetHlsWaitKeyframe(vhostName)
 	// this.muxer
-	muxer.update_config("test", ".", "", "", 5, 360, false, 0.0, true, true)
+	fmt.Println("**************m3u8File=", m3u8File, "***************")
+	muxer.UpdateConfig(req, entryPrefix, hlsPath, m3u8File, tsFile, float64(hlsFragment), float64(hlsWindow), false, 0.0, cleanUp, hlsWaitKeyframe)
 
-	muxer.segment_open(segment_start_dts)
+	muxer.SegmentOpen(segment_start_dts)
 	return nil
 }
 
@@ -112,7 +124,7 @@ func (this *SrsHlsCache) reap_segment(log_desc string, muxer *SrsHlsMuxer, segme
 		return err
 	}
 
-	if err := muxer.segment_open(segment_start_dts); err != nil {
+	if err := muxer.SegmentOpen(segment_start_dts); err != nil {
 		return err
 	}
 
