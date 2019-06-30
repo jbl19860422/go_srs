@@ -55,6 +55,14 @@ func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) Consumer {
 	return consumer
 }
 //有两个协程需要处理，这里的cycle和queueRecvThread
+func (this *SrsConsumer) OnPublish() error {
+	return nil
+}
+
+func (this *SrsConsumer) OnUnpublish() error {
+	return nil
+}
+
 func (this *SrsConsumer) ConsumeCycle() error {
 	for {
 		for !this.queueRecvThread.Empty() {//process signal message

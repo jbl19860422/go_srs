@@ -35,11 +35,28 @@ type SrsDvrConsumer struct {
 
 func NewSrsDvrConsumer(s *SrsSource, req *SrsRequest) *SrsDvrConsumer {
 	p := NewSrsDvrPlan(req)
+	if p == nil {
+		return nil
+	}
 	return &SrsDvrConsumer{
 		source:s,
 		plan:p,
 		queue:NewSrsMessageQueue(),
 	}
+}
+
+func (this *SrsDvrConsumer) OnPublish() error {
+	if this.plan != nil {
+		return this.plan.OnPublish()
+	}
+	return nil
+}
+
+func (this *SrsDvrConsumer) OnUnpublish() error {
+	if this.plan != nil {
+		return this.plan.OnUnpublish()
+	}
+	return nil
 }
 
 func (this *SrsDvrConsumer) ConsumeCycle() error {

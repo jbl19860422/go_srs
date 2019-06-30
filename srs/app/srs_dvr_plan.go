@@ -25,6 +25,7 @@ package app
 import (
 	"go_srs/srs/app/config"
 	"go_srs/srs/protocol/rtmp"
+	"fmt"
 )
 
 type SrsDvrPlan interface {
@@ -36,6 +37,7 @@ type SrsDvrPlan interface {
 }
 
 func NewSrsDvrPlan(req *SrsRequest) SrsDvrPlan {
+	fmt.Println("xxxxxxxxxxxxx vhost=", req.vhost)
 	dvrPlan := config.GetDvrPlan(req.vhost)
 	if dvrPlan == "session" {
 		return NewSrsSessionDvrPlan(req)
@@ -54,23 +56,30 @@ func NewSrsSessionDvrPlan(req *SrsRequest) *SrsSessionDvrPlan {
 }
 
 func (this *SrsSessionDvrPlan) OnPublish() error {
+	if err := this.segment.Open(true); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (this *SrsSessionDvrPlan) OnUnpublish() error {
+	if err := this.segment.Close(); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (this *SrsSessionDvrPlan) OnMetaData(metaData *rtmp.SrsRtmpMessage) error {
-	return nil
+	fmt.Println("===================================onMetadata")
+	return this.segment.WriteMetaData(metaData)
 }
 
 func (this *SrsSessionDvrPlan) OnVideo(video *rtmp.SrsRtmpMessage) error {
-	return nil
+	return this.segment.WriteVideo(video)
 }
 
-func (this *SrsSessionDvrPlan) OnAudio(video *rtmp.SrsRtmpMessage) error {
-	return nil
+func (this *SrsSessionDvrPlan) OnAudio(audio *rtmp.SrsRtmpMessage) error {
+	return this.segment.WriteAudio(audio)
 }
 
 //

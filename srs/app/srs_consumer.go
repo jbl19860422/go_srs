@@ -26,6 +26,8 @@ import (
 	"go_srs/srs/protocol/rtmp"
 )
 type Consumer interface {
+	OnPublish() error
+	OnUnpublish() error
 	ConsumeCycle() error
 	StopConsume() error
 	OnRecvError(err error)

@@ -47,6 +47,14 @@ func NewSrsHttpFlvConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request)
 	}
 }
 
+func (this *SrsHttpFlvConsumer) OnPublish() error {
+	return nil
+}
+
+func (this *SrsHttpFlvConsumer) OnUnpublish() error {
+	return nil
+}
+
 func (this *SrsHttpFlvConsumer) ConsumeCycle() error {
 	this.flvEncoder.WriteHeader()
 	go func() {

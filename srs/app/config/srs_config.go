@@ -192,11 +192,11 @@ const SRS_CONF_DEFAULT_DVR_PLAN = SRS_CONF_DEFAULT_DVR_PLAN_SESSION
 func GetDvrPlan(vhost string) string {
 	h := GetInstance().GetVHost(vhost)
 	if h == nil {
-		return SRS_CONF_DEFAULT_DVR_PATH
+		return SRS_CONF_DEFAULT_DVR_PLAN
 	}
 
 	if h.Enabled != "on" || h.Dvr == nil || h.Dvr.Enabled != "on" {
-		return SRS_CONF_DEFAULT_DVR_PATH
+		return SRS_CONF_DEFAULT_DVR_PLAN
 	}
 
 	return h.Dvr.DvrPlan
@@ -298,7 +298,7 @@ type DvrConf struct {
 	TimerJitter     string `json:"timer_jitter"` //full, zero, off
 }
 
-const SRS_CONF_DEFAULT_DVR_PATH = "html/[app]/[stream].[timestamp].flv"
+const SRS_CONF_DEFAULT_DVR_PATH = "./html/[app]/[stream].[timestamp].flv"
 func (this *DvrConf) amendDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"

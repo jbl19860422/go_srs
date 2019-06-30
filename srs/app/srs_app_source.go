@@ -69,6 +69,7 @@ type SrsSource struct {
 
 	//record
 	//dvr				*SrsDvr
+	//dvr				*SrsDvrConsumer
 	hls				*SrsHls
 	tsContext		*SrsTsContext
 }
@@ -89,10 +90,18 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		rtmp:c.rtmp,
 		gopCache:NewSrsGopCache(),
 		atc:false,
-		//dvr:NewSrsDvr(),
 		hls:NewSrsHls(tsCtx),
 		tsContext: tsCtx,
 	}
+
+	dvrConsumer := NewSrsDvrConsumer(source, r)
+	if dvrConsumer != nil {
+		source.AppendConsumer(dvrConsumer)
+		go func(){
+			dvrConsumer.ConsumeCycle()
+		}()
+	}
+
 	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
 	return source
 }
@@ -188,6 +197,10 @@ func (this *SrsSource) on_dvr_request_sh() error {
 }
 
 func (this *SrsSource) onPublish() error {
+	for i := 0; i < len(this.consumers); i++ {
+		this.consumers[i].OnPublish()
+	}
+
 	if this.hls != nil {
 		err := this.hls.onPublish(this.req, false)
 		if err != nil {
@@ -401,15 +414,15 @@ func (this *SrsSource) OnMetaData(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMet
 		return err
 	}
 	
-	this.cacheMetaData = rtmp.NewSrsRtmpMessage()
-	this.cacheMetaData.SetHeader(*(msg.GetHeader()))
-	
-	this.cacheMetaData.GetHeader().SetLength(int32(len(stream.Data())))
-	this.cacheMetaData.GetHeader().Print()
-	this.cacheMetaData.SetPayload(stream.Data())
-
+	//this.cacheMetaData = rtmp.NewSrsRtmpMessage()
+	//this.cacheMetaData.SetHeader(*(msg.GetHeader()))
+	//
+	//this.cacheMetaData.GetHeader().SetLength(int32(len(stream.Data())))
+	//this.cacheMetaData.GetHeader().Print()
+	//this.cacheMetaData.SetPayload(stream.Data())
+	this.cacheMetaData = msg
 	for i := 0; i < len(this.consumers); i++ {
-		this.consumers[i].Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
+		this.consumers[i].Enqueue(msg, false, this.jitterAlgorithm)
 	}
 
 	//if err := this.dvr.OnMetaData(msg); err != nil {
@@ -510,5 +523,8 @@ func (this *SrsSource) CyclePublish() error {
 
 func (this *SrsSource) StopPublish() {
 	//this.dvr.Close()
+	for i := 0; i < len(this.consumers); i++ {
+		this.consumers[i].OnUnpublish()
+	}
 	this.recvThread.Stop()
 }

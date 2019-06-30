@@ -45,6 +45,14 @@ func NewSrsHttpTsConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+func (this *SrsHttpTsConsumer) OnPublish() error {
+	return nil
+}
+
+func (this *SrsHttpTsConsumer) OnUnpublish() error {
+	return nil
+}
+
 func (this *SrsHttpTsConsumer) ConsumeCycle() error {
 	this.tsEncoder.WriteHeader()
 	go func() {
