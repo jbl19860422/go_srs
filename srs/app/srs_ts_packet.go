@@ -8,6 +8,7 @@ type SrsTsPacket struct {
 	tsHeader        *SrsTsHeader
 	adaptationField *SrsTsAdapationField
 	payload         SrsTsPayload
+	payload1		[]byte
 }
 
 func NewSrsTsPacket() *SrsTsPacket {

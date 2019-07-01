@@ -479,8 +479,7 @@ func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
 		nb_required += 2
 	}
 
-	if this.PESExtensionFlag {
+	if this.PESExtensionFlag == 1 {
 		nb_required += 1
 	}
-	
 }

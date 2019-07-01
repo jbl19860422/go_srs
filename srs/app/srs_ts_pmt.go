@@ -120,6 +120,9 @@ type SrsTsPayloadPMT struct {
 	programDescriptor []byte //the len is programInfoLength
 
 	infoes []*SrsTsPayloadPMTESInfo
+
+	//私有数据
+	pmtPid	int16
 }
 
 func NewSrsTsPayloadPMT(p *SrsTsPacket) *SrsTsPayloadPMT {
