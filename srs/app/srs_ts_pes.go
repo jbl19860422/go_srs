@@ -1,7 +1,8 @@
 package app
 
 import (
-	"fmt"
+	// "os"
+	"fmt"	
 	"encoding/binary"
 	"go_srs/srs/utils"
 )
@@ -353,13 +354,15 @@ func (this *SrsTsPayloadPES) Size() uint32 {
 
 func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuityCounter *uint8, discontinuity int8, pcr int64, dts int64, pts int64, data []byte) []*SrsTsPacket {
 	pkts := make([]*SrsTsPacket, 0)
-	fmt.Println("************pcr=", pcr, "****************")
+	// fmt.Println("************pcr=", pcr, "****************")
 	pes := NewSrsTsPayloadPES()
 	pes.dataBytes = data
 	if len(data) > 0xffff {
 		pes.PESPacketLength = 0
+		fmt.Println("PESPacketLength=0")
 	} else {
 		pes.PESPacketLength = uint16(len(data))
+		fmt.Println("PESPacketLength=",pes.PESPacketLength)
 	}
 
 	pes.packetStartCodePrefix = 0x01
@@ -434,14 +437,14 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 		} else {
 			canConsumed = 188 - 4
 		}
-		fmt.Println("***********canConsumed=", canConsumed, "*************")
+		// fmt.Println("***********canConsumed=", canConsumed, "*************")
 		
 		if leftCount < canConsumed {
 			paddingCount = canConsumed - leftCount
 		}
-		fmt.Println("***********paddingCount=", paddingCount, "************")
+		// fmt.Println("***********paddingCount=", paddingCount, "************")
 		consumed := canConsumed - paddingCount
-		fmt.Println("***********consumed=", consumed)
+		// fmt.Println("***********consumed=", consumed)
 		pkt.payload1 = payload[currPos:(currPos+consumed)]
 		currPos += consumed
 
@@ -540,10 +543,17 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 // }
 
 func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
+	this.PESHeaderDataLength = 0
+	if this.PTSDTSFlags == 0x03 {
+		this.PESHeaderDataLength = 10
+	} else if this.PTSDTSFlags == 0x02 {
+		this.PESHeaderDataLength = 5
+	}
+
 	//start code
+	stream.WriteByte(0x00)
+	stream.WriteByte(0x00)
 	stream.WriteByte(0x01)
-	stream.WriteByte(0x00)
-	stream.WriteByte(0x00)
 	//stream id(1B)
 	stream.WriteByte(byte(this.streamId))
 	// 2B
@@ -583,6 +593,8 @@ func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
 		this.encode_33bits_dts_pts(stream, 0x02, this.pts)
 	}
 
+	// fmt.Println("PTSDTSFlags=", this.PTSDTSFlags)
+	// os.Exit(0)
 	if this.PTSDTSFlags == 0x03 {
 		this.encode_33bits_dts_pts(stream, 0x03, this.pts)
 		this.encode_33bits_dts_pts(stream, 0x03, this.dts)

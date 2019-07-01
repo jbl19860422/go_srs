@@ -1,7 +1,7 @@
 package app
 
 import (
-	"fmt"
+	// "fmt"
 	// "encoding/binary"
 	"go_srs/srs/utils"
 )
@@ -371,7 +371,7 @@ func (this *SrsTsAdapationField) Padding(paddingCount int) {
 	}
 
 	this.adaptationFieldLength = uint8(sz - 1)
-	fmt.Println("************paddingCount=", paddingCount, "&this.adaptationFieldLength=", this.adaptationFieldLength, "**************")
+	// fmt.Println("************paddingCount=", paddingCount, "&this.adaptationFieldLength=", this.adaptationFieldLength, "**************")
 }
 
 func (this *SrsTsAdapationField) Size() uint32 {
