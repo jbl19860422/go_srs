@@ -441,6 +441,7 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 		}
 		fmt.Println("***********paddingCount=", paddingCount, "************")
 		consumed := canConsumed - paddingCount
+		fmt.Println("***********consumed=", consumed)
 		pkt.payload1 = payload[currPos:(currPos+consumed)]
 		currPos += consumed
 
