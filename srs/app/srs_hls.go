@@ -17,6 +17,7 @@ type SrsHls struct {
 	source	*SrsSource
 	sample   *SrsCodecSample
 	codec    *SrsAvcAacCodec
+	context	  	*SrsTsContext
 
 	hlsDispose	int64			//second
 	/**
@@ -37,12 +38,13 @@ type SrsHls struct {
 	done     chan bool
 }
 
-func NewSrsHls(fname string) *SrsHls {
+func NewSrsHls(c *SrsTsContext) *SrsHls {
 	return &SrsHls{
 		muxer:    NewSrsHlsMuxer(),
 		hlsCache: NewSrsHlsCache(),
 		sample:   NewSrsCodecSample(),
 		codec:	  NewSrsAvcAacCodec(),
+		context:  c,
 		streamDts:0,
 		lastUpdateTime:0,
 		hlsDispose:5000,//dispose every five second
@@ -161,12 +163,21 @@ func (this *SrsHls) on_video(video *rtmp.SrsRtmpMessage) error {
 	dts := video.GetHeader().GetTimestamp()*90
 	this.streamDts = dts
 
-	err = this.hlsCache.WriteVideo(this.codec, this.muxer, dts, this.sample)
-	if err != nil {
-		return err
+	ts := &SrsTsMessage{
+		payload:video.GetPayload(),
+		dts:video.GetHeader().GetTimestamp(),
+		pts:video.GetHeader().GetTimestamp(),
 	}
 
+	this.context.Encode(ts, codec.SrsCodecVideo(this.codec.videoCodecId), codec.SrsCodecAudio(this.codec.audioCodecId))
+
 	return nil
+	// err = this.hlsCache.WriteVideo(this.codec, this.muxer, dts, this.sample)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// return nil
 }
 
 func (this *SrsHls) on_audio(audio *rtmp.SrsRtmpMessage) error {
@@ -185,11 +196,20 @@ func (this *SrsHls) on_audio(audio *rtmp.SrsRtmpMessage) error {
 		return nil
 	}
 
-	err = this.muxer.update_acodec(acodec)
-	if err != nil {
-		return err
+	ts := &SrsTsMessage{
+		payload:audio.GetPayload(),
+		dts:audio.GetHeader().GetTimestamp(),
+		pts:audio.GetHeader().GetTimestamp(),
 	}
+
+	this.context.Encode(ts, codec.SrsCodecVideo(this.codec.videoCodecId), codec.SrsCodecAudio(this.codec.audioCodecId))
+
 	return nil
+	// err = this.muxer.update_acodec(acodec)
+	// if err != nil {
+	// 	return err
+	// }
+	// return nil
 }
 
 func (this *SrsHls) Close() {

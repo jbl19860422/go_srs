@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"encoding/binary"
 	"go_srs/srs/utils"
 )
@@ -336,9 +337,8 @@ type SrsTsPayloadPES struct {
 	paddings []byte
 }
 
-func NewSrsTsPayloadPES(p *SrsTsPacket) *SrsTsPayloadPES {
+func NewSrsTsPayloadPES() *SrsTsPayloadPES {
 	return &SrsTsPayloadPES{
-		packet:     p,
 		const2Bits: 0x02,
 	}
 }
@@ -351,46 +351,19 @@ func (this *SrsTsPayloadPES) Size() uint32 {
 	return 0
 }
 
-func CreatePesFirst(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuityCounter uint8, discontinuity int8, pcr int64, dts int64, pts int64, size int) *SrsTsPacket {
-	pkt := NewSrsTsPacket()
-
-	pkt.tsHeader.syncByte = SRS_TS_SYNC_BYTE
-	pkt.tsHeader.transportErrorIndicator = 0
-	pkt.tsHeader.payloadUnitStartIndicator = 1
-	pkt.tsHeader.transportPriority = 0
-	pkt.tsHeader.PID = SrsTsPid(pid)
-	pkt.tsHeader.transportScrambingControl = SrsTsScrambledDisabled
-	pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
-	pkt.tsHeader.continuityCounter = int8(continuityCounter)
-
-	pkt.payload = NewSrsTsPayloadPES(pkt)
-	pes := pkt.payload.(*SrsTsPayloadPES)
-
-	if pcr >= 0 { //这里没明白
-		af := NewSrsTsAdaptationField(pkt)
-		pkt.adaptationField = af
-		pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
-
-		af.adaptationFieldLength = 0 // calc in size.
-		af.discontinuityIndicator = discontinuity
-		af.randomAccessIndicator = 0
-		af.elementaryStreamPriorityIndicator = 0
-		af.PCRFlag = 1
-		af.OPCRFlag = 0
-		af.splicingPointFlag = 0
-		af.transportPrivateDataFlag = 0
-		af.adaptationFieldExtensionFlag = 0
-		af.programClockReferenceBase = pcr
-		af.programClockReferenceExtension = 0
+func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuityCounter *uint8, discontinuity int8, pcr int64, dts int64, pts int64, data []byte) []*SrsTsPacket {
+	pkts := make([]*SrsTsPacket, 0)
+	fmt.Println("************pcr=", pcr, "****************")
+	pes := NewSrsTsPayloadPES()
+	pes.dataBytes = data
+	if len(data) > 0xffff {
+		pes.PESPacketLength = 0
+	} else {
+		pes.PESPacketLength = uint16(len(data))
 	}
 
 	pes.packetStartCodePrefix = 0x01
 	pes.streamId = int8(sid)
-	if size > 0xFFFF {
-		pes.PESPacketLength = 0
-	} else {
-		pes.PESPacketLength = uint16(size)
-	}
 	pes.PESScramblingControl = 0
 	pes.PESPriority = 0
 	pes.dataAlignmentIndicator = 0
@@ -410,8 +383,160 @@ func CreatePesFirst(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, cont
 	pes.PESHeaderDataLength = 0 // calc in size.
 	pes.pts = pts
 	pes.dts = dts
-	return pkt
+
+	s := utils.NewSrsStream([]byte{})
+	pes.Encode(s)
+	payload := s.Data()
+	leftCount := len(payload)
+	var currPos int = 0
+	for leftCount > 0 {
+		pkt := NewSrsTsPacket()
+
+		pkt.tsHeader.syncByte = SRS_TS_SYNC_BYTE
+		pkt.tsHeader.transportErrorIndicator = 0
+		pkt.tsHeader.payloadUnitStartIndicator = 0
+		if leftCount == len(payload) {
+			pkt.tsHeader.payloadUnitStartIndicator = 1
+		}
+		pkt.tsHeader.transportPriority = 0
+		pkt.tsHeader.PID = SrsTsPid(pid)
+		pkt.tsHeader.transportScrambingControl = SrsTsScrambledDisabled
+		pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
+		pkt.tsHeader.continuityCounter = int8(*continuityCounter)
+		*continuityCounter++
+		if *continuityCounter >= 0xf {
+			*continuityCounter = 0
+		}
+		var canConsumed int = 0
+		var paddingCount int = 0
+		if leftCount == len(payload) {
+			if pcr >= 0 { 
+				af := NewSrsTsAdaptationField(pkt)
+				pkt.adaptationField = af
+				pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
+		
+				af.adaptationFieldLength = 0 // calc in size.
+				af.discontinuityIndicator = discontinuity
+				af.randomAccessIndicator = 0
+				af.elementaryStreamPriorityIndicator = 0
+				af.PCRFlag = 1
+				af.OPCRFlag = 0
+				af.splicingPointFlag = 0
+				af.transportPrivateDataFlag = 0
+				af.adaptationFieldExtensionFlag = 0
+				af.programClockReferenceBase = pcr
+				af.programClockReferenceExtension = 0
+
+				canConsumed = int(188 - 4 - af.Size())
+			} else {
+				canConsumed = 188 - 4
+			}
+		} else {
+			canConsumed = 188 - 4
+		}
+		fmt.Println("***********canConsumed=", canConsumed, "*************")
+		
+		if leftCount < canConsumed {
+			paddingCount = canConsumed - leftCount
+		}
+		fmt.Println("***********paddingCount=", paddingCount, "************")
+		consumed := canConsumed - paddingCount
+		pkt.payload1 = payload[currPos:(currPos+consumed)]
+		currPos += consumed
+
+		if paddingCount > 0 {
+			if pkt.adaptationField == nil {
+				af := NewSrsTsAdaptationField(pkt)
+				pkt.adaptationField = af
+				pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
+		
+				af.adaptationFieldLength = 0 // calc in size.
+				af.discontinuityIndicator = discontinuity
+				af.randomAccessIndicator = 0
+				af.elementaryStreamPriorityIndicator = 0
+				af.PCRFlag = 0
+				af.OPCRFlag = 0
+				af.splicingPointFlag = 0
+				af.transportPrivateDataFlag = 0
+				af.adaptationFieldExtensionFlag = 0
+				af.programClockReferenceBase = 0
+				af.programClockReferenceExtension = 0
+				af.Padding(paddingCount)
+			} else {
+				pkt.adaptationField.Padding(paddingCount)
+			}
+		} else if pkt.adaptationField != nil {
+			pkt.adaptationField.Padding(paddingCount)
+		}
+
+		leftCount -= canConsumed
+		// fmt.Println("******leftCount=", leftCount, "&canConsumed=", canConsumed, "&len(payload)=", len(payload))
+		pkts = append(pkts, pkt)
+	}
+	return pkts
 }
+
+// func CreatePesFirst(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuityCounter uint8, discontinuity int8, pcr int64, dts int64, pts int64, size int) *SrsTsPacket {
+// 	pkt := NewSrsTsPacket()
+
+// 	pkt.tsHeader.syncByte = SRS_TS_SYNC_BYTE
+// 	pkt.tsHeader.transportErrorIndicator = 0
+// 	pkt.tsHeader.payloadUnitStartIndicator = 1
+// 	pkt.tsHeader.transportPriority = 0
+// 	pkt.tsHeader.PID = SrsTsPid(pid)
+// 	pkt.tsHeader.transportScrambingControl = SrsTsScrambledDisabled
+// 	pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
+// 	pkt.tsHeader.continuityCounter = int8(continuityCounter)
+
+// 	pkt.payload = NewSrsTsPayloadPES()
+// 	pes := pkt.payload.(*SrsTsPayloadPES)
+
+// 	if pcr >= 0 { 
+// 		af := NewSrsTsAdaptationField()
+// 		pkt.adaptationField = af
+// 		pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
+
+// 		af.adaptationFieldLength = 0 // calc in size.
+// 		af.discontinuityIndicator = discontinuity
+// 		af.randomAccessIndicator = 0
+// 		af.elementaryStreamPriorityIndicator = 0
+// 		af.PCRFlag = 1
+// 		af.OPCRFlag = 0
+// 		af.splicingPointFlag = 0
+// 		af.transportPrivateDataFlag = 0
+// 		af.adaptationFieldExtensionFlag = 0
+// 		af.programClockReferenceBase = pcr
+// 		af.programClockReferenceExtension = 0
+// 	}
+
+// 	pes.packetStartCodePrefix = 0x01
+// 	pes.streamId = int8(sid)
+// 	if size > 0xFFFF {
+// 		pes.PESPacketLength = 0
+// 	} else {
+// 		pes.PESPacketLength = uint16(size)
+// 	}
+// 	pes.PESScramblingControl = 0
+// 	pes.PESPriority = 0
+// 	pes.dataAlignmentIndicator = 0
+// 	pes.copyright = 0
+// 	pes.originalOrCopy = 0
+// 	if dts == pts {
+// 		pes.PTSDTSFlags = 0x02
+// 	} else {
+// 		pes.PTSDTSFlags = 0x03
+// 	}
+// 	pes.ESCRFlag = 0
+// 	pes.ESRateFlag = 0
+// 	pes.DSMTrickModeFlag = 0
+// 	pes.additionalCopyInfoFlag = 0
+// 	pes.PESCRCFlag = 0
+// 	pes.PESExtensionFlag = 0
+// 	pes.PESHeaderDataLength = 0 // calc in size.
+// 	pes.pts = pts
+// 	pes.dts = dts
+// 	return pkt
+// }
 
 func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
 	//start code
@@ -452,34 +577,30 @@ func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
 	stream.WriteByte(byte(pefv))
 	// 1B
 	stream.WriteByte(this.PESHeaderDataLength)
-	var nb_required int32 = 0
-	if this.PTSDTSFlags == 0x2 {
-		nb_required += 5
-	} else if this.PTSDTSFlags == 0x03 {
-		nb_required += 10
+
+	if this.PTSDTSFlags == 0x02 {
+		this.encode_33bits_dts_pts(stream, 0x02, this.pts)
 	}
 
-	if this.ESCRFlag == 1 {
-		nb_required += 6
+	if this.PTSDTSFlags == 0x03 {
+		this.encode_33bits_dts_pts(stream, 0x03, this.pts)
+		this.encode_33bits_dts_pts(stream, 0x03, this.dts)
+		//todo message
 	}
 
-	if this.ESRateFlag == 1 {
-		nb_required += 3
-	}
+	stream.WriteBytes(this.dataBytes)
+}
 
-	if this.DSMTrickModeFlag == 1 {
-		nb_required += 1
-	}
-
-	if this.additionalCopyInfoFlag == 1 {
-		nb_required += 1
-	}
-
-	if this.PESCRCFlag == 1 {
-		nb_required += 2
-	}
-
-	if this.PESExtensionFlag == 1 {
-		nb_required += 1
-	}
+func (this *SrsTsPayloadPES) encode_33bits_dts_pts(stream *utils.SrsStream, fb uint8, v int64) {
+    var val int32 = 0
+    val = int32(int64(fb) << 4 | (((v >> 30) & 0x07) << 1) | 1)
+    stream.WriteByte(byte(val))
+    
+    val = int32((((v >> 15) & 0x7fff) << 1) | 1)
+    stream.WriteByte(byte(val >> 8))
+    stream.WriteByte(byte(val))
+    
+	val = int32((((v) & 0x7fff) << 1) | 1)
+	stream.WriteByte(byte(val >> 8))
+	stream.WriteByte(byte(val))
 }

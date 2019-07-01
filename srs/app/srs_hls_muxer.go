@@ -110,7 +110,7 @@ func (this *SrsHlsMuxer) update_config(entry_prefix string, p string,
 }
 
 func (this *SrsHlsMuxer) on_sequence_header() error {
-	this.current.is_sequence_header = true
+	// this.current.is_sequence_header = true
 	return nil
 }
 

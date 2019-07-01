@@ -308,7 +308,7 @@ func (this *SrsAvcAacCodec) avc_demux_annexb_format(stream *utils.SrsStream, sam
 }
 
 func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sample *SrsCodecSample) bool {
-	fmt.Println("***************avc_demux_ibmf_format start*****************",this.NalUnitLength)
+	// fmt.Println("***************avc_demux_ibmf_format start*****************",this.NalUnitLength)
 	pictureLength := len(stream.Data())
 	for i := 0; i < pictureLength; {
 		b, err := stream.ReadBytes(uint32(this.NalUnitLength + 1))
@@ -337,8 +337,7 @@ func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sampl
 		}
 
 		i += int(int32(this.NalUnitLength) + 1 + NALUnitLength)
-		fmt.Println("pictureLength=", pictureLength, "&i=", i, "&NALUnitLength=", NALUnitLength)
-		// fmt.Printf("*****************NALUnitLength=%x\n", NALUnitLength)
+		// fmt.Println("pictureLength=", pictureLength, "&i=", i, "&NALUnitLength=", NALUnitLength)
 	}
 	return true
 }
@@ -492,11 +491,6 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 		return nil
 	}
 
-	// fmt.Print("rbsp= ")
-	// for i := 0; i < len(rbsp); i++ {
-	// 	fmt.Printf("%x ", rbsp[i])
-	// }
-	// fmt.Println("")
 
 	stream := utils.NewSrsStream(rbsp)
 	// for SPS, 7.3.2.1.1 Sequence parameter set data syntax

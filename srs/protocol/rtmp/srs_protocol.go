@@ -398,10 +398,7 @@ func (s *SrsProtocol) RecvMessagePayload(chunk *SrsChunkStream) (msg *SrsRtmpMes
 
 	chunk.RtmpMessage.payload = append(chunk.RtmpMessage.payload, buffer1...)
 	chunk.RtmpMessage.size += payload_size
-	// log.Printf("recv payload=%x %x %x %x", chunk.RtmpMessage.payload[0], chunk.RtmpMessage.payload[1], chunk.RtmpMessage.payload[2], chunk.RtmpMessage.payload[3])
-
-	// log.Print("recv payload_length=", chunk.Header.payload_length)
-
+	
 	if chunk.Header.payload_length == chunk.RtmpMessage.size {
 		// log.Print("recv new message")
 		new_msg := chunk.RtmpMessage

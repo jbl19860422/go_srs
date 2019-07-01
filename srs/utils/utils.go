@@ -268,11 +268,6 @@ func GetNalus(stream *SrsStream) []([]byte) {
 	} else if payload[2] == 0x00 && payload[3] == 0x01 {
 		prevPos = 4
 	} else {
-		// fmt.Println("err3")
-		for l := 0; l < 8; l++ {
-			fmt.Printf("%x ", payload[l])
-		}
-		fmt.Println("")
 		return nil
 	}
 

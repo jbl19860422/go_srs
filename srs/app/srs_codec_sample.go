@@ -1,7 +1,7 @@
 package app
 
 import (
-	"fmt"
+	// "fmt"
 	"errors"
 	"go_srs/srs/codec"
 )
@@ -46,7 +46,6 @@ func (this *SrsCodecSample) AddSampleUnit(data []byte) error {
 
 	this.SampleUnits = append(this.SampleUnits, data)
 	if this.IsVideo {
-		fmt.Printf("***************data[0]=%x\n", data[0])
 		nalUnitType := codec.SrsAvcNaluType(data[0] & 0x1f)
 		if nalUnitType == codec.SrsAvcNaluTypeIDR {
 			this.HasIdr = true

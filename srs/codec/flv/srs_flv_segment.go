@@ -156,11 +156,6 @@ func (this *SrsFlvSegment) updateMetaData() error {
 	off, _ := this.file.Seek(0, 2)
 	fmt.Println("offset=", this.filesizeOffset, "&filesize=", off)
 	c := utils.Float64ToBytes(float64(off), binary.BigEndian)
-	fmt.Println("****************c.len=", len(c), "*********************")
-	for i := 0; i < len(c); i++ {
-		fmt.Printf("%x ", c[i])
-	}
-	fmt.Println("")
 	this.file.WriteAt(c, this.filesizeOffset)
 
 	fmt.Println("duration=", float64(this.duration)/1000)

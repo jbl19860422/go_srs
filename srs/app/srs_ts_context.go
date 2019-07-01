@@ -2,6 +2,7 @@ package app
 
 import (
 	"os"
+	"fmt"
 	"errors"
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
@@ -17,7 +18,7 @@ type SrsTsContext struct {
 }
 
 func NewSrsTsContext() *SrsTsContext {
-	f, err := os.OpenFile("aa.ts", os.O_RDWR|os.O_CREATE, 0755)
+	f, err := os.OpenFile("a.ts", os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		return nil
 	}
@@ -26,6 +27,7 @@ func NewSrsTsContext() *SrsTsContext {
 	return &SrsTsContext{
 		ready: false,
 		file:f,
+		pids:make(map[int]*SrsTsChannel),
 	}
 }
 
@@ -79,7 +81,8 @@ func (this *SrsTsContext) Encode(msg *SrsTsMessage, vc codec.SrsCodecVideo, ac c
 	default:
 		as = SrsTsStreamReserved
 	}
-
+	as = SrsTsStreamAudioAAC
+	audioPid = TS_AUDIO_AAC_PID
 	if as == SrsTsStreamReserved || vs == SrsTsStreamReserved {
 		return errors.New("not support as or vs")
 	}
@@ -87,20 +90,24 @@ func (this *SrsTsContext) Encode(msg *SrsTsMessage, vc codec.SrsCodecVideo, ac c
 	if this.vcodec != vc || this.acodec != ac {
 		this.vcodec = vc
 		this.acodec = ac
+		fmt.Println("videopid=", videoPid, "&audioPid=", audioPid)
 		err := this.encodePatPmt(videoPid, vs, audioPid, as)
 		if err != nil {
 			return err
 		}
+		// os.Exit(0)
 	}
 
 	noVideo := false
 	if vs == SrsTsStreamReserved {
 		noVideo = true
 	}
-
+	
 	if msg.IsAudio() {
+		fmt.Println("****************encodePes audio****************")
 		this.encodePes(msg, audioPid, as, noVideo)
 	} else {
+		// fmt.Println("****************encodePes video****************")
 		this.encodePes(msg, videoPid, vs, noVideo)
 	}
 	return nil
@@ -144,18 +151,24 @@ func (this *SrsTsContext) encodePes(msg *SrsTsMessage, pid int16, sid SrsTsStrea
 	if sid != SrsTsStreamVideoH264 && sid != SrsTsStreamAudioMp3 && sid != SrsTsStreamAudioAAC {
 		return errors.New("ts: ignore the unknown stream")
 	}
-
+	
 	channel := this.Get(int(pid))
 	_ = channel
-	left := len(msg.payload)
-
-
-	for left > 0 {
-		var pkt *SrsTsPacket
-		if left == len(msg.payload) {
-
-		}
-		_ = pkt
+	// left := len(msg.payload)
+	pcr := msg.dts
+	pkts := CreatePes(this, pid, msg.sid, &channel.continuityCounter, 0, pcr, msg.dts, msg.pts, msg.payload)
+	// fmt.Println("****************encodePes video", len(pkts), ",len=", len(msg.payload), "****************")
+	for i := 0; i < len(pkts); i++ {
+		s := utils.NewSrsStream([]byte{})
+		pkts[i].Encode(s)
+		this.file.Write(s.Data())
 	}
+	// for left > 0 {
+	// 	var pkt *SrsTsPacket
+	// 	if left == len(msg.payload) {
+
+	// 	}
+	// 	_ = pkt
+	// }
 	return nil
 }

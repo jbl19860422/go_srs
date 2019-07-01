@@ -22,10 +22,11 @@ func (this *SrsTsPacket) Decode(stream *utils.SrsStream) error {
 }
 
 func (this *SrsTsPacket) Encode(stream *utils.SrsStream) {
-	this.tsHeader.Encode(stream)
+	this.tsHeader.Encode(stream)//4
 	if this.tsHeader.adaptationFieldControl == SrsTsAdapationControlFieldOnly || this.tsHeader.adaptationFieldControl == SrsTsAdapationControlBoth {
 		this.adaptationField.Encode(stream)
 	}
 
-	this.payload.Encode(stream)
+	//this.payload.Encode(stream)
+	stream.WriteBytes(this.payload1)
 }

@@ -129,6 +129,10 @@ func CreatePAT(context *SrsTsContext, pmt_number int16, pmt_pid int16) *SrsTsPac
 	pat.programs = append(pat.programs, program)
 	//calc section length
 	pat.psiHeader.sectionLength = int16(pat.Size())
+	//填充payload
+	s := utils.NewSrsStream([]byte{})
+	pat.Encode(s)
+	pkt.payload1 = s.Data()
 	return pkt
 }
 
@@ -152,8 +156,8 @@ func (this *SrsTsPayloadPAT) Encode(stream *utils.SrsStream) {
 	CRC32 := utils.MpegtsCRC32(s.Data()[1:])
 	s.WriteInt32(int32(CRC32), binary.BigEndian)//4
 	stream.WriteBytes(s.Data())
-	if len(stream.Data()) < 188 {
-		i := 188 - len(stream.Data())
+	if len(stream.Data()) + 4 < 188 {
+		i := 188 - len(stream.Data()) - 4
 		for j := 0; j < i; j++ {
 			stream.WriteByte(0xff)
 		}

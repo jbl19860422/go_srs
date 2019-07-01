@@ -24,7 +24,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"os"
+	// "os"
 	"sync"
 	"errors"
 	"fmt"
@@ -70,6 +70,7 @@ type SrsSource struct {
 	//record
 	dvr				*SrsDvr
 	hls				*SrsHls
+	tsContext		*SrsTsContext
 }
 
 var sourcePoolMtx sync.Mutex
@@ -80,6 +81,7 @@ func init() {
 }
 
 func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource {
+	tsCtx := NewSrsTsContext()
 	source := &SrsSource{
 		req:r,
 		conn:c,
@@ -88,26 +90,28 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		gopCache:NewSrsGopCache(),
 		atc:false,
 		dvr:NewSrsDvr(),
-		hls:NewSrsHls("333.ts"),
+		hls:NewSrsHls(tsCtx),
+		tsContext: tsCtx,
 	}
 	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
 
-
-	pkt := CreatePAT(nil, TS_PMT_NUMBER, TS_PMT_PID)
-	f, err := os.OpenFile("a.ts", os.O_RDWR|os.O_CREATE, 0755)
-	stream := utils.NewSrsStream([]byte{})
-	pkt.Encode(stream)
-	f.Write(stream.Data())
+	// pkt := CreatePAT(source.tsContext, TS_PMT_NUMBER, TS_PMT_PID)
+	// f, err := os.OpenFile("a.ts", os.O_RDWR|os.O_CREATE, 0755)
+	// f.Truncate(0)
+	// stream := utils.NewSrsStream([]byte{})
+	// pkt.Encode(stream)
+	// f.Write(stream.Data())
 	
 
-	pkt1 := CreatePMT(nil, TS_PMT_NUMBER, TS_PMT_PID, TS_VIDEO_AVC_PID, SrsTsStreamVideoH264, TS_AUDIO_AAC_PID, SrsTsStreamAudioAAC)
-	stream1 := utils.NewSrsStream([]byte{})
-	pkt1.Encode(stream1)
-	f.Write(stream1.Data())
+	// pkt1 := CreatePMT(source.tsContext, TS_PMT_NUMBER, TS_PMT_PID, TS_VIDEO_AVC_PID, SrsTsStreamVideoH264, TS_AUDIO_AAC_PID, SrsTsStreamAudioAAC)
+	// stream1 := utils.NewSrsStream([]byte{})
+	// pkt1.Encode(stream1)
+	// fmt.Println("stream1.datalen=****************", len(stream1.Data()))
+	// f.Write(stream1.Data())
 
-	f.Close()
-	_ = pkt
-	_ = err
+	// f.Close()
+	// _ = pkt
+	// _ = err
 
 	return source
 }
@@ -350,6 +354,11 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 		fmt.Println(err)
 		return err
 	}
+
+	// tsMsg := &SrsTsMessage{
+	// 	payload:
+	// }
+	// this.tsContext.Encode(ts, codec.SrsCodecVideoAVC, codec.SrsCodecAudioAAC)
 
 	return nil
 }

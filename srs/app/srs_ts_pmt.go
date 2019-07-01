@@ -18,7 +18,7 @@ type SrsTsPayloadPMTESInfo struct {
 		This is a 13-bit field specifying the PID of the Transport Stream packets which carry the associated
 		program element
 	*/
-	elemenaryPID int16 //13bits
+	elementaryPID int16 //13bits
 	const1Value1 int8  //4bits
 	/*
 		This is a 12-bit field, the first two bits of which shall be '00'. The remaining 10 bits specify the number
@@ -31,7 +31,7 @@ type SrsTsPayloadPMTESInfo struct {
 func NewSrsTsPayloadPMTESInfo(s SrsTsStream, pid int16) *SrsTsPayloadPMTESInfo {
 	return &SrsTsPayloadPMTESInfo{
 		streamType:s,
-		elemenaryPID:pid,
+		elementaryPID:pid,
 		const1Value0:0x07,
 		const1Value1:0x0f,
 		ESInfoLength:0,
@@ -40,13 +40,13 @@ func NewSrsTsPayloadPMTESInfo(s SrsTsStream, pid int16) *SrsTsPayloadPMTESInfo {
 
 func (this *SrsTsPayloadPMTESInfo) Encode(stream *utils.SrsStream) {
 	stream.WriteByte(byte(this.streamType))
-
+	fmt.Printf("streamType=%x\n", this.streamType)
 	var epid int16 = 0
-	epid |= this.elemenaryPID & 0x1fff
+	epid |= this.elementaryPID & 0x1fff
 	epid |= int16((int32(this.const1Value0) << 13) & 0xE000)
 	stream.WriteInt16(epid, binary.BigEndian)
 
-	fmt.Printf("**************epid=%x***************\n", epid)
+	fmt.Printf("elementaryPID=%x\n", this.elementaryPID)
 
 	var esv int16 = 0
 	esv |= this.ESInfoLength & 0x0FFF
@@ -121,17 +121,17 @@ type SrsTsPayloadPMT struct {
 
 	infoes []*SrsTsPayloadPMTESInfo
 
-	//私有数据
-	pmtPid	int16
+	context *SrsTsContext
 }
 
-func NewSrsTsPayloadPMT(p *SrsTsPacket) *SrsTsPayloadPMT {
+func NewSrsTsPayloadPMT(c *SrsTsContext, p *SrsTsPacket) *SrsTsPayloadPMT {
 	return &SrsTsPayloadPMT{
 		psiHeader: NewSrsTsPayloadPSI(p),
 		const1Value0:0x3,
 		const1Value1:0x7,
 		const1Value2:0x0f,
 		infoes:make([]*SrsTsPayloadPMTESInfo, 0),
+		context:c,
 	}
 }
 
@@ -149,7 +149,7 @@ func (this *SrsTsPayloadPMT) Encode(stream *utils.SrsStream) {
 	s.WriteByte(b)
 	
 	s.WriteByte(byte(this.sectionNumber))
-	s.WriteByte(byte(this.lastSectionNumber))//5
+	s.WriteByte(byte(this.lastSectionNumber))//5  E1
 
 	var ppv int16 = this.PCR_PID & 0x1FFF
 	ppv |= int16((int32(this.const1Value1) << 13) & 0xE000)
@@ -158,8 +158,6 @@ func (this *SrsTsPayloadPMT) Encode(stream *utils.SrsStream) {
 	var pilv int16 = this.programInfoLength & 0xFFF
     pilv |= int16((int32(this.const1Value2) << 12) & 0xF000)
 	s.WriteInt16(pilv, binary.BigEndian)
-	
-	fmt.Printf("***************ppv=%x pplv=%x**************\n", ppv, pilv)
 
 	if this.programInfoLength > 0 {
 		//todo check length 
@@ -168,13 +166,21 @@ func (this *SrsTsPayloadPMT) Encode(stream *utils.SrsStream) {
 
 	for i := 0; i < len(this.infoes); i++ {
 		this.infoes[i].Encode(s)//4
+		switch this.infoes[i].streamType {
+		case SrsTsStreamVideoH264, SrsTsStreamVideoMpeg4:
+			fmt.Println("****************************add video channel****************************")
+			this.context.Set(int(this.infoes[i].elementaryPID), SrsTsPidApplyVideo, this.infoes[i].streamType)
+		case SrsTsStreamAudioAAC, SrsTsStreamAudioAC3, SrsTsStreamAudioDTS, SrsTsStreamAudioMp3:
+			fmt.Println("****************************add audio channel****************************")
+			this.context.Set(int(this.infoes[i].elementaryPID), SrsTsPidApplyAudio, this.infoes[i].streamType)
+		}
 	}
 
 	CRC32 := utils.MpegtsCRC32(s.Data()[1:])
 	s.WriteInt32(int32(CRC32), binary.BigEndian)//4
 	stream.WriteBytes(s.Data())
-	if len(stream.Data()) < 188 {
-		i := 188 - len(stream.Data())
+	if len(stream.Data()) + 4 < 188 {
+		i := 188 - len(stream.Data()) - 4
 		for j := 0; j < i; j++ {
 			stream.WriteByte(0xff)
 		}
@@ -205,7 +211,7 @@ func CreatePMT(context *SrsTsContext, pmtNumber int16, pmtPid int16, vpid int16,
 	pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
 	pkt.tsHeader.continuityCounter = 0
 
-	pkt.payload = NewSrsTsPayloadPMT(pkt)
+	pkt.payload = NewSrsTsPayloadPMT(context, pkt)
 	var pmt *SrsTsPayloadPMT = pkt.payload.(*SrsTsPayloadPMT)
 	pmt.psiHeader.pointerField = 0
 	pmt.psiHeader.tableId = SrsTsPsiTableIdPms
@@ -233,5 +239,9 @@ func CreatePMT(context *SrsTsContext, pmtNumber int16, pmtPid int16, vpid int16,
 	}
 	//calc section length
 	pmt.psiHeader.sectionLength = int16(pmt.Size())
+	//填充payload
+	s := utils.NewSrsStream([]byte{})
+	pmt.Encode(s)
+	pkt.payload1 = s.Data()
 	return pkt
 }
