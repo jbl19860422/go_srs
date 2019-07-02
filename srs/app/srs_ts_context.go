@@ -156,13 +156,16 @@ func (this *SrsTsContext) encodePes(msg *SrsTsMessage, pid int16, sid SrsTsStrea
 	_ = channel
 	// left := len(msg.payload)
 	pcr := msg.dts
+	msg.sid = SrsTsPESStreamIdVideoCommon
 	pkts := CreatePes(this, pid, msg.sid, &channel.continuityCounter, 0, pcr, msg.dts, msg.pts, msg.payload)
+	fmt.Println("payload_len=", len(msg.payload), "&pkts_count=", len(pkts))
 	// fmt.Println("****************encodePes video", len(pkts), ",len=", len(msg.payload), "****************")
 	for i := 0; i < len(pkts); i++ {
 		s := utils.NewSrsStream([]byte{})
 		pkts[i].Encode(s)
 		this.file.Write(s.Data())
 	}
+	// os.Exit(0)
 	// for left > 0 {
 	// 	var pkt *SrsTsPacket
 	// 	if left == len(msg.payload) {

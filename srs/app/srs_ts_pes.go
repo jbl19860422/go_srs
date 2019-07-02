@@ -2,7 +2,7 @@ package app
 
 import (
 	// "os"
-	"fmt"	
+	// "fmt"	
 	"encoding/binary"
 	"go_srs/srs/utils"
 )
@@ -359,10 +359,10 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 	pes.dataBytes = data
 	if len(data) > 0xffff {
 		pes.PESPacketLength = 0
-		fmt.Println("PESPacketLength=0")
+		// fmt.Println("PESPacketLength=0")
 	} else {
 		pes.PESPacketLength = uint16(len(data))
-		fmt.Println("PESPacketLength=",pes.PESPacketLength)
+		// fmt.Println("PESPacketLength=",pes.PESPacketLength)
 	}
 
 	pes.packetStartCodePrefix = 0x01
@@ -407,9 +407,9 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 		pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
 		pkt.tsHeader.continuityCounter = int8(*continuityCounter)
 		*continuityCounter++
-		if *continuityCounter >= 0xf {
-			*continuityCounter = 0
-		}
+		// if *continuityCounter >= 0x10000 {
+		// 	*continuityCounter = 0
+		// }
 		var canConsumed int = 0
 		var paddingCount int = 0
 		if leftCount == len(payload) {

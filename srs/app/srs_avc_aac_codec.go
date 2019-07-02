@@ -251,8 +251,8 @@ func (this *SrsAvcAacCodec) video_avc_demux(data []byte, sample *SrsCodecSample)
 
 	var cts int32 = 0
 	cts |= int32(ctsTmp[2])
-	cts |= int32(ctsTmp[1] << 8)
-	cts |= int32(ctsTmp[0] << 16)
+	cts |= int32(ctsTmp[1]) << 8
+	cts |= int32(ctsTmp[0]) << 16
 	//pts = dts + cts
 	sample.Cts = cts
 	sample.AvcPacketType = codec.SrsCodecVideoAVCType(avcPacketType)

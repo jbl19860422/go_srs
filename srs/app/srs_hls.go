@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+	// "os"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
@@ -162,15 +164,34 @@ func (this *SrsHls) on_video(video *rtmp.SrsRtmpMessage) error {
 
 	dts := video.GetHeader().GetTimestamp()*90
 	this.streamDts = dts
-
-	ts := &SrsTsMessage{
-		payload:video.GetPayload(),
-		dts:video.GetHeader().GetTimestamp(),
-		pts:video.GetHeader().GetTimestamp(),
+	
+	
+	// fmt.Println("this.codec.sequenceParameterSetNALUnit=", len(this.codec.sequenceParameterSetNALUnit))
+	// fmt.Println("SampleUnits=", len(this.sample.SampleUnits))
+	// os.Exit(0)
+	var add_sps_pps bool = false
+	p := make([]byte, 0)
+	for i := 0; i < len(this.sample.SampleUnits); i++ {
+		nal_unit_type := codec.SrsAvcNaluType(this.sample.SampleUnits[i][0] & 0x1f)
+		if !add_sps_pps && nal_unit_type == codec.SrsAvcNaluTypeIDR {
+			p = append(p, []byte{0,0,1}...)
+			p = append(p, this.codec.sequenceParameterSetNALUnit...)
+			p = append(p, []byte{0,0,1}...)
+			p = append(p, this.codec.pictureParameterSetNALUnit...)
+			add_sps_pps = true
+		}
+		p = append(p, []byte{0,0,1}...)
+		p = append(p, this.sample.SampleUnits[i]...)
+		
 	}
-
+	ts := &SrsTsMessage{
+		payload:p,
+		dts:dts,
+		pts:dts + int64(this.sample.Cts*90),
+	}
+	fmt.Println("*********************cts=", this.sample.Cts)
 	this.context.Encode(ts, codec.SrsCodecVideo(this.codec.videoCodecId), codec.SrsCodecAudio(this.codec.audioCodecId))
-
+	
 	return nil
 	// err = this.hlsCache.WriteVideo(this.codec, this.muxer, dts, this.sample)
 	// if err != nil {
@@ -201,6 +222,8 @@ func (this *SrsHls) on_audio(audio *rtmp.SrsRtmpMessage) error {
 		dts:audio.GetHeader().GetTimestamp(),
 		pts:audio.GetHeader().GetTimestamp(),
 	}
+
+	
 
 	this.context.Encode(ts, codec.SrsCodecVideo(this.codec.videoCodecId), codec.SrsCodecAudio(this.codec.audioCodecId))
 
