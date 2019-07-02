@@ -37,7 +37,7 @@ type SrsHlsMuxer struct {
 
 func NewSrsHlsMuxer() *SrsHlsMuxer {
 	return &SrsHlsMuxer{
-		context:NewSrsTsContext(),
+		context:nil,
 	}
 }
 

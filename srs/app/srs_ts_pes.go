@@ -2,7 +2,7 @@ package app
 
 import (
 	// "os"
-	// "fmt"	
+	"fmt"	
 	"encoding/binary"
 	"go_srs/srs/utils"
 )
@@ -359,10 +359,8 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 	pes.dataBytes = data
 	if len(data) > 0xffff {
 		pes.PESPacketLength = 0
-		// fmt.Println("PESPacketLength=0")
 	} else {
 		pes.PESPacketLength = uint16(len(data))
-		// fmt.Println("PESPacketLength=",pes.PESPacketLength)
 	}
 
 	pes.packetStartCodePrefix = 0x01
@@ -407,10 +405,7 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 		pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
 		pkt.tsHeader.continuityCounter = int8(*continuityCounter)
 		*continuityCounter++
-		// if *continuityCounter >= 0x10000 {
-		// 	*continuityCounter = 0
-		// }
-		var canConsumed int = 0
+		var spaceLeft int = 0
 		var paddingCount int = 0
 		if leftCount == len(payload) {
 			if pcr >= 0 { 
@@ -430,32 +425,36 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 				af.programClockReferenceBase = pcr
 				af.programClockReferenceExtension = 0
 
-				canConsumed = int(188 - 4 - af.Size())
+				spaceLeft = int(188 - 4 - af.Size())
 			} else {
-				canConsumed = 188 - 4
+				spaceLeft = 188 - 4
 			}
 		} else {
-			canConsumed = 188 - 4
+			spaceLeft = 188 - 4
 		}
-		// fmt.Println("***********canConsumed=", canConsumed, "*************")
-		
-		if leftCount < canConsumed {
-			paddingCount = canConsumed - leftCount
+
+		if leftCount < spaceLeft {
+			paddingCount = spaceLeft - leftCount
 		}
-		// fmt.Println("***********paddingCount=", paddingCount, "************")
-		consumed := canConsumed - paddingCount
-		// fmt.Println("***********consumed=", consumed)
+
+		// if pkt.adaptationField != nil {
+		// 	paddingCount += int(pkt.adaptationField.Size())
+		// }
+
+		fmt.Println("***********leftCount=", leftCount, "&paddingCount=", paddingCount, "spaceLeft=", spaceLeft, "************")
+		consumed := spaceLeft - paddingCount
+		fmt.Println("***********consumed=", consumed)
 		pkt.payload1 = payload[currPos:(currPos+consumed)]
 		currPos += consumed
 
-		if paddingCount > 0 {
+		if paddingCount > 0 {//说明需要padding
 			if pkt.adaptationField == nil {
 				af := NewSrsTsAdaptationField(pkt)
 				pkt.adaptationField = af
 				pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
 		
 				af.adaptationFieldLength = 0 // calc in size.
-				af.discontinuityIndicator = discontinuity
+				af.discontinuityIndicator = 0
 				af.randomAccessIndicator = 0
 				af.elementaryStreamPriorityIndicator = 0
 				af.PCRFlag = 0
@@ -465,82 +464,21 @@ func CreatePes(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuit
 				af.adaptationFieldExtensionFlag = 0
 				af.programClockReferenceBase = 0
 				af.programClockReferenceExtension = 0
+				// fmt.Println("*********create adaptationField***************")
 				af.Padding(paddingCount)
 			} else {
 				pkt.adaptationField.Padding(paddingCount)
 			}
-		} else if pkt.adaptationField != nil {
+		} else if pkt.adaptationField != nil {//也说明有padding
 			pkt.adaptationField.Padding(paddingCount)
 		}
 
-		leftCount -= canConsumed
+		leftCount -= consumed
 		// fmt.Println("******leftCount=", leftCount, "&canConsumed=", canConsumed, "&len(payload)=", len(payload))
 		pkts = append(pkts, pkt)
 	}
 	return pkts
 }
-
-// func CreatePesFirst(context *SrsTsContext, pid int16, sid SrsTsPESStreamId, continuityCounter uint8, discontinuity int8, pcr int64, dts int64, pts int64, size int) *SrsTsPacket {
-// 	pkt := NewSrsTsPacket()
-
-// 	pkt.tsHeader.syncByte = SRS_TS_SYNC_BYTE
-// 	pkt.tsHeader.transportErrorIndicator = 0
-// 	pkt.tsHeader.payloadUnitStartIndicator = 1
-// 	pkt.tsHeader.transportPriority = 0
-// 	pkt.tsHeader.PID = SrsTsPid(pid)
-// 	pkt.tsHeader.transportScrambingControl = SrsTsScrambledDisabled
-// 	pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
-// 	pkt.tsHeader.continuityCounter = int8(continuityCounter)
-
-// 	pkt.payload = NewSrsTsPayloadPES()
-// 	pes := pkt.payload.(*SrsTsPayloadPES)
-
-// 	if pcr >= 0 { 
-// 		af := NewSrsTsAdaptationField()
-// 		pkt.adaptationField = af
-// 		pkt.tsHeader.adaptationFieldControl = SrsTsAdaptationFieldTypeBoth
-
-// 		af.adaptationFieldLength = 0 // calc in size.
-// 		af.discontinuityIndicator = discontinuity
-// 		af.randomAccessIndicator = 0
-// 		af.elementaryStreamPriorityIndicator = 0
-// 		af.PCRFlag = 1
-// 		af.OPCRFlag = 0
-// 		af.splicingPointFlag = 0
-// 		af.transportPrivateDataFlag = 0
-// 		af.adaptationFieldExtensionFlag = 0
-// 		af.programClockReferenceBase = pcr
-// 		af.programClockReferenceExtension = 0
-// 	}
-
-// 	pes.packetStartCodePrefix = 0x01
-// 	pes.streamId = int8(sid)
-// 	if size > 0xFFFF {
-// 		pes.PESPacketLength = 0
-// 	} else {
-// 		pes.PESPacketLength = uint16(size)
-// 	}
-// 	pes.PESScramblingControl = 0
-// 	pes.PESPriority = 0
-// 	pes.dataAlignmentIndicator = 0
-// 	pes.copyright = 0
-// 	pes.originalOrCopy = 0
-// 	if dts == pts {
-// 		pes.PTSDTSFlags = 0x02
-// 	} else {
-// 		pes.PTSDTSFlags = 0x03
-// 	}
-// 	pes.ESCRFlag = 0
-// 	pes.ESRateFlag = 0
-// 	pes.DSMTrickModeFlag = 0
-// 	pes.additionalCopyInfoFlag = 0
-// 	pes.PESCRCFlag = 0
-// 	pes.PESExtensionFlag = 0
-// 	pes.PESHeaderDataLength = 0 // calc in size.
-// 	pes.pts = pts
-// 	pes.dts = dts
-// 	return pkt
-// }
 
 func (this *SrsTsPayloadPES) Encode(stream *utils.SrsStream) {
 	this.PESHeaderDataLength = 0

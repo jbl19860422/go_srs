@@ -1,7 +1,7 @@
 package app
 
 import (
-	"fmt"
+	// "fmt"
 	// "os"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/codec"
@@ -165,10 +165,6 @@ func (this *SrsHls) on_video(video *rtmp.SrsRtmpMessage) error {
 	dts := video.GetHeader().GetTimestamp()*90
 	this.streamDts = dts
 	
-	
-	// fmt.Println("this.codec.sequenceParameterSetNALUnit=", len(this.codec.sequenceParameterSetNALUnit))
-	// fmt.Println("SampleUnits=", len(this.sample.SampleUnits))
-	// os.Exit(0)
 	var add_sps_pps bool = false
 	p := make([]byte, 0)
 	for i := 0; i < len(this.sample.SampleUnits); i++ {
@@ -182,14 +178,13 @@ func (this *SrsHls) on_video(video *rtmp.SrsRtmpMessage) error {
 		}
 		p = append(p, []byte{0,0,1}...)
 		p = append(p, this.sample.SampleUnits[i]...)
-		
 	}
 	ts := &SrsTsMessage{
 		payload:p,
 		dts:dts,
 		pts:dts + int64(this.sample.Cts*90),
 	}
-	fmt.Println("*********************cts=", this.sample.Cts)
+	ts.sid = SrsTsPESStreamIdVideoCommon
 	this.context.Encode(ts, codec.SrsCodecVideo(this.codec.videoCodecId), codec.SrsCodecAudio(this.codec.audioCodecId))
 	
 	return nil
@@ -212,19 +207,49 @@ func (this *SrsHls) on_audio(audio *rtmp.SrsRtmpMessage) error {
 	}
 
 	acodec := codec.SrsCodecAudio(this.codec.audioCodecId)
+	// fmt.Println("acodec=",acodec)
 	//not support
 	if acodec != codec.SrsCodecAudioAAC && acodec != codec.SrsCodecAudioMP3 {
 		return nil
 	}
 
+	p := make([]byte, 0)
+	// fmt.Println("audiothis.sample.SampleUnits=", len(this.sample.SampleUnits))
+	for i := 0; i < len(this.sample.SampleUnits); i++ {
+	 	var frame_length int32 = int32(len(this.sample.SampleUnits[i]) + 7)
+        // AAC-ADTS
+        // 6.2 Audio Data Transport Stream, ADTS
+        // in aac-iso-13818-7.pdf, page 26.
+        // fixed 7bytes header
+        var adts_header = []byte{0xff, 0xf9, 0x00, 0x00, 0x00, 0x0f, 0xfc}
+        // profile, 2bits
+        aac_profile := codec.SrsAacProfileLC //srs_codec_aac_rtmp2ts(codec->aac_object);
+        adts_header[2] = (byte(aac_profile) << 6) & 0xc0
+        // sampling_frequency_index 4bits
+        adts_header[2] |= byte((this.codec.aacSampleRateIndex << 2) & 0x3c)
+        // channel_configuration 3bits
+        adts_header[2] |= byte((this.codec.aacChannels >> 2) & 0x01)
+        adts_header[3] = byte((int32(this.codec.aacChannels) << 6) & 0xc0)
+        // frame_length 13bits
+        adts_header[3] |= byte((frame_length >> 11) & 0x03)
+        adts_header[4] = byte((frame_length >> 3) & 0xff)
+        adts_header[5] = byte(((frame_length << 5) & 0xe0))
+        // adts_buffer_fullness; //11bits
+        adts_header[5] |= 0x1f
+
+        // copy to audio buffer
+        p = append(p, adts_header...)
+        p = append(p, this.sample.SampleUnits[i]...)
+	}
+	
+	dts := audio.GetHeader().GetTimestamp()*90
 	ts := &SrsTsMessage{
-		payload:audio.GetPayload(),
-		dts:audio.GetHeader().GetTimestamp(),
-		pts:audio.GetHeader().GetTimestamp(),
+		payload:p,
+		dts:dts,
+		pts:dts,
 	}
 
-	
-
+	ts.sid = SrsTsPESStreamIdAudioCommon
 	this.context.Encode(ts, codec.SrsCodecVideo(this.codec.videoCodecId), codec.SrsCodecAudio(this.codec.audioCodecId))
 
 	return nil

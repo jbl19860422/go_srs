@@ -13,6 +13,21 @@ const (
 	SrsCodecVideoAVCFrameVideoInfoFrame = 5
 )
 
+/**
+* the aac profile, for ADTS(HLS/TS)
+* @see https://github.com/ossrs/srs/issues/310
+*/
+type SrsAacProfile int
+const (
+    _ SrsAacProfile = iota
+    SrsAacProfileReserved = 3
+    
+    // @see 7.1 Profiles, aac-iso-13818-7.pdf, page 40
+    SrsAacProfileMain = 0
+    SrsAacProfileLC = 1
+    SrsAacProfileSSR = 2
+)
+
 // E.4.3.1 VIDEODATA
 // CodecID UB [4]
 // Codec Identifier. The following values are defined:

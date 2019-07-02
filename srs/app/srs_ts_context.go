@@ -18,12 +18,12 @@ type SrsTsContext struct {
 }
 
 func NewSrsTsContext() *SrsTsContext {
-	f, err := os.OpenFile("a.ts", os.O_RDWR|os.O_CREATE, 0755)
+	f, err := os.OpenFile("c.ts", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
 	if err != nil {
 		return nil
 	}
 	f.Truncate(0)
-
+	fmt.Println("*************************NewSrsTsContext********************************")
 	return &SrsTsContext{
 		ready: false,
 		file:f,
@@ -104,11 +104,11 @@ func (this *SrsTsContext) Encode(msg *SrsTsMessage, vc codec.SrsCodecVideo, ac c
 	}
 	
 	if msg.IsAudio() {
-		fmt.Println("****************encodePes audio****************")
-		this.encodePes(msg, audioPid, as, noVideo)
+		// fmt.Println("****************encodePes audio****************")
+		// this.encodePes(msg, audioPid, as, -1, noVideo)
 	} else {
 		// fmt.Println("****************encodePes video****************")
-		this.encodePes(msg, videoPid, vs, noVideo)
+		this.encodePes(msg, videoPid, vs, msg.dts, noVideo)
 	}
 	return nil
 }
@@ -117,7 +117,7 @@ func (this *SrsTsContext) encodePatPmt(vpid int16, vs SrsTsStream, apid int16, a
 	if vs != SrsTsStreamVideoH264 && as != SrsTsStreamAudioAAC && as != SrsTsStreamAudioMp3 {
 		return errors.New("invalid video stream or audio stream type")
 	}
-
+	fmt.Println("************encodePatPmt*****************")
 	var pmt_number int16 = TS_PMT_NUMBER
 	var pmt_pid int16 = TS_PMT_PID
 	if true {
@@ -138,7 +138,7 @@ func (this *SrsTsContext) encodePatPmt(vpid int16, vs SrsTsStream, apid int16, a
 	return nil
 }
 
-func (this *SrsTsContext) encodePes(msg *SrsTsMessage, pid int16, sid SrsTsStream, pure_audio bool) error {
+func (this *SrsTsContext) encodePes(msg *SrsTsMessage, pid int16, sid SrsTsStream, pcr int64, pure_audio bool) error {
 	// Sometimes, the context is not ready(PAT/PMT write failed), error in this situation.
 	if !this.ready {
 		return errors.New("context not ready")
@@ -155,23 +155,23 @@ func (this *SrsTsContext) encodePes(msg *SrsTsMessage, pid int16, sid SrsTsStrea
 	channel := this.Get(int(pid))
 	_ = channel
 	// left := len(msg.payload)
-	pcr := msg.dts
-	msg.sid = SrsTsPESStreamIdVideoCommon
+	// pcr := msg.dts
 	pkts := CreatePes(this, pid, msg.sid, &channel.continuityCounter, 0, pcr, msg.dts, msg.pts, msg.payload)
-	fmt.Println("payload_len=", len(msg.payload), "&pkts_count=", len(pkts))
-	// fmt.Println("****************encodePes video", len(pkts), ",len=", len(msg.payload), "****************")
+	
 	for i := 0; i < len(pkts); i++ {
 		s := utils.NewSrsStream([]byte{})
 		pkts[i].Encode(s)
-		this.file.Write(s.Data())
+		n, err := this.file.Write(s.Data())
+		if len(s.Data()) != 188 {
+			fmt.Println("errrrrrrrrrrrrrrrrrrrrrrrrrrrpayload_len=", len(msg.payload), "&pkts_count=", len(pkts), "&data_len=", len(s.Data()))
+		}
+		// if pid == TS_AUDIO_AAC_PID {
+		// 	fmt.Println("payload_len=", len(msg.payload), "&pkts_count=", len(pkts), "&data_len=", len(s.Data()))
+		// }
+		// fmt.Printf("data[0]=%x, data[1]=%x, data[2]=%x, data[3]=%x, len=%d\n", s.Data()[0], s.Data()[1], s.Data()[2], s.Data()[3], len(s.Data()))
+		if err != nil {
+			fmt.Println("***********************write file err, n=", n, "********************")
+		}
 	}
-	// os.Exit(0)
-	// for left > 0 {
-	// 	var pkt *SrsTsPacket
-	// 	if left == len(msg.payload) {
-
-	// 	}
-	// 	_ = pkt
-	// }
 	return nil
 }

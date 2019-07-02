@@ -284,28 +284,28 @@ func (this *SrsTsAdapationField) Encode(stream *utils.SrsStream) {
 	stream.WriteInt8(tmpv)
 	
 	if this.PCRFlag == 1 {
-        // @remark, use pcr base and ignore the extension
-        // @see https://github.com/ossrs/srs/issues/250#issuecomment-71349370
-        var pcrv int64 = this.programClockReferenceBase & 0x1ff
-        pcrv |= (int64(this.const1Value0) << 9) & 0x7E00
-        pcrv |= (this.programClockReferenceBase << 15) & 0xFFFFFFFF8000
-		// stream.WriteInt64(pcrv, binary.BigEndian)
-		b := byte((pcrv >> 40) & 0xff)
-		stream.WriteByte(b)
-		b = byte((pcrv >> 32) & 0xff)
-		stream.WriteByte(b)
-		b = byte((pcrv >> 24) & 0xff)
-		stream.WriteByte(b)
-		b = byte((pcrv >> 16) & 0xff)
-		stream.WriteByte(b)
-		b = byte((pcrv >> 8) & 0xff)
-		stream.WriteByte(b)
-		b = byte((pcrv) & 0xff)
-		stream.WriteByte(b)
+			// @remark, use pcr base and ignore the extension
+			// @see https://github.com/ossrs/srs/issues/250#issuecomment-71349370
+			var pcrv int64 = this.programClockReferenceBase & 0x1ff
+			pcrv |= (int64(this.const1Value0) << 9) & 0x7E00
+			pcrv |= (this.programClockReferenceBase << 15) & 0xFFFFFFFF8000
+			// stream.WriteInt64(pcrv, binary.BigEndian)
+			b := byte((pcrv >> 40) & 0xff)
+			stream.WriteByte(b)
+			b = byte((pcrv >> 32) & 0xff)
+			stream.WriteByte(b)
+			b = byte((pcrv >> 24) & 0xff)
+			stream.WriteByte(b)
+			b = byte((pcrv >> 16) & 0xff)
+			stream.WriteByte(b)
+			b = byte((pcrv >> 8) & 0xff)
+			stream.WriteByte(b)
+			b = byte((pcrv) & 0xff)
+			stream.WriteByte(b)
     }
 
     if this.OPCRFlag == 1{
-		stream.WriteBytes([]byte{0,0,0,0,0,0})
+			stream.WriteBytes([]byte{0,0,0,0,0,0})
     }
 
     if this.splicingPointFlag == 1 {
@@ -339,6 +339,10 @@ func (this *SrsTsAdapationField) Encode(stream *utils.SrsStream) {
 			stream.WriteBytes([]byte{0xff,0xff,0xff,0xff,0xff})
 		}
 	}
+
+	if this.staffingByte != nil && len(this.staffingByte) > 0 {
+		stream.WriteBytes(this.staffingByte)
+	}
 }
 
 func (this *SrsTsAdapationField) Padding(paddingCount int) {
@@ -365,8 +369,10 @@ func (this *SrsTsAdapationField) Padding(paddingCount int) {
 
 	staffingCount := paddingCount - sz
 	this.staffingByte = make([]byte, 0)
-	for i := 0; i < staffingCount; i++ {
-		this.staffingByte = append(this.staffingByte, 0xff)
+	if staffingCount > 0 {
+		for i := 0; i < staffingCount; i++ {
+			this.staffingByte = append(this.staffingByte, 0xff)
+		}
 		sz += staffingCount
 	}
 

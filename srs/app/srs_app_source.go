@@ -327,6 +327,10 @@ func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 		return err
 	}
 
+	if err := this.hls.on_audio(msg); err != nil {
+		return err
+	}
+
 	return nil
 }
 
