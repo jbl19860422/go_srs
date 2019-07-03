@@ -138,8 +138,6 @@ func NewSrsTsPayloadPMT(c *SrsTsContext, p *SrsTsPacket) *SrsTsPayloadPMT {
 func (this *SrsTsPayloadPMT) Encode(stream *utils.SrsStream) {
 	s := utils.NewSrsStream([]byte{})//4
 	this.psiHeader.Encode(s) //5
-
-	// fmt.Println("************psilen=", len(s)+4, "**************")
 	s.WriteInt16(this.programNumber, binary.BigEndian)
 
 	var b byte = 0
@@ -211,8 +209,7 @@ func CreatePMT(context *SrsTsContext, pmtNumber int16, pmtPid int16, vpid int16,
 	pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
 	pkt.tsHeader.continuityCounter = 0
 
-	pkt.payload = NewSrsTsPayloadPMT(context, pkt)
-	var pmt *SrsTsPayloadPMT = pkt.payload.(*SrsTsPayloadPMT)
+	pmt := NewSrsTsPayloadPMT(context, pkt)
 	pmt.psiHeader.pointerField = 0
 	pmt.psiHeader.tableId = SrsTsPsiTableIdPms
 	pmt.psiHeader.sectionSyntaxIndicator = 1
@@ -242,6 +239,6 @@ func CreatePMT(context *SrsTsContext, pmtNumber int16, pmtPid int16, vpid int16,
 	//填充payload
 	s := utils.NewSrsStream([]byte{})
 	pmt.Encode(s)
-	pkt.payload1 = s.Data()
+	pkt.payload = s.Data()
 	return pkt
 }

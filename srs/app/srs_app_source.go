@@ -220,6 +220,13 @@ func (this *SrsSource) on_publish() error {
 			return err
 		}
 	}
+
+	if this.handler != nil {
+		err := this.handler.OnPublish(this, this.req)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

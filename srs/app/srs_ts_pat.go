@@ -110,8 +110,7 @@ func CreatePAT(context *SrsTsContext, pmt_number int16, pmt_pid int16) *SrsTsPac
 	pkt.tsHeader.adaptationFieldControl = SrsTsAdapationControlPayloadOnly
 	pkt.tsHeader.continuityCounter = 0
 
-	pkt.payload = NewSrsTsPayloadPAT(pkt)
-	var pat *SrsTsPayloadPAT = pkt.payload.(*SrsTsPayloadPAT)
+	pat := NewSrsTsPayloadPAT(pkt)
 	pat.psiHeader.pointerField = 0
 	pat.psiHeader.tableId = SrsTsPsiTableIdPas
 	pat.psiHeader.sectionSyntaxIndicator = 1
@@ -132,7 +131,7 @@ func CreatePAT(context *SrsTsContext, pmt_number int16, pmt_pid int16) *SrsTsPac
 	//填充payload
 	s := utils.NewSrsStream([]byte{})
 	pat.Encode(s)
-	pkt.payload1 = s.Data()
+	pkt.payload = s.Data()
 	return pkt
 }
 

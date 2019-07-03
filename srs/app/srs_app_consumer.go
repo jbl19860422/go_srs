@@ -24,7 +24,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"fmt"
+	// "fmt"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/codec/flv"
 	"go_srs/srs/protocol/packet"
@@ -85,7 +85,6 @@ func (this *SrsConsumer) PlayCycle() error {
 				}
 				// fmt.Println("timestamp=", msg.GetHeader().GetTimestamp())
 			} else {
-				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg audio");
 			}
 			err := this.conn.rtmp.SendMsg(msg, this.StreamId)
 			_ = err
@@ -96,20 +95,10 @@ func (this *SrsConsumer) PlayCycle() error {
 }
 
 func (this *SrsConsumer) StopPlay() error {
-	fmt.Println("******************StopPlay*****************")
 	this.source.RemoveConsumer(this)
 	this.conn.Close()
-	fmt.Println("******************StopPlay1*****************")
 	this.queueRecvThread.Stop()
-	fmt.Println("******************StopPlay2*****************")
 	this.queue.Break()
-	fmt.Println("******************StopPlay3*****************")
-	// this.conn.Stop()
-	fmt.Println("******************StopPlay4*****************")
-	//this.queueRecvThread.Stop()
-	
-	//this.conn.RemoveSelf()
-	fmt.Println("******************StopPlay5*****************")
 	return nil
 }
 
@@ -140,7 +129,6 @@ func (this *SrsConsumer) process_play_control_msg(msg *rtmp.SrsRtmpMessage) erro
 	}
 	return nil
 }
-
 
 //todo add rtmp jitter algorithm
 func (this *SrsConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) {

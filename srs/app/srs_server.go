@@ -3,6 +3,7 @@ package app
 import (
 	// log "github.com/sirupsen/logrus"
 	// "go_srs/srs/protocol"
+	"net/http"
 	"fmt"
 	"sync"
 	_ "log"
@@ -54,6 +55,9 @@ func (this *SrsServer) StartProcess(port int) error {
 		return err
 	}
 
+	http.Handle("/", &SrsHttpStreamServer{})
+	http.ListenAndServe(":8080", nil)
+
 	go func() {
 		for {
 			time.Sleep(time.Second*2)
@@ -80,6 +84,8 @@ func (this *SrsServer) HandleConnection(conn net.Conn) {
 }
 
 func (this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
+
+	fmt.Println("*********************server onpublishxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 	return nil
 }
 	
