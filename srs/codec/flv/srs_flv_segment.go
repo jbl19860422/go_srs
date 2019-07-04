@@ -24,10 +24,8 @@ type SrsFlvSegment struct {
 }
 
 func NewSrsFlvSegment(fname string) *SrsFlvSegment {
-	fmt.Println("**********************open ", fname, "********************")
 	f, err := os.OpenFile(fname, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		fmt.Println("**********************open ", fname, " failed********************", err)
 		return nil
 	}
 	f.Truncate(0)
@@ -63,7 +61,6 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 	if err != nil {
 		return err
 	}
-	// fmt.Println("xxxxxxxxxxxxxxxxxxxxx command=", command.GetValue().(string), ",name=", name.GetValue().(string)," xxxxxxxxxxxxxxxx", marker)
 
 	var metaData amf0.SrsAmf0Any
 	switch marker {
@@ -84,7 +81,6 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 		}
 	}
 
-	
 	switch marker {
 		case amf0.RTMP_AMF0_Object:{
 			metaData.(*amf0.SrsAmf0Object).Remove("fileSize")

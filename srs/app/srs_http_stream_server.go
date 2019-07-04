@@ -21,7 +21,6 @@ func NewSrsHttpStreamServer() *SrsHttpStreamServer {
 func (this *SrsHttpStreamServer) Mount(r *SrsRequest, s *SrsSource) {
 	path := r.GetStreamUrl()
 	path += ".flv"
-	fmt.Println("????????????????path=", path, "??????????????????")
 	this.sources[path] = s
 }
 
@@ -38,6 +37,7 @@ type SrsHttpFlvConsumer struct {
 	queue           *SrsMessageQueue
 	StreamId		int
 	writer			http.ResponseWriter
+	flvEncoder		*flvcodec.SrsFlvEncoder
 }
 
 func NewSrsHttpFlvConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request) *SrsHttpFlvConsumer {
@@ -46,10 +46,18 @@ func NewSrsHttpFlvConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request)
 		writer:w,
 		queue:NewSrsMessageQueue(),
 		StreamId:0,
+		flvEncoder:flvcodec.NewSrsFlvEncoder(w),
 	}
 }
 
 func (this *SrsHttpFlvConsumer) PlayCycle() error {
+	this.flvEncoder.WriteHeader()
+	go func() {
+		notify := this.writer.(http.CloseNotifier).CloseNotify()
+		<- notify
+		this.StopPlay()
+	}()
+
 	for {
 		// fmt.Println("***********SrsHttpFlvConsumer playing")
 		//todo process http message
@@ -70,14 +78,15 @@ func (this *SrsHttpFlvConsumer) PlayCycle() error {
 		}
 
 		if msg != nil {
-			// fmt.Println("send to consumer")
 			if msg.GetHeader().IsVideo() {
-				//fmt.Println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxsendmsg video");
 				if flvcodec.VideoIsKeyFrame(msg.GetPayload()) {
 					fmt.Println("send key frame")
 				}
-				// fmt.Println("timestamp=", msg.GetHeader().GetTimestamp())
+				this.flvEncoder.WriteVideo(uint32(msg.GetHeader().GetTimestamp()), msg.GetPayload())
+			} else if msg.GetHeader().IsAudio() {
+				this.flvEncoder.WriteAudio(uint32(msg.GetHeader().GetTimestamp()), msg.GetPayload())
 			} else {
+				this.flvEncoder.WriteMetaData(msg.GetPayload())
 			}
 			//todo send msg to response writer
 			// err := this.conn.rtmp.SendMsg(msg, this.StreamId)
