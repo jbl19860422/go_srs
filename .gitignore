@@ -1,4 +1,5 @@
 .vscode
 *.flv
 *.ts
+*.exe
 srs/main/main
