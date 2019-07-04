@@ -1,7 +1,8 @@
 package flvcodec
 
 import (
-	"os"
+	// "os"
+	"io"
 	"fmt"
 	"encoding/binary"
 	"go_srs/srs/codec"
@@ -161,13 +162,13 @@ func (this *TagHeader) Data() []byte {
 
 type SrsFlvEncoder struct {
 	header 			*SrsFlvHeader
-	file 			*os.File
+	writer 			io.Writer
 	tagCount		int32
 }
 
-func NewSrsFlvEncoder(f *os.File) *SrsFlvEncoder {
+func NewSrsFlvEncoder(w io.Writer) *SrsFlvEncoder {
 	return &SrsFlvEncoder{
-		file:f,
+		writer:w,
 		header:NewSrsFlvHeader(true, true),
 		tagCount:0,
 	}
@@ -175,12 +176,12 @@ func NewSrsFlvEncoder(f *os.File) *SrsFlvEncoder {
 
 func (this *SrsFlvEncoder) WriteHeader() error {
 	// 9bytes header and 4bytes first previous-tag-size
-	if _, err := this.file.Write(this.header.Data()); err != nil {
+	if _, err := this.writer.Write(this.header.Data()); err != nil {
 		return err
 	}
 	// previous tag size.
 	pts := []byte{0x00, 0x00, 0x00, 0x00}
-	if _, err := this.file.Write(pts); err != nil {
+	if _, err := this.writer.Write(pts); err != nil {
 		return err
 	}
 	return nil
@@ -218,7 +219,7 @@ func (this *SrsFlvEncoder) writeTag(header *TagHeader, data []byte) (uint32, err
 	//fmt.Println(prevTagSize)
 	p := utils.Int32ToBytes(prevTagSize, binary.BigEndian)
 	d = append(d, p...)
-	n, err := this.file.Write(d)
+	n, err := this.writer.Write(d)
 	_ = n
 	return uint32(len(d)), err
 }
