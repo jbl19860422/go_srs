@@ -1,29 +1,31 @@
 package app
 
 import (
-	"os"
+	//"os"
 	"fmt"
 	"errors"
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
+	"io"
 )
 
 type SrsTsContext struct {
-	ready      bool
-	pids       map[int]*SrsTsChannel
-	pure_audio bool
-	vcodec     codec.SrsCodecVideo
-	acodec     codec.SrsCodecAudio
-	file 	   *os.File
+	ready      	bool
+	pids       	map[int]*SrsTsChannel
+	pure_audio 	bool
+	vcodec     	codec.SrsCodecVideo
+	acodec     	codec.SrsCodecAudio
+	//file 	   	*os.File
+	writer		io.Writer
 }
 
 func NewSrsTsContext() *SrsTsContext {
-	f, err := os.OpenFile("c.ts", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
-	if err != nil {
-		return nil
-	}
-	f.Truncate(0)
-	fmt.Println("*************************NewSrsTsContext********************************")
+	//f, err := os.OpenFile("c.ts", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0755)
+	//if err != nil {
+	//	return nil
+	//}
+	//f.Truncate(0)
+	//fmt.Println("*************************NewSrsTsContext********************************")
 	return &SrsTsContext{
 		ready: false,
 		file:f,
