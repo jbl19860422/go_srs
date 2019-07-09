@@ -26,35 +26,38 @@ import (
 	"go_srs/srs/protocol/rtmp"
 )
 
-type SrsDvr struct {
-	source 	*SrsSource
-	plan	*SrsDvrPlan
+type SrsDvrPlan struct {
+	segment *SrsFlvSegment
 }
 
-func NewSrsDvr() *SrsDvr {
-	return &SrsDvr{}
+func NewSrsDvrPlan(fname string) *SrsDvrPlan {
+	return &SrsDvrPlan{
+		segment: NewSrsFlvSegment(fname),
+	}
 }
 
-func (this *SrsDvr) Initialize(s *SrsSource, r *SrsRequest) error {
-	this.source = s
-	this.plan = NewSrsDvrPlan("./record.flv")
-	//todo fix 
-	this.plan.Initialize()
+func (this *SrsDvrPlan) Initialize() {
+	this.segment.Initialize()
+}
+
+func (this *SrsDvrPlan) On_video(msg *rtmp.SrsRtmpMessage) error {
+	this.segment.WriteVideo(msg)
 	return nil
 }
 
-func (this *SrsDvr) OnMetaData(metaData *rtmp.SrsRtmpMessage) error {
-	return this.plan.OnMetaData(metaData)
+func (this *SrsDvrPlan) On_audio(msg *rtmp.SrsRtmpMessage) error {
+	this.segment.WriteAudio(msg)
+	return nil
 }
 
-func (this *SrsDvr) on_video(video *rtmp.SrsRtmpMessage) error {
-	return this.plan.On_video(video)
+func (this *SrsDvrPlan) OnMetaData(msg *rtmp.SrsRtmpMessage) error {
+	err := this.segment.WriteMetaData(msg)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (this *SrsDvr) on_audio(audio *rtmp.SrsRtmpMessage) error {
-	return this.plan.On_audio(audio)
-}
-
-func (this *SrsDvr) Close() {
-	this.plan.Close()
+func (this *SrsDvrPlan) Close() {
+	this.segment.Close()
 }
