@@ -47,12 +47,12 @@ func NewSrsHttpFlvConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (this *SrsHttpFlvConsumer) PlayCycle() error {
+func (this *SrsHttpFlvConsumer) ConsumeCycle() error {
 	this.flvEncoder.WriteHeader()
 	go func() {
 		notify := this.writer.(http.CloseNotifier).CloseNotify()
 		<- notify
-		this.StopPlay()
+		this.StopConsume()
 	}()
 	this.writer.Header().Set("Content-Type", "video/x-flv")
 	for {
@@ -76,7 +76,7 @@ func (this *SrsHttpFlvConsumer) PlayCycle() error {
 	}
 }
 
-func (this *SrsHttpFlvConsumer) StopPlay() error {
+func (this *SrsHttpFlvConsumer) StopConsume() error {
 	this.source.RemoveConsumer(this)
 	//send connection close to response writer
 	this.queue.Break()
@@ -84,7 +84,7 @@ func (this *SrsHttpFlvConsumer) StopPlay() error {
 }
 
 func (this *SrsHttpFlvConsumer) OnRecvError(err error) {
-	this.StopPlay()
+	this.StopConsume()
 }
 
 func (this *SrsHttpFlvConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) {

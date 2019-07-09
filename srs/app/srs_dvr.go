@@ -22,39 +22,35 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package app
 
-import (
-	"go_srs/srs/protocol/rtmp"
-)
-
-type SrsDvr struct {
-	source 	*SrsSource
-	plan	*SrsDvrPlan
-}
-
-func NewSrsDvr() *SrsDvr {
-	return &SrsDvr{}
-}
-
-func (this *SrsDvr) Initialize(s *SrsSource, r *SrsRequest) error {
-	this.source = s
-	this.plan = NewSrsDvrPlan("./record.flv")
-	//todo fix 
-	this.plan.Initialize()
-	return nil
-}
-
-func (this *SrsDvr) OnMetaData(metaData *rtmp.SrsRtmpMessage) error {
-	return this.plan.OnMetaData(metaData)
-}
-
-func (this *SrsDvr) on_video(video *rtmp.SrsRtmpMessage) error {
-	return this.plan.On_video(video)
-}
-
-func (this *SrsDvr) on_audio(audio *rtmp.SrsRtmpMessage) error {
-	return this.plan.On_audio(audio)
-}
-
-func (this *SrsDvr) Close() {
-	this.plan.Close()
-}
+//type SrsDvr struct {
+//	source 	*SrsSource
+//	plan	*SrsDvrPlan
+//}
+//
+//func NewSrsDvr() *SrsDvr {
+//	return &SrsDvr{}
+//}
+//
+//func (this *SrsDvr) Initialize(s *SrsSource, r *SrsRequest) error {
+//	this.source = s
+//	this.plan = NewSrsDvrPlan("./record.flv")
+//	//todo fix
+//	this.plan.Initialize()
+//	return nil
+//}
+//
+//func (this *SrsDvr) OnMetaData(metaData *rtmp.SrsRtmpMessage) error {
+//	return this.plan.OnMetaData(metaData)
+//}
+//
+//func (this *SrsDvr) on_video(video *rtmp.SrsRtmpMessage) error {
+//	return this.plan.On_video(video)
+//}
+//
+//func (this *SrsDvr) on_audio(audio *rtmp.SrsRtmpMessage) error {
+//	return this.plan.On_audio(audio)
+//}
+//
+//func (this *SrsDvr) Close() {
+//	this.plan.Close()
+//}

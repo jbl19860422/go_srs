@@ -170,6 +170,38 @@ func (this *SrsConfig) GetChunkSize(vhost string) uint32 {
 	return h.ChunkSize
 }
 
+func GetDvrPath(vhost string) string {
+	h := GetInstance().GetVHost(vhost)
+	if h == nil {
+		return SRS_CONF_DEFAULT_DVR_PATH
+	}
+
+	if h.Enabled != "on" || h.Dvr == nil || h.Dvr.Enabled != "on" {
+		return SRS_CONF_DEFAULT_DVR_PATH
+	}
+
+	return h.Dvr.DvrPath
+}
+
+const SRS_CONF_DEFAULT_DVR_PLAN_SESSION = "session"
+const SRS_CONF_DEFAULT_DVR_PLAN_SEGMENT = "segment"
+const SRS_CONF_DEFAULT_DVR_PLAN_APPEND = "append"
+
+const SRS_CONF_DEFAULT_DVR_PLAN = SRS_CONF_DEFAULT_DVR_PLAN_SESSION
+
+func GetDvrPlan(vhost string) string {
+	h := GetInstance().GetVHost(vhost)
+	if h == nil {
+		return SRS_CONF_DEFAULT_DVR_PATH
+	}
+
+	if h.Enabled != "on" || h.Dvr == nil || h.Dvr.Enabled != "on" {
+		return SRS_CONF_DEFAULT_DVR_PATH
+	}
+
+	return h.Dvr.DvrPlan
+}
+
 type HeartBeatConf struct {
 	Enabled   string  `json:"enabled"`
 	Interval  float64 `json:"interval"`
@@ -266,6 +298,7 @@ type DvrConf struct {
 	TimerJitter     string `json:"timer_jitter"` //full, zero, off
 }
 
+const SRS_CONF_DEFAULT_DVR_PATH = "html/[app]/[stream].[timestamp].flv"
 func (this *DvrConf) amendDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
@@ -276,7 +309,7 @@ func (this *DvrConf) amendDefault() {
 	}
 
 	if this.DvrPath == "" {
-		this.DvrPath = "html/[app]/[stream].[timestamp].flv"
+		this.DvrPath = SRS_CONF_DEFAULT_DVR_PATH
 	}
 
 	if this.DvrDuration == 0 {

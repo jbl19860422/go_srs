@@ -130,3 +130,7 @@ func (s *SrsMessageHeader) IsAggregate() bool {
 func (this *SrsMessageHeader) SetLength(len int32) {
 	this.payloadLength = len
 }
+
+func (this *SrsMessageHeader) IsAV() bool {
+	return this.IsVideo() || this.IsAudio()
+}

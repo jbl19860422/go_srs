@@ -68,7 +68,7 @@ type SrsSource struct {
 	jitterAlgorithm *SrsRtmpJitterAlgorithm
 
 	//record
-	dvr				*SrsDvr
+	//dvr				*SrsDvr
 	hls				*SrsHls
 	tsContext		*SrsTsContext
 }
@@ -89,7 +89,7 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		rtmp:c.rtmp,
 		gopCache:NewSrsGopCache(),
 		atc:false,
-		dvr:NewSrsDvr(),
+		//dvr:NewSrsDvr(),
 		hls:NewSrsHls(tsCtx),
 		tsContext: tsCtx,
 	}
@@ -166,24 +166,24 @@ func (this *SrsSource) OnRequestSH(requester SrsSHRequester) error {
 
 
 func (this *SrsSource) on_dvr_request_sh() error {
-	if this.cacheMetaData != nil {
-		if err := this.dvr.OnMetaData(this.cacheMetaData); err != nil {
-			return err
-		}
-	}
-
-	if this.cacheSHVideo != nil {
-		if err := this.dvr.on_video(this.cacheSHVideo); err != nil {
-			return err
-		}
-	}
-
-	if this.cacheSHAudio != nil {
-		fmt.Println("on_dvr_request_sh audio len=", len(this.cacheSHAudio.GetPayload()))
-		if err := this.dvr.on_audio(this.cacheSHAudio); err != nil {
-			return err
-		}
-	}
+	//if this.cacheMetaData != nil {
+	//	if err := this.dvr.OnMetaData(this.cacheMetaData); err != nil {
+	//		return err
+	//	}
+	//}
+	//
+	//if this.cacheSHVideo != nil {
+	//	if err := this.dvr.on_video(this.cacheSHVideo); err != nil {
+	//		return err
+	//	}
+	//}
+	//
+	//if this.cacheSHAudio != nil {
+	//	fmt.Println("on_dvr_request_sh audio len=", len(this.cacheSHAudio.GetPayload()))
+	//	if err := this.dvr.on_audio(this.cacheSHAudio); err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 
@@ -235,7 +235,7 @@ func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
 }
 
 func (this *SrsSource) Initialize() {
-	this.dvr.Initialize(this, this.req)
+	//this.dvr.Initialize(this, this.req)
 	this.hls.Initialize(this, this.req)
 }
 
@@ -284,7 +284,7 @@ func (this *SrsSource) RemoveConsumers() {
 	defer this.consumersMtx.Unlock()
 
 	for i := 0; i < len(this.consumers); i++ {
-		this.consumers[i].StopPlay()
+		this.consumers[i].StopConsume()
 	}
 
 	this.consumers = this.consumers[0:0]
@@ -305,9 +305,9 @@ func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 	if err := this.gopCache.cache(msg); err != nil {
 	}
 
-	if err := this.dvr.on_audio(msg); err != nil {
-		return err
-	}
+	//if err := this.dvr.on_audio(msg); err != nil {
+	//	return err
+	//}
 
 	if err := this.hls.on_audio(msg); err != nil {
 		return err
@@ -332,9 +332,9 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 		return err
 	}
 
-	if err := this.dvr.on_video(msg); err != nil {
-		return err
-	}
+	//if err := this.dvr.on_video(msg); err != nil {
+	//	return err
+	//}
 
 	if err := this.hls.on_video(msg); err != nil {
 		fmt.Println(err)
@@ -412,9 +412,9 @@ func (this *SrsSource) OnMetaData(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMet
 		this.consumers[i].Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
 	}
 
-	if err := this.dvr.OnMetaData(msg); err != nil {
-		return err
-    }
+	//if err := this.dvr.OnMetaData(msg); err != nil {
+		//return err
+    //}
     return nil
 }
 
@@ -509,6 +509,6 @@ func (this *SrsSource) CyclePublish() error {
 }
 
 func (this *SrsSource) StopPublish() {
-	this.dvr.Close()
+	//this.dvr.Close()
 	this.recvThread.Stop()
 }

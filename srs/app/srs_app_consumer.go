@@ -55,7 +55,7 @@ func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) Consumer {
 	return consumer
 }
 //有两个协程需要处理，这里的cycle和queueRecvThread
-func (this *SrsConsumer) PlayCycle() error {
+func (this *SrsConsumer) ConsumeCycle() error {
 	for {
 		for !this.queueRecvThread.Empty() {//process signal message
 			msg := this.queueRecvThread.GetMsg()
@@ -82,7 +82,7 @@ func (this *SrsConsumer) PlayCycle() error {
 	return nil
 }
 
-func (this *SrsConsumer) StopPlay() error {
+func (this *SrsConsumer) StopConsume() error {
 	this.source.RemoveConsumer(this)
 	this.conn.Close()
 	this.queueRecvThread.Stop()
@@ -91,7 +91,7 @@ func (this *SrsConsumer) StopPlay() error {
 }
 
 func (this *SrsConsumer) OnRecvError(err error) {
-	this.StopPlay()
+	this.StopConsume()
 }
 
 func (this *SrsConsumer) processPlayControlMsg(msg *rtmp.SrsRtmpMessage) error {

@@ -23,41 +23,89 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
+	"go_srs/srs/app/config"
 	"go_srs/srs/protocol/rtmp"
 )
 
-type SrsDvrPlan struct {
+type SrsDvrPlan interface {
+	OnPublish() error
+	OnUnpublish() error
+	OnMetaData(metaData *rtmp.SrsRtmpMessage) error
+	OnVideo(video *rtmp.SrsRtmpMessage) error
+	OnAudio(audio *rtmp.SrsRtmpMessage) error
+}
+
+func NewSrsDvrPlan(req *SrsRequest) SrsDvrPlan {
+	dvrPlan := config.GetDvrPlan(req.vhost)
+	if dvrPlan == "session" {
+		return NewSrsSessionDvrPlan(req)
+	}
+	return nil
+}
+
+type SrsSessionDvrPlan struct {
 	segment *SrsFlvSegment
 }
 
-func NewSrsDvrPlan(fname string) *SrsDvrPlan {
-	return &SrsDvrPlan{
-		segment: NewSrsFlvSegment(fname),
+func NewSrsSessionDvrPlan(req *SrsRequest) *SrsSessionDvrPlan {
+	return &SrsSessionDvrPlan{
+		segment:NewSrsFlvSegment(req),
 	}
 }
 
-func (this *SrsDvrPlan) Initialize() {
-	this.segment.Initialize()
-}
-
-func (this *SrsDvrPlan) On_video(msg *rtmp.SrsRtmpMessage) error {
-	this.segment.WriteVideo(msg)
+func (this *SrsSessionDvrPlan) OnPublish() error {
 	return nil
 }
 
-func (this *SrsDvrPlan) On_audio(msg *rtmp.SrsRtmpMessage) error {
-	this.segment.WriteAudio(msg)
+func (this *SrsSessionDvrPlan) OnUnpublish() error {
 	return nil
 }
 
-func (this *SrsDvrPlan) OnMetaData(msg *rtmp.SrsRtmpMessage) error {
-	err := this.segment.WriteMetaData(msg)
-	if err != nil {
-		return err
-	}
+func (this *SrsSessionDvrPlan) OnMetaData(metaData *rtmp.SrsRtmpMessage) error {
 	return nil
 }
 
-func (this *SrsDvrPlan) Close() {
-	this.segment.Close()
+func (this *SrsSessionDvrPlan) OnVideo(video *rtmp.SrsRtmpMessage) error {
+	return nil
 }
+
+func (this *SrsSessionDvrPlan) OnAudio(video *rtmp.SrsRtmpMessage) error {
+	return nil
+}
+
+//
+//type SrsDvrPlan struct {
+//	segment *SrsFlvSegment
+//}
+//
+//func NewSrsDvrPlan(fname string) *SrsDvrPlan {
+//	return &SrsDvrPlan{
+//		segment: NewSrsFlvSegment(fname),
+//	}
+//}
+//
+//func (this *SrsDvrPlan) Initialize() {
+//	this.segment.Initialize()
+//}
+//
+//func (this *SrsDvrPlan) On_video(msg *rtmp.SrsRtmpMessage) error {
+//	this.segment.WriteVideo(msg)
+//	return nil
+//}
+//
+//func (this *SrsDvrPlan) On_audio(msg *rtmp.SrsRtmpMessage) error {
+//	this.segment.WriteAudio(msg)
+//	return nil
+//}
+//
+//func (this *SrsDvrPlan) OnMetaData(msg *rtmp.SrsRtmpMessage) error {
+//	err := this.segment.WriteMetaData(msg)
+//	if err != nil {
+//		return err
+//	}
+//	return nil
+//}
+//
+//func (this *SrsDvrPlan) Close() {
+//	this.segment.Close()
+//}

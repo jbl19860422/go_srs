@@ -263,7 +263,7 @@ func (this *SrsRtmpConn) doPlaying(source *SrsSource, consumer Consumer) error {
 	//todo refer check
 	//todo srsprint
 	// realtime := false
-	if err := consumer.PlayCycle(); err != nil {
+	if err := consumer.ConsumeCycle(); err != nil {
 		return err
 	}
 	return nil

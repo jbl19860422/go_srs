@@ -23,36 +23,26 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"net/http"
 	"go_srs/srs/protocol/rtmp"
 )
 
-type SrsHttpTsConsumer struct {
+type SrsDvrConsumer struct {
 	source          *SrsSource
+	req 			*SrsRequest
 	queue           *SrsMessageQueue
-	StreamId		int
-	writer			http.ResponseWriter
-	tsEncoder		*SrsTsEncoder
+	plan			SrsDvrPlan
 }
 
-func NewSrsHttpTsConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request) *SrsHttpTsConsumer {
-	return &SrsHttpTsConsumer{
+func NewSrsDvrConsumer(s *SrsSource, req *SrsRequest) *SrsDvrConsumer {
+	p := NewSrsDvrPlan(req)
+	return &SrsDvrConsumer{
 		source:s,
-		writer:w,
+		plan:p,
 		queue:NewSrsMessageQueue(),
-		StreamId:0,
-		tsEncoder:NewSrsTsEncoder(w),
 	}
 }
 
-func (this *SrsHttpTsConsumer) ConsumeCycle() error {
-	this.tsEncoder.WriteHeader()
-	go func() {
-		notify := this.writer.(http.CloseNotifier).CloseNotify()
-		<- notify
-		this.StopConsume()
-	}()
-	this.writer.Header().Set("Content-Type", "video/MP2T")
+func (this *SrsDvrConsumer) ConsumeCycle() error {
 	for {
 		msg, err := this.queue.Wait()
 		if err != nil {
@@ -61,26 +51,34 @@ func (this *SrsHttpTsConsumer) ConsumeCycle() error {
 
 		if msg != nil {
 			if msg.GetHeader().IsVideo() {
-				this.tsEncoder.WriteVideo(uint32(msg.GetHeader().GetTimestamp()), msg.GetPayload())
+				if err := this.plan.OnVideo(msg); err != nil {
+					return err
+				}
 			} else if msg.GetHeader().IsAudio() {
-				this.tsEncoder.WriteAudio(uint32(msg.GetHeader().GetTimestamp()), msg.GetPayload())
+				if err := this.plan.OnAudio(msg); err != nil {
+					return err
+				}
 			} else {
+				if err := this.plan.OnMetaData(msg); err != nil {
+					return err
+				}
 			}
 		}
 	}
+	return nil
 }
 
-func (this *SrsHttpTsConsumer) StopConsume() error {
+func (this *SrsDvrConsumer) StopConsume() error {
 	this.source.RemoveConsumer(this)
 	//send connection close to response writer
 	this.queue.Break()
 	return nil
 }
 
-func (this *SrsHttpTsConsumer) OnRecvError(err error) {
+func (this *SrsDvrConsumer) OnRecvError(err error) {
 	this.StopConsume()
 }
 
-func (this *SrsHttpTsConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) {
+func (this *SrsDvrConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) {
 	this.queue.Enqueue(msg)
 }

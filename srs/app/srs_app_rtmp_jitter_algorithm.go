@@ -22,6 +22,3 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 package app
-
-type SrsRtmpJitterAlgorithm struct {
-}

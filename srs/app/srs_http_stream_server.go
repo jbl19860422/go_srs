@@ -77,7 +77,7 @@ func (this *SrsHttpStreamServer) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 		fmt.Println("Create Ts Consumer)")
 		consumer := this.CreateTsConsumer(source, w, r)
-		err := consumer.PlayCycle()
+		err := consumer.ConsumeCycle()
 		_ = err
 		return
 	} else if strings.HasSuffix(r.URL.Path, ".flv") {
@@ -95,7 +95,7 @@ func (this *SrsHttpStreamServer) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 		fmt.Println("Create flv Consumer)")
 		consumer := this.CreateFlvConsumer(source, w, r)
-		err := consumer.PlayCycle()
+		err := consumer.ConsumeCycle()
 		_ = err
 		return
 	}
