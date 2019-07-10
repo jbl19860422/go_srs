@@ -49,6 +49,8 @@ func (this *SrsDvrConsumer) OnPublish() error {
 	if this.plan != nil {
 		return this.plan.OnPublish()
 	}
+
+	this.StopConsume()
 	return nil
 }
 

@@ -70,7 +70,7 @@ type SrsSource struct {
 	//record
 	//dvr				*SrsDvr
 	//dvr				*SrsDvrConsumer
-	hls				*SrsHls
+	//hls				*SrsHls
 	tsContext		*SrsTsContext
 }
 
@@ -90,7 +90,7 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		rtmp:c.rtmp,
 		gopCache:NewSrsGopCache(),
 		atc:false,
-		hls:NewSrsHls(tsCtx),
+		//hls:NewSrsHls(tsCtx),
 		tsContext: tsCtx,
 	}
 
@@ -99,6 +99,14 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		source.AppendConsumer(dvrConsumer)
 		go func(){
 			dvrConsumer.ConsumeCycle()
+		}()
+	}
+
+	hlsConsumer := NewSrsHlsConsumer(source, r)
+	if dvrConsumer != nil {
+		source.AppendConsumer(hlsConsumer)
+		go func(){
+			hlsConsumer.ConsumeCycle()
 		}()
 	}
 
@@ -201,12 +209,12 @@ func (this *SrsSource) onPublish() error {
 		this.consumers[i].OnPublish()
 	}
 
-	if this.hls != nil {
-		err := this.hls.onPublish(this.req, false)
-		if err != nil {
-			return err
-		}
-	}
+	//if this.hls != nil {
+	//	err := this.hls.onPublish(this.req, false)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 
 	if this.handler != nil {
 		err := this.handler.OnPublish(this, this.req)
@@ -218,19 +226,19 @@ func (this *SrsSource) onPublish() error {
 }
 
 func (this *SrsSource) onHlsStart() error {
-	if this.cacheSHVideo != nil {
-		err := this.hls.on_video(this.cacheSHVideo)
-		if err != nil {
-			return err
-		}
-	}
-
-	if this.cacheSHAudio != nil {
-		err := this.hls.on_audio(this.cacheSHAudio)
-		if err != nil {
-			return err
-		}
-	}
+	//if this.cacheSHVideo != nil {
+	//	err := this.hls.on_video(this.cacheSHVideo)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	//
+	//if this.cacheSHAudio != nil {
+	//	err := this.hls.on_audio(this.cacheSHAudio)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 
@@ -249,7 +257,7 @@ func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
 
 func (this *SrsSource) Initialize() {
 	//this.dvr.Initialize(this, this.req)
-	this.hls.Initialize(this, this.req)
+	//this.hls.Initialize(this, this.req)
 }
 
 func (this *SrsSource) ProcessPublishMessage(msg *rtmp.SrsRtmpMessage) error {
@@ -321,10 +329,10 @@ func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 	//if err := this.dvr.on_audio(msg); err != nil {
 	//	return err
 	//}
-
-	if err := this.hls.on_audio(msg); err != nil {
-		return err
-	}
+	//
+	//if err := this.hls.on_audio(msg); err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -349,10 +357,10 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 	//	return err
 	//}
 
-	if err := this.hls.on_video(msg); err != nil {
-		fmt.Println(err)
-		return err
-	}
+	//if err := this.hls.on_video(msg); err != nil {
+	//	fmt.Println(err)
+	//	return err
+	//}
 
 	// tsMsg := &SrsTsMessage{
 	// 	payload:
