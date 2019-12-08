@@ -23,8 +23,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type LogConfig struct {
-	logLevel string
-	logDir   string
-	logFile  string
+type SecurityConf struct {
+	Enabled string `json:"enabled"`
+}
+
+func (this *SecurityConf) amendDefault() {
+	if this.Enabled == "" {
+		this.Enabled = "off"
+	}
 }

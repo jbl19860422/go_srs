@@ -23,8 +23,38 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type LogConfig struct {
-	logLevel string
-	logDir   string
-	logFile  string
+type DvrConf struct {
+	Enabled         string `json:"enabled"`
+	DvrPlan         string `json:"dvr_plan"`
+	DvrPath         string `json:"dvr_path"`
+	DvrDuration     uint32 `json:"dvr_duration"`
+	DvrWaitKeyFrame string `json:"dvr_wait_keyframe"`
+	TimerJitter     string `json:"timer_jitter"` //full, zero, off
+}
+
+const SRS_CONF_DEFAULT_DVR_PATH = "./html/[app]/[stream].[timestamp].flv"
+func (this *DvrConf) amendDefault() {
+	if this.Enabled == "" {
+		this.Enabled = "off"
+	}
+
+	if this.DvrPlan == "" {
+		this.DvrPlan = "session"
+	}
+
+	if this.DvrPath == "" {
+		this.DvrPath = SRS_CONF_DEFAULT_DVR_PATH
+	}
+
+	if this.DvrDuration == 0 {
+		this.DvrDuration = 30
+	}
+
+	if this.DvrWaitKeyFrame == "" {
+		this.DvrWaitKeyFrame = "on"
+	}
+
+	if this.TimerJitter == "" {
+		this.TimerJitter = "full"
+	}
 }

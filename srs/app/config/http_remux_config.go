@@ -23,8 +23,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type LogConfig struct {
-	logLevel string
-	logDir   string
-	logFile  string
+type HttpRemuxConf struct {
+	Enabled   string `json:"enabled"`
+	FastCache uint32 `json:"fast_cache"`
+	Mount     string `json:"mount"`
+	HStrs     string `json:"hstrs"`
+}
+
+func (this *HttpRemuxConf) amendDefault() {
+	if this.Enabled == "" {
+		this.Enabled = "off"
+	}
+
+	if this.Mount == "" {
+		this.Mount = "[vhost]/[app]/[stream].flv"
+	}
+
+	if this.HStrs == "" {
+		this.HStrs = "on"
+	}
 }

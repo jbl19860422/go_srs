@@ -23,8 +23,22 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type LogConfig struct {
-	logLevel string
-	logDir   string
-	logFile  string
+type HttpStaticConf struct {
+	Enabled string `json:"enabled"`
+	Mount   string `json:"mount"`
+	Dir     string `json:"dir"`
+}
+
+func (this *HttpStaticConf) amendDefault() {
+	if this.Enabled == "" {
+		this.Enabled = "off"
+	}
+
+	if this.Mount == "" {
+		this.Mount = "[vhost]/hls"
+	}
+
+	if this.Dir == "" {
+		this.Dir = "html/hls"
+	}
 }

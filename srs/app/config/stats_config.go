@@ -23,8 +23,14 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type LogConfig struct {
-	logLevel string
-	logDir   string
-	logFile  string
+type StatsConf struct {
+	Enabled string   `json:"enabled"`
+	Disk    []string `json:"disk"`
 }
+
+func (this *StatsConf) amendDefault() {
+	if this.Enabled == "" {
+		this.Enabled = "off"
+	}
+}
+

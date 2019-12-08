@@ -23,8 +23,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type LogConfig struct {
-	logLevel string
-	logDir   string
-	logFile  string
+type PublishConf struct {
+	ParseSps string `json:"parse_sps"`
+}
+
+func (this *PublishConf) amendDefault() {
+	if this.ParseSps == "" {
+		this.ParseSps = "on"
+	}
 }

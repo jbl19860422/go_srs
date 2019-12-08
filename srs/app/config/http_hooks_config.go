@@ -23,8 +23,21 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type LogConfig struct {
-	logLevel string
-	logDir   string
-	logFile  string
+type HttpHooksConf struct {
+	Enabled     string `json:"enabled"`
+	OnConnect   string `json:"on_connect"`
+	OnClose     string `json:"on_close"`
+	OnPublish   string `json:"on_publish"`
+	OnUnpublish string `json:"on_unpublish"`
+	OnPlay      string `json:"on_play"`
+	OnStop      string `json:"on_stop"`
+	OnDvr       string `json:"on_dvr"`
+	OnHls       string `json:"on_hls"`
+	OnHlsNotify string `json:"on_hls_notify"`
+}
+
+func (this *HttpHooksConf) amendDefault() {
+	if this.Enabled == "" {
+		this.Enabled = "off"
+	}
 }

@@ -23,8 +23,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type LogConfig struct {
-	logLevel string
-	logDir   string
-	logFile  string
+type HttpServerConf struct {
+	Enabled string `json:"enabled"`
+	Listen  uint32 `json:"listen"`
+	Dir     string `json:"dir"`
 }
+
+func (this *HttpServerConf) amendDefault() {
+	if this.Enabled == "" {
+		this.Enabled = "off"
+	}
+
+	if this.Listen == 0 {
+		this.Listen = 8080
+	}
+
+	if this.Dir == "" {
+		this.Dir = "./html"
+	}
+}
+
