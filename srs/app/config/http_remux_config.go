@@ -30,7 +30,7 @@ type HttpRemuxConf struct {
 	HStrs     string `json:"hstrs"`
 }
 
-func (this *HttpRemuxConf) amendDefault() {
+func (this *HttpRemuxConf) initDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
 	}

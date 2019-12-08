@@ -28,7 +28,7 @@ type StatsConf struct {
 	Disk    []string `json:"disk"`
 }
 
-func (this *StatsConf) amendDefault() {
+func (this *StatsConf) initDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
 	}

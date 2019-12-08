@@ -36,7 +36,7 @@ type HttpHooksConf struct {
 	OnHlsNotify string `json:"on_hls_notify"`
 }
 
-func (this *HttpHooksConf) amendDefault() {
+func (this *HttpHooksConf) initDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
 	}

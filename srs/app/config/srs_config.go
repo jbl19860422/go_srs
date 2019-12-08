@@ -45,7 +45,7 @@ func (this *SrsConfig) GetVHost(name string) *VHostConf {
 	return h
 }
 
-func (this *SrsConfig) amendDefault() {
+func (this *SrsConfig) initDefault() {
 	if this.ListenPort == 0 {
 		this.ListenPort = 1935
 	}
@@ -67,7 +67,7 @@ func (this *SrsConfig) amendDefault() {
 	}
 
 	for _, v := range this.VHosts {
-		v.amendDefault()
+		v.initDefault()
 	}
 }
 
@@ -83,7 +83,6 @@ func GetHlsFragment(vname string) uint32 {
 }
 
 const SRS_CONF_DEFAULT_HLS_WINDOW = 60
-
 func GetHlsWindow(vname string) uint32 {
 	vhost := GetInstance().GetVHost(vname)
 	if vhost == nil {
@@ -227,7 +226,7 @@ func (this *SrsConfig) Init(file string) error {
 		return err
 	}
 
-	this.amendDefault()
+	this.initDefault()
 	return nil
 }
 

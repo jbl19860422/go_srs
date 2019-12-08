@@ -27,7 +27,7 @@ type SecurityConf struct {
 	Enabled string `json:"enabled"`
 }
 
-func (this *SecurityConf) amendDefault() {
+func (this *SecurityConf) initDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
 	}

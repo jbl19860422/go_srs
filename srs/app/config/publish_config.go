@@ -27,7 +27,7 @@ type PublishConf struct {
 	ParseSps string `json:"parse_sps"`
 }
 
-func (this *PublishConf) amendDefault() {
+func (this *PublishConf) initDefault() {
 	if this.ParseSps == "" {
 		this.ParseSps = "on"
 	}

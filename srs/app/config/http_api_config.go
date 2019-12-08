@@ -29,7 +29,7 @@ type HttpApiConf struct {
 	Crossdomain string `json:"crossdomain"`
 }
 
-func (this *HttpApiConf) amendDefault() {
+func (this *HttpApiConf) initDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
 	}

@@ -23,28 +23,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package config
 
-type HeartBeatConf struct {
-	Enabled   string  `json:"enabled"`
-	Interval  float64 `json:"interval"`
-	Url       string  `json:"url"`
-	DeviceId  string  `json:"device_id"`
-	Summeries string  `json:"summeries"`
+type SrsReloadHandler interface {
+
 }
 
-func (this *HeartBeatConf) initDefault() {
-	if this.Enabled != "on" {
-		this.Enabled = "off"
-	}
 
-	if this.Interval <= 0 {
-		this.Interval = 9.3
-	}
-
-	if this.Url == "" {
-		this.Url = "http://127.0.0.1:8085/api/v1/servers"
-	}
-
-	if this.Summeries == "" {
-		this.Summeries = "on"
-	}
-}

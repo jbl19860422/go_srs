@@ -29,7 +29,7 @@ type HttpServerConf struct {
 	Dir     string `json:"dir"`
 }
 
-func (this *HttpServerConf) amendDefault() {
+func (this *HttpServerConf) initDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
 	}

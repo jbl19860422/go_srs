@@ -33,7 +33,7 @@ type DvrConf struct {
 }
 
 const SRS_CONF_DEFAULT_DVR_PATH = "./html/[app]/[stream].[timestamp].flv"
-func (this *DvrConf) amendDefault() {
+func (this *DvrConf) initDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
 	}

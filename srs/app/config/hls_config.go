@@ -43,7 +43,7 @@ type HlsConf struct {
 	HlsWaitKeyframe string  `json:"hls_wait_keyframe"` //whether wait keyframe to reap segment,
 }
 
-func (this *HlsConf) amendDefault() {
+func (this *HlsConf) initDefault() {
 	if this.Enabled == "" {
 		this.Enabled = "off"
 	}

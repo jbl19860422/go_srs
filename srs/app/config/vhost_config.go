@@ -51,7 +51,7 @@ type VHostConf struct {
 	Publish              *PublishConf    `json:"publish"`
 }
 
-func (this *VHostConf) amendDefault() {
+func (this *VHostConf) initDefault() {
 	this.MinLatency = "on"
 	if this.GopCache == "" {
 		this.GopCache = "on"
@@ -94,46 +94,46 @@ func (this *VHostConf) amendDefault() {
 	}
 
 	if this.HeartBeat != nil {
-		this.HeartBeat.amendDefault()
+		this.HeartBeat.initDefault()
 	}
 
 	if this.Stats != nil {
-		this.Stats.amendDefault()
+		this.Stats.initDefault()
 	}
 
 	if this.HttpApi != nil {
-		this.HttpApi.amendDefault()
+		this.HttpApi.initDefault()
 	}
 
 	if this.HttpServer != nil {
-		this.HttpServer.amendDefault()
+		this.HttpServer.initDefault()
 	}
 
 	if this.Security != nil {
-		this.Security.amendDefault()
+		this.Security.initDefault()
 	}
 
 	if this.Dvr != nil {
-		this.Dvr.amendDefault()
+		this.Dvr.initDefault()
 	}
 
 	if this.HttpStatic != nil {
-		this.HttpStatic.amendDefault()
+		this.HttpStatic.initDefault()
 	}
 
 	if this.HttpRemux != nil {
-		this.HttpRemux.amendDefault()
+		this.HttpRemux.initDefault()
 	}
 
 	if this.Hls != nil {
-		this.Hls.amendDefault()
+		this.Hls.initDefault()
 	}
 
 	if this.HttpHooks != nil {
-		this.HttpHooks.amendDefault()
+		this.HttpHooks.initDefault()
 	}
 
 	if this.Publish != nil {
-		this.Publish.amendDefault()
+		this.Publish.initDefault()
 	}
 }
