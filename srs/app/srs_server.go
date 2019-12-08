@@ -31,6 +31,8 @@ import (
 	"go_srs/srs/utils"
 	"runtime"
 	"time"
+	"go_srs/srs/app/config"
+	"fmt"
 )
 
 type SrsServer struct {
@@ -61,10 +63,14 @@ func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 	}
 }
 
-func (this *SrsServer) AddConn(c *SrsRtmpConn) {
+func (this *SrsServer) AddConn(c *SrsRtmpConn) error {
 	this.connsMtx.Lock()
+	if uint32(len(this.conns) + 1) > config.GetInstance().MaxConnections {
+		return fmt.Errorf("exceed the max connections, drop client:clients=%d, max=%d", len(this.conns), config.GetInstance().MaxConnections);
+	}
 	this.conns = append(this.conns, c)
 	this.connsMtx.Unlock()
+	return nil
 }
 
 func (this *SrsServer) StartProcess(port uint32) error {
@@ -88,7 +94,6 @@ func (this *SrsServer) StartProcess(port uint32) error {
 	}()
 
 	for {
-		
 		conn, _ := ln.Accept()
 		go this.HandleConnection(conn)
 	}
@@ -97,9 +102,12 @@ func (this *SrsServer) StartProcess(port uint32) error {
 
 func (this *SrsServer) HandleConnection(conn net.Conn) {
 	rtmpConn := NewSrsRtmpConn(conn, this)
-	this.AddConn(rtmpConn)
-	err := rtmpConn.Start()
-	_ = err
+	err := this.AddConn(rtmpConn)
+	if err != nil {
+		conn.Close()
+		return
+	}
+	err = rtmpConn.Start()
 	this.RemoveConn(rtmpConn)
 }
 
