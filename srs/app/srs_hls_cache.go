@@ -107,7 +107,7 @@ func (this *SrsHlsCache) WriteVideo(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts i
 
 	if muxer.is_segment_overflow() {
 		if !muxer.hls_wait_keyframe || sampler.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame {
-			if err := this.reap_segment("video", muxer, this.cache.video.dts); err != nil {
+			if err := this.reapSegment("video", muxer, this.cache.video.dts); err != nil {
 				return err
 			}
 		}
@@ -119,7 +119,7 @@ func (this *SrsHlsCache) WriteVideo(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts i
 	return nil
 }
 
-func (this *SrsHlsCache) reap_segment(log_desc string, muxer *SrsHlsMuxer, segment_start_dts int64) error {
+func (this *SrsHlsCache) reapSegment(log_desc string, muxer *SrsHlsMuxer, segment_start_dts int64) error {
 	if err := muxer.segment_close(); err != nil {
 		return err
 	}
