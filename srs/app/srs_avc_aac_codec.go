@@ -278,7 +278,7 @@ func (this *SrsAvcAacCodec) videoAvcDemux(data []byte, sample *SrsCodecSampler) 
 	sample.AvcPacketType = codec.SrsCodecVideoAVCType(avcPacketType)
 
 	if avcPacketType == codec.SrsCodecVideoAVCTypeSequenceHeader {
-		err := this.avc_demux_sps_pps(stream)
+		err := this.avcDemuxSpsPps(stream)
 		if err != nil {
 			return err
 		}
@@ -355,7 +355,7 @@ func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sampl
 	return true
 }
 
-func (this *SrsAvcAacCodec) avc_demux_sps_pps(stream *utils.SrsStream) error {
+func (this *SrsAvcAacCodec) avcDemuxSpsPps(stream *utils.SrsStream) error {
 	this.avcExtraData = stream.CopyLeftBytes()
 	//int8_t configurationVersion = stream->read_1bytes();
 	_, err := stream.ReadByte()
