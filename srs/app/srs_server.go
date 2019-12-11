@@ -33,6 +33,7 @@ import (
 	"time"
 	"go_srs/srs/app/config"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 type SrsServer struct {
@@ -74,6 +75,8 @@ func (this *SrsServer) AddConn(c *SrsRtmpConn) error {
 }
 
 func (this *SrsServer) StartProcess(port uint32) error {
+	log.Info("starting server...")
+
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(int(port)))
 	if err != nil {
 		return err
@@ -93,10 +96,12 @@ func (this *SrsServer) StartProcess(port uint32) error {
 		}
 	}()
 
+	log.Info("starting server succeed")
 	for {
 		conn, _ := ln.Accept()
 		go this.HandleConnection(conn)
 	}
+
 	return nil
 }
 

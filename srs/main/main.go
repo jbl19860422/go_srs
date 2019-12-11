@@ -32,6 +32,8 @@ import (
     "io/ioutil"
     "math/rand"
     _ "net/http/pprof"
+    log "github.com/sirupsen/logrus"
+    "os"
 )
 
 var (
@@ -39,10 +41,16 @@ var (
 )
 
 func init() {
-    // hook, err := lSyslog.NewSyslogHook("", "", syslog.LOG_INFO, "")
-    // if err == nil {
-    //     log.Hooks.Add(hook)
-    // }
+    // 设置日志格式为json格式
+    log.SetFormatter(&log.TextFormatter{
+        DisableColors: true,
+        TimestampFormat: "2006-01-02 15:04:05",
+    })
+    // 设置将日志输出到标准输出（默认的输出为stderr，标准错误）
+    // 日志消息输出可以是任意的io.writer类型
+    log.SetOutput(os.Stdout)
+    // 设置日志级别为warn以上
+    log.SetLevel(log.InfoLevel)
 }
 
 func main() {
@@ -50,7 +58,6 @@ func main() {
     if err := config.GetInstance().Init(*conf); err != nil {
         return
     }
-    // log.Info("abc")
 
 	server := app.NewSrsServer()
 	_ = server.StartProcess(config.GetInstance().ListenPort)
