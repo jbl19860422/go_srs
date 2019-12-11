@@ -81,7 +81,7 @@ func (this *SrsHlsCache) onPublish(muxer *SrsHlsMuxer, req *SrsRequest, segment_
 * @see: hls-m3u8-draft-pantos-http-live-streaming-12.txt
 * @see: 3.4.11.  EXT-X-DISCONTINUITY
  */
-func (this *SrsHlsCache) on_sequence_header(muxer *SrsHlsMuxer) error {
+func (this *SrsHlsCache) onSequenceHeader(muxer *SrsHlsMuxer) error {
 
 	return muxer.on_sequence_header()
 }
@@ -89,7 +89,7 @@ func (this *SrsHlsCache) on_sequence_header(muxer *SrsHlsMuxer) error {
 /**
 * write audio to cache, if need to flush, flush to muxer.
  */
-func (this *SrsHlsCache) write_audio(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sample *SrsCodecSample) error {
+func (this *SrsHlsCache) writeAudio(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sample *SrsCodecSample) error {
 	if err := this.cache.cache_audio(c, dts, sample); err != nil {
 		return err
 	}
