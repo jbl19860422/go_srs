@@ -62,7 +62,7 @@ func (this *SrsTsEncoder) WriteHeader() error {
 
 func (this *SrsTsEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, error) {
 	this.sample.Clear()
-	if err := this.codec.audio_aac_demux(data, this.sample); err != nil {
+	if err := this.codec.audioAACDemux(data, this.sample); err != nil {
 		//if err := this.codec.audio_mp3_demux(data, this.sample); err != nil {
 		//	return 0, err
 		//}

@@ -186,7 +186,7 @@ func (this *SrsHls) on_audio(audio *rtmp.SrsRtmpMessage) error {
 	this.lastUpdateTime = utils.GetCurrentMs()
 
 	this.sample.Clear()
-	err := this.codec.audio_aac_demux(audio.GetPayload(), this.sample)
+	err := this.codec.audioAACDemux(audio.GetPayload(), this.sample)
 	if err != nil {
 		return err
 	}

@@ -113,7 +113,7 @@ func (this *SrsAvcAacCodec) is_aac_codec_ok() bool {
 	return this.aacExtraData != nil && len(this.aacExtraData) > 0
 }
 
-func (this *SrsAvcAacCodec) audio_aac_demux(data []byte, sample *SrsCodecSample) error {
+func (this *SrsAvcAacCodec) audioAACDemux(data []byte, sample *SrsCodecSample) error {
 	sample.SetIsVideo(false)
 
 	stream := utils.NewSrsStream(data)
