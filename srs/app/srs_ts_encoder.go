@@ -93,7 +93,7 @@ func (this *SrsTsEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, err
 
 func (this *SrsTsEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, error) {
 	this.sample.Clear()
-	if err := this.codec.video_avc_demux(data, this.sample); err != nil {
+	if err := this.codec.videoAvcDemux(data, this.sample); err != nil {
 		return 0, err
 	}
 

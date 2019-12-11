@@ -234,7 +234,7 @@ func (this *SrsAvcAacCodec) audio_aac_sequence_header_demux(data []byte) error {
 	return nil
 }
 
-func (this *SrsAvcAacCodec) video_avc_demux(data []byte, sample *SrsCodecSample) error {
+func (this *SrsAvcAacCodec) videoAvcDemux(data []byte, sample *SrsCodecSample) error {
 	sample.SetIsVideo(true)
 
 	stream := utils.NewSrsStream(data)

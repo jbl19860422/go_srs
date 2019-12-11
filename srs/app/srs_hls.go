@@ -156,7 +156,7 @@ func (this *SrsHls) on_video(video *rtmp.SrsRtmpMessage) error {
 	this.lastUpdateTime = utils.GetCurrentMs()
 
 	this.sample.Clear()
-	err := this.codec.video_avc_demux(video.GetPayload(), this.sample)
+	err := this.codec.videoAvcDemux(video.GetPayload(), this.sample)
 	if err != nil {
 		return err
 	}
