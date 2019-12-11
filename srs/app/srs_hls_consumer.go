@@ -140,7 +140,7 @@ func (this *SrsHlsConsumer) onAudio(audio *rtmp.SrsRtmpMessage) error {
 		return nil
 	}
 
-	if err := this.muxer.update_acodec(acodec); err != nil {
+	if err := this.muxer.updateACodec(acodec); err != nil {
 		return err
 	}
 

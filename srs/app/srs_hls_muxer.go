@@ -194,7 +194,7 @@ func (this *SrsHlsMuxer) on_sequence_header() error {
 	return nil
 }
 
-func (this *SrsHlsMuxer) update_acodec(ac codec.SrsCodecAudio) error {
+func (this *SrsHlsMuxer) updateACodec(ac codec.SrsCodecAudio) error {
 	this.acodec = ac
 	return this.current.muxer.UpdateACodec(ac)
 }

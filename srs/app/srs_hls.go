@@ -170,7 +170,7 @@ func (this *SrsHls) on_video(video *rtmp.SrsRtmpMessage) error {
 	}
 	
 	if this.sample.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame && this.sample.AvcPacketType == codec.SrsCodecVideoAVCTypeSequenceHeader {
-		return this.hlsCache.on_sequence_header(this.muxer)
+		return this.hlsCache.onSequenceHeader(this.muxer)
 	}
 	//todo add jitter
 	dts := video.GetHeader().GetTimestamp()*90
@@ -197,19 +197,19 @@ func (this *SrsHls) on_audio(audio *rtmp.SrsRtmpMessage) error {
 		return nil
 	}
 
-	if err := this.muxer.update_acodec(acodec); err != nil {
+	if err := this.muxer.updateACodec(acodec); err != nil {
 		return err
 	}
 
 	if acodec == codec.SrsCodecAudioAAC && this.sample.AacPacketType == codec.SrsCodecAudioTypeSequenceHeader {
-		return this.hlsCache.on_sequence_header(this.muxer)
+		return this.hlsCache.onSequenceHeader(this.muxer)
 	}
 	//todo config jitter
 	dts := int64(audio.GetHeader().GetTimestamp()*90)
 	// for pure audio, we need to update the stream dts also.
 	this.streamDts = dts
 
-	if err := this.hlsCache.write_audio(this.codec, this.muxer, dts, this.sample); err != nil {
+	if err := this.hlsCache.writeAudio(this.codec, this.muxer, dts, this.sample); err != nil {
 		return err
 	}
 	return nil
