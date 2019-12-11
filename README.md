@@ -26,6 +26,7 @@ go run main.go
 obs推流地址：
 * rtmp://ip:port/app/live?vhost=srs.net
 * vhost对应在配置文件中配置的vhost
+
 拉流地址：
 * ffplay rtmp://ip:port/app/live?vhost=srs.net
 * ffplay http://ip:port/app/live.flv?vhost=srs.net
