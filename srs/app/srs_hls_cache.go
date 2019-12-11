@@ -25,7 +25,7 @@ package app
 import (
 	"go_srs/srs/codec"
 	"go_srs/srs/app/config"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 /**
@@ -68,7 +68,7 @@ func (this *SrsHlsCache) onPublish(muxer *SrsHlsMuxer, req *SrsRequest, segment_
 	cleanUp := config.GetHlsCleanup(vhostName)
 	hlsWaitKeyframe := config.GetHlsWaitKeyframe(vhostName)
 	// this.muxer
-	fmt.Println("**************m3u8File=", m3u8File, "***************")
+	log.Info("create m3u8 file:", m3u8File)
 	muxer.UpdateConfig(req, entryPrefix, hlsPath, m3u8File, tsFile, float64(hlsFragment), float64(hlsWindow), false, 0.0, cleanUp, hlsWaitKeyframe)
 
 	muxer.SegmentOpen(segment_start_dts)

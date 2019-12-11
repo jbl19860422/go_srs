@@ -43,6 +43,9 @@ type SrsHlsMuxer struct {
 	hls_wait_keyframe  bool
 	m3u8_dir           string
 	hls_aof_ratio      float64
+	/*
+	* the hls fragment in seconds(read from config file), the duration of a piece of ts. default:10
+	 */
 	hls_fragment       float64
 	hls_window         float64
 	hls_ts_floor       bool
