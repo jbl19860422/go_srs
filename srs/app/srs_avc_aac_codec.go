@@ -284,7 +284,7 @@ func (this *SrsAvcAacCodec) videoAvcDemux(data []byte, sample *SrsCodecSampler) 
 		}
 	} else if avcPacketType == codec.SrsCodecVideoAVCTypeNALU {
 		s := utils.NewSrsStream(stream.PeekLeftBytes())
-		err := this.video_nalu_demux(s, sample)
+		err := this.videoNaluDemux(s, sample)
 		if err != nil {
 			return err
 		}
@@ -292,7 +292,7 @@ func (this *SrsAvcAacCodec) videoAvcDemux(data []byte, sample *SrsCodecSampler) 
 	return nil
 }
 
-func (this *SrsAvcAacCodec) video_nalu_demux(stream *utils.SrsStream, sampler *SrsCodecSampler) error {
+func (this *SrsAvcAacCodec) videoNaluDemux(stream *utils.SrsStream, sampler *SrsCodecSampler) error {
 	if !this.is_avc_codec_ok() {
 		return nil
 	}
