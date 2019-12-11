@@ -27,7 +27,7 @@ import (
 	"errors"
 	"go_srs/srs/codec"
 )
-type SrsCodecSample struct {
+type SrsCodecSampler struct {
 	IsVideo			bool
 	SampleUnits		[]([]byte)
 	/**
@@ -55,13 +55,13 @@ type SrsCodecSample struct {
 
 const SRS_SRS_MAX_CODEC_SAMPLE = 128
 
-func NewSrsCodecSample() *SrsCodecSample {
-	return &SrsCodecSample{
+func NewSrsCodecSampler() *SrsCodecSampler {
+	return &SrsCodecSampler{
 		SampleUnits:make([]([]byte), 0),
 	}
 }
 
-func (this *SrsCodecSample) AddSampleUnit(data []byte) error {
+func (this *SrsCodecSampler) AddSampleUnit(data []byte) error {
 	if len(this.SampleUnits) > SRS_SRS_MAX_CODEC_SAMPLE {
 		return errors.New("hls decode samples error, exceed the max count")
 	}
@@ -84,7 +84,7 @@ func (this *SrsCodecSample) AddSampleUnit(data []byte) error {
 	return nil
 }
 
-func (this *SrsCodecSample) Clear() {
+func (this *SrsCodecSampler) Clear() {
 	this.IsVideo = false
 	this.SampleUnits = this.SampleUnits[0:0]
     this.Cts = 0
@@ -102,7 +102,7 @@ func (this *SrsCodecSample) Clear() {
     this.AacPacketType = codec.SrsCodecAudioTypeReserved
 }
 
-func (this *SrsCodecSample) SetIsVideo(v bool) {
+func (this *SrsCodecSampler) SetIsVideo(v bool) {
 	this.IsVideo = v
 }
 

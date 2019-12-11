@@ -36,7 +36,7 @@ func NewSrsTsCache() *SrsTsCache {
 	return &SrsTsCache{}
 }
 
-func (this *SrsTsCache) cache_audio(c *SrsAvcAacCodec, dts int64, sample *SrsCodecSample) error {
+func (this *SrsTsCache) cache_audio(c *SrsAvcAacCodec, dts int64, sampler *SrsCodecSampler) error {
 	if this.audio == nil {
 		this.audio = NewSrsTsMessage()
 		this.audio.writePcr = false
@@ -48,17 +48,17 @@ func (this *SrsTsCache) cache_audio(c *SrsAvcAacCodec, dts int64, sample *SrsCod
 	this.audio.sid = SrsTsPESStreamIdAudioCommon //used in ts stream_id field
 	acodec := codec.SrsCodecAudio(c.audioCodecId)
 	if acodec == codec.SrsCodecAudioAAC {
-		if err := this.do_cache_aac(c, sample); err != nil {
+		if err := this.do_cache_aac(c, sampler); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (this *SrsTsCache) cache_video(c *SrsAvcAacCodec, dts int64, sample *SrsCodecSample) error {
+func (this *SrsTsCache) cache_video(c *SrsAvcAacCodec, dts int64, sampler *SrsCodecSampler) error {
 	if this.video == nil {
 		this.video = NewSrsTsMessage()
-		if sample.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame {
+		if sampler.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame {
 			this.video.writePcr = true
 		} else {
 			this.video.writePcr = false
@@ -67,18 +67,18 @@ func (this *SrsTsCache) cache_video(c *SrsAvcAacCodec, dts int64, sample *SrsCod
 	}
 
 	this.video.dts = dts
-	this.video.pts = this.video.dts + int64(sample.Cts)*90
+	this.video.pts = this.video.dts + int64(sampler.Cts)*90
 	this.video.sid = SrsTsPESStreamIdVideoCommon //this is the hint to judge the SrsTsMessage is audio or video
-	if err := this.do_cache_avc(c, sample); err != nil {
+	if err := this.do_cache_avc(c, sampler); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sample *SrsCodecSample) error {
+func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sampler *SrsCodecSampler) error {
 	audInserted := false
 	this.video.payload = make([]byte, 0)
-	if sample.HasAud {
+	if sampler.HasAud {
 		// the aud(access unit delimiter) before each frame.
 		// 7.3.2.4 Access unit delimiter RBSP syntax
 		// H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 66.
@@ -119,15 +119,15 @@ func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sample *SrsCodecSample) 
 	//When it is the first byte stream NAL unit in the bitstream, it may
 	//also contain one or more additional leading_zero_8bits syntax elements.
 	isSpsPpsAppend := false
-	for i := 0; i < len(sample.SampleUnits); i++ {
-		if sample.SampleUnits[i] == nil || len(sample.SampleUnits[i]) <= 0 {
+	for i := 0; i < len(sampler.SampleUnits); i++ {
+		if sampler.SampleUnits[i] == nil || len(sampler.SampleUnits[i]) <= 0 {
 			return errors.New("sample unit must not be nil or empty")
 		}
 
-		naluUnitType := codec.SrsAvcNaluType(sample.SampleUnits[i][0] & 0x0f)
+		naluUnitType := codec.SrsAvcNaluType(sampler.SampleUnits[i][0] & 0x0f)
 		// Insert sps/pps before IDR when there is no sps/pps in samples.
 		// The sps/pps is parsed from sequence header(generally the first flv packet).
-		if naluUnitType == codec.SrsAvcNaluTypeIDR && !sample.HasSpsPps && !isSpsPpsAppend {
+		if naluUnitType == codec.SrsAvcNaluTypeIDR && !sampler.HasSpsPps && !isSpsPpsAppend {
 			if len(c.sequenceParameterSetNALUnit) > 0 {
 				if audInserted {
 					this.video.payload = append(this.video.payload, []byte{0x00, 0x00, 0x01}...)
@@ -150,15 +150,15 @@ func (this *SrsTsCache) do_cache_avc(c *SrsAvcAacCodec, sample *SrsCodecSample) 
 			isSpsPpsAppend = true
 		}
 		this.video.payload = append(this.video.payload, []byte{0x00, 0x00, 0x01}...)
-		this.video.payload = append(this.video.payload, sample.SampleUnits[i]...)
+		this.video.payload = append(this.video.payload, sampler.SampleUnits[i]...)
 	}
 	return nil
 }
 
-func (this *SrsTsCache) do_cache_aac(c *SrsAvcAacCodec, sample *SrsCodecSample) error {
+func (this *SrsTsCache) do_cache_aac(c *SrsAvcAacCodec, sampler *SrsCodecSampler) error {
 	this.audio.payload = make([]byte, 0)
-	for i := 0; i < len(sample.SampleUnits); i++ {
-		var frame_length int32 = int32(len(sample.SampleUnits[i]) + 7)
+	for i := 0; i < len(sampler.SampleUnits); i++ {
+		var frame_length int32 = int32(len(sampler.SampleUnits[i]) + 7)
 		// AAC-ADTS
 		// 6.2 Audio Data Transport Stream, ADTS
 		// in aac-iso-13818-7.pdf, page 26.
@@ -181,18 +181,18 @@ func (this *SrsTsCache) do_cache_aac(c *SrsAvcAacCodec, sample *SrsCodecSample) 
 
 		// copy to audio buffer
 		this.audio.payload = append(this.audio.payload, adtsHeader...)
-		this.audio.payload = append(this.audio.payload, sample.SampleUnits[i]...)
+		this.audio.payload = append(this.audio.payload, sampler.SampleUnits[i]...)
 	}
 
 	return nil
 }
 
-func (this *SrsTsCache) do_cache_mp3(c *SrsAvcAacCodec, sample *SrsCodecSample) error {
+func (this *SrsTsCache) do_cache_mp3(c *SrsAvcAacCodec, sampler *SrsCodecSampler) error {
 	// for mp3, directly write to cache.
 	// TODO: FIXME: implements the ts jitter.
 	p := make([]byte, 0)
-	for i := 0; i < len(sample.SampleUnits); i++ {
-		p = append(p, sample.SampleUnits[i]...)
+	for i := 0; i < len(sampler.SampleUnits); i++ {
+		p = append(p, sampler.SampleUnits[i]...)
 	}
 
 	return nil

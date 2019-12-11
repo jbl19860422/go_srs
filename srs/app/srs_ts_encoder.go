@@ -32,7 +32,7 @@ import (
 
 type SrsTsEncoder struct {
 	codec 	*SrsAvcAacCodec
-	sample	*SrsCodecSample
+	sampler	*SrsCodecSampler
 	tsCache	*SrsTsCache
 	context *SrsTsContext
 	muxer 	*SrsTsMuxer
@@ -42,13 +42,13 @@ type SrsTsEncoder struct {
 
 func NewSrsTsEncoder(w io.Writer) *SrsTsEncoder {
 	c := NewSrsAvcAacCodec()
-	s := NewSrsCodecSample()
+	s := NewSrsCodecSampler()
 	cache := NewSrsTsCache()
 	context := NewSrsTsContext()
 	m := NewSrsTsMuxer(w, context, codec.SrsCodecAudioAAC, codec.SrsCodecVideoAVC)
 	return &SrsTsEncoder{
 		codec:c,
-		sample:s,
+		sampler:s,
 		tsCache:cache,
 		context:context,
 		writer:w,
@@ -61,8 +61,8 @@ func (this *SrsTsEncoder) WriteHeader() error {
 }
 
 func (this *SrsTsEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, error) {
-	this.sample.Clear()
-	if err := this.codec.audioAACDemux(data, this.sample); err != nil {
+	this.sampler.Clear()
+	if err := this.codec.audioAACDemux(data, this.sampler); err != nil {
 		//if err := this.codec.audio_mp3_demux(data, this.sample); err != nil {
 		//	return 0, err
 		//}
@@ -77,12 +77,12 @@ func (this *SrsTsEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, err
 	}
 
 	this.muxer.UpdateACodec(acodec)
-	if acodec == codec.SrsCodecAudioAAC && this.sample.AacPacketType == codec.SrsCodecAudioTypeSequenceHeader {
+	if acodec == codec.SrsCodecAudioAAC && this.sampler.AacPacketType == codec.SrsCodecAudioTypeSequenceHeader {
 		return 0, nil	//ignore aac sequence header
 	}
 
 	dts := int64(timestamp * 90)
-	if err := this.tsCache.cache_audio(this.codec, dts, this.sample); err != nil {
+	if err := this.tsCache.cache_audio(this.codec, dts, this.sampler); err != nil {
 		return 0, err
 	}
 
@@ -92,14 +92,14 @@ func (this *SrsTsEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, err
 }
 
 func (this *SrsTsEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, error) {
-	this.sample.Clear()
-	if err := this.codec.videoAvcDemux(data, this.sample); err != nil {
+	this.sampler.Clear()
+	if err := this.codec.videoAvcDemux(data, this.sampler); err != nil {
 		return 0, err
 	}
 
 	// ignore info frame,
 	// @see https://github.com/ossrs/srs/issues/288#issuecomment-69863909
-	if this.sample.FrameType == codec.SrsCodecVideoAVCFrameVideoInfoFrame {
+	if this.sampler.FrameType == codec.SrsCodecVideoAVCFrameVideoInfoFrame {
 		return 0, nil
 	}
 
@@ -108,12 +108,12 @@ func (this *SrsTsEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, err
 	}
 
 	// ignore sequence header
-	if this.sample.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame && this.sample.AvcPacketType == codec.SrsCodecVideoAVCTypeSequenceHeader {
+	if this.sampler.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame && this.sampler.AvcPacketType == codec.SrsCodecVideoAVCTypeSequenceHeader {
 		return 0, nil
 	}
 
 	dts := int64(timestamp * 90)
-	if err := this.tsCache.cache_video(this.codec, dts, this.sample); err != nil {
+	if err := this.tsCache.cache_video(this.codec, dts, this.sampler); err != nil {
 		return 0, nil
 	}
 	// write video to cache.

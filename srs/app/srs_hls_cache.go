@@ -89,8 +89,8 @@ func (this *SrsHlsCache) onSequenceHeader(muxer *SrsHlsMuxer) error {
 /**
 * write audio to cache, if need to flush, flush to muxer.
  */
-func (this *SrsHlsCache) writeAudio(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sample *SrsCodecSample) error {
-	if err := this.cache.cache_audio(c, dts, sample); err != nil {
+func (this *SrsHlsCache) writeAudio(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sampler *SrsCodecSampler) error {
+	if err := this.cache.cache_audio(c, dts, sampler); err != nil {
 		return err
 	}
 
@@ -100,13 +100,13 @@ func (this *SrsHlsCache) writeAudio(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts i
 	return nil
 }
 
-func (this *SrsHlsCache) WriteVideo(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sample *SrsCodecSample) error {
-	if err := this.cache.cache_video(c, dts, sample); err != nil {
+func (this *SrsHlsCache) WriteVideo(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts int64, sampler *SrsCodecSampler) error {
+	if err := this.cache.cache_video(c, dts, sampler); err != nil {
 		return err
 	}
 
 	if muxer.is_segment_overflow() {
-		if !muxer.hls_wait_keyframe || sample.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame {
+		if !muxer.hls_wait_keyframe || sampler.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame {
 			if err := this.reap_segment("video", muxer, this.cache.video.dts); err != nil {
 				return err
 			}

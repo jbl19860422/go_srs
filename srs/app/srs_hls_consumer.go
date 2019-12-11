@@ -33,7 +33,7 @@ type SrsHlsConsumer struct {
 	req 			*SrsRequest
 	queue           *SrsMessageQueue
 	codec    		*SrsAvcAacCodec
-	sample   		*SrsCodecSample
+	sampler   		*SrsCodecSampler
 	muxer    		*SrsHlsMuxer
 	hlsCache 		*SrsHlsCache
 	context	 		*SrsTsContext
@@ -48,7 +48,7 @@ func NewSrsHlsConsumer(s *SrsSource, req *SrsRequest) *SrsHlsConsumer {
 		req:req,
 		queue:NewSrsMessageQueue(),
 		codec:NewSrsAvcAacCodec(),
-		sample:NewSrsCodecSample(),
+		sampler:NewSrsCodecSampler(),
 		muxer:NewSrsHlsMuxer(),
 		hlsCache:NewSrsHlsCache(),
 		context:NewSrsTsContext(),
@@ -98,13 +98,13 @@ func (this *SrsHlsConsumer) ConsumeCycle() error {
 func (this *SrsHlsConsumer) onVideo(video *rtmp.SrsRtmpMessage) error {
 	this.lastUpdateTime = utils.GetCurrentMs()
 
-	this.sample.Clear()
-	err := this.codec.videoAvcDemux(video.GetPayload(), this.sample)
+	this.sampler.Clear()
+	err := this.codec.videoAvcDemux(video.GetPayload(), this.sampler)
 	if err != nil {
 		return err
 	}
 
-	if this.sample.FrameType == codec.SrsCodecVideoAVCFrameVideoInfoFrame {
+	if this.sampler.FrameType == codec.SrsCodecVideoAVCFrameVideoInfoFrame {
 		return nil
 	}
 
@@ -112,14 +112,14 @@ func (this *SrsHlsConsumer) onVideo(video *rtmp.SrsRtmpMessage) error {
 		return nil
 	}
 
-	if this.sample.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame && this.sample.AvcPacketType == codec.SrsCodecVideoAVCTypeSequenceHeader {
+	if this.sampler.FrameType == codec.SrsCodecVideoAVCFrameKeyFrame && this.sampler.AvcPacketType == codec.SrsCodecVideoAVCTypeSequenceHeader {
 		return this.hlsCache.onSequenceHeader(this.muxer)
 	}
 	//todo add jitter
 	dts := video.GetHeader().GetTimestamp()*90
 	this.streamDts = dts
 
-	if err := this.hlsCache.WriteVideo(this.codec, this.muxer, dts, this.sample); err != nil {
+	if err := this.hlsCache.WriteVideo(this.codec, this.muxer, dts, this.sampler); err != nil {
 		return err
 	}
 	return nil
@@ -128,8 +128,8 @@ func (this *SrsHlsConsumer) onVideo(video *rtmp.SrsRtmpMessage) error {
 func (this *SrsHlsConsumer) onAudio(audio *rtmp.SrsRtmpMessage) error {
 	this.lastUpdateTime = utils.GetCurrentMs()
 
-	this.sample.Clear()
-	err := this.codec.audioAACDemux(audio.GetPayload(), this.sample)
+	this.sampler.Clear()
+	err := this.codec.audioAACDemux(audio.GetPayload(), this.sampler)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (this *SrsHlsConsumer) onAudio(audio *rtmp.SrsRtmpMessage) error {
 		return err
 	}
 
-	if acodec == codec.SrsCodecAudioAAC && this.sample.AacPacketType == codec.SrsCodecAudioTypeSequenceHeader {
+	if acodec == codec.SrsCodecAudioAAC && this.sampler.AacPacketType == codec.SrsCodecAudioTypeSequenceHeader {
 		return this.hlsCache.onSequenceHeader(this.muxer)
 	}
 	//todo config jitter
@@ -152,7 +152,7 @@ func (this *SrsHlsConsumer) onAudio(audio *rtmp.SrsRtmpMessage) error {
 	// for pure audio, we need to update the stream dts also.
 	this.streamDts = dts
 
-	if err := this.hlsCache.writeAudio(this.codec, this.muxer, dts, this.sample); err != nil {
+	if err := this.hlsCache.writeAudio(this.codec, this.muxer, dts, this.sampler); err != nil {
 		return err
 	}
 	return nil

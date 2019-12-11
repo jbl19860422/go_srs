@@ -113,8 +113,8 @@ func (this *SrsAvcAacCodec) is_aac_codec_ok() bool {
 	return this.aacExtraData != nil && len(this.aacExtraData) > 0
 }
 
-func (this *SrsAvcAacCodec) audioAACDemux(data []byte, sample *SrsCodecSample) error {
-	sample.SetIsVideo(false)
+func (this *SrsAvcAacCodec) audioAACDemux(data []byte, sampler *SrsCodecSampler) error {
+	sampler.SetIsVideo(false)
 
 	stream := utils.NewSrsStream(data)
 
@@ -128,10 +128,10 @@ func (this *SrsAvcAacCodec) audioAACDemux(data []byte, sample *SrsCodecSample) e
 	soundFormat = (soundFormat >> 4) & 0x0f
 
 	this.audioCodecId = int(soundFormat)
-	sample.ACodec = codec.SrsCodecAudio(this.audioCodecId)
-	sample.SoundType = codec.SrsCodecAudioSoundType(soundType)
-	sample.SoundRate = codec.SrsCodecAudioSampleRate(soundRate)
-	sample.SoundSize = codec.SrsCodecAudioSampleSize(soundSize)
+	sampler.ACodec = codec.SrsCodecAudio(this.audioCodecId)
+	sampler.SoundType = codec.SrsCodecAudioSoundType(soundType)
+	sampler.SoundRate = codec.SrsCodecAudioSampleRate(soundRate)
+	sampler.SoundSize = codec.SrsCodecAudioSampleSize(soundSize)
 
 	if this.audioCodecId == codec.SrsCodecAudioMP3 {
 		return errors.New("error hls try mp3")
@@ -146,7 +146,7 @@ func (this *SrsAvcAacCodec) audioAACDemux(data []byte, sample *SrsCodecSample) e
 		return err
 	}
 
-	sample.AacPacketType = codec.SrsCodecAudioType(aacPacketType)
+	sampler.AacPacketType = codec.SrsCodecAudioType(aacPacketType)
 	if aacPacketType == codec.SrsCodecAudioTypeSequenceHeader {
 		this.aacExtraData = stream.ReadLeftBytes()
 		if err := this.audio_aac_sequence_header_demux(this.aacExtraData); err != nil {
@@ -158,7 +158,7 @@ func (this *SrsAvcAacCodec) audioAACDemux(data []byte, sample *SrsCodecSample) e
 		}
 		// Raw AAC frame data in UI8 []
 		// 6.3 Raw Data, aac-iso-13818-7.pdf, page 28
-		if err := sample.AddSampleUnit(stream.ReadLeftBytes()); err != nil {
+		if err := sampler.AddSampleUnit(stream.ReadLeftBytes()); err != nil {
 			return errors.New("aac add sample failed.")
 		}
 	}
@@ -174,13 +174,13 @@ func (this *SrsAvcAacCodec) audioAACDemux(data []byte, sample *SrsCodecSample) e
 
 		switch aacSampleRates[this.aacSampleRateIndex] {
 		case 11025:
-			sample.SoundRate = codec.SrsCodecAudioSampleRate11025
+			sampler.SoundRate = codec.SrsCodecAudioSampleRate11025
 			break
 		case 22050:
-			sample.SoundRate = codec.SrsCodecAudioSampleRate22050
+			sampler.SoundRate = codec.SrsCodecAudioSampleRate22050
 			break
 		case 44100:
-			sample.SoundRate = codec.SrsCodecAudioSampleRate44100
+			sampler.SoundRate = codec.SrsCodecAudioSampleRate44100
 			break
 		default:
 			break
@@ -234,7 +234,7 @@ func (this *SrsAvcAacCodec) audio_aac_sequence_header_demux(data []byte) error {
 	return nil
 }
 
-func (this *SrsAvcAacCodec) videoAvcDemux(data []byte, sample *SrsCodecSample) error {
+func (this *SrsAvcAacCodec) videoAvcDemux(data []byte, sample *SrsCodecSampler) error {
 	sample.SetIsVideo(true)
 
 	stream := utils.NewSrsStream(data)
@@ -292,32 +292,32 @@ func (this *SrsAvcAacCodec) videoAvcDemux(data []byte, sample *SrsCodecSample) e
 	return nil
 }
 
-func (this *SrsAvcAacCodec) video_nalu_demux(stream *utils.SrsStream, sample *SrsCodecSample) error {
+func (this *SrsAvcAacCodec) video_nalu_demux(stream *utils.SrsStream, sampler *SrsCodecSampler) error {
 	if !this.is_avc_codec_ok() {
 		return nil
 	}
 
 	if this.payloadFormat == codec.SrsAvcPayloadFormatGuess {
-		is_annexb, _ := this.avc_demux_annexb_format(stream, sample)
+		is_annexb, _ := this.avc_demux_annexb_format(stream, sampler)
 		if is_annexb {
 			this.payloadFormat = codec.SrsAvcPayloadFormatAnnexb
 		} else {
-			is_ibmf := this.avc_demux_ibmf_format(stream, sample)
+			is_ibmf := this.avc_demux_ibmf_format(stream, sampler)
 			_ = is_ibmf
 			if is_ibmf {
 				this.payloadFormat = codec.SrsAvcPayloadFormatIbmf
 			}
 		}
 	} else if this.payloadFormat == codec.SrsAvcPayloadFormatAnnexb {
-		_, _ = this.avc_demux_annexb_format(stream, sample)
+		_, _ = this.avc_demux_annexb_format(stream, sampler)
 	} else if this.payloadFormat == codec.SrsAvcPayloadFormatIbmf {
-		_ = this.avc_demux_ibmf_format(stream, sample)
+		_ = this.avc_demux_ibmf_format(stream, sampler)
 	}
 
 	return nil
 }
 
-func (this *SrsAvcAacCodec) avc_demux_annexb_format(stream *utils.SrsStream, sample *SrsCodecSample) (bool, error) {
+func (this *SrsAvcAacCodec) avc_demux_annexb_format(stream *utils.SrsStream, sampler *SrsCodecSampler) (bool, error) {
 	nalus := utils.GetNalus(stream)
 	if nalus == nil {
 		return false, nil
@@ -325,7 +325,7 @@ func (this *SrsAvcAacCodec) avc_demux_annexb_format(stream *utils.SrsStream, sam
 	return true, nil
 }
 
-func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sample *SrsCodecSample) bool {
+func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sampler *SrsCodecSampler) bool {
 	pictureLength := len(stream.Data())
 	for i := 0; i < pictureLength; {
 		b, err := stream.ReadBytes(uint32(this.NalUnitLength + 1))
@@ -345,7 +345,7 @@ func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sampl
 		_ = d
 		
 		// 7.3.1 NAL unit syntax, H.264-AVC-ISO_IEC_14496-10.pdf, page 44.
-		err = sample.AddSampleUnit(d)
+		err = sampler.AddSampleUnit(d)
 		if err != nil {
 			return false
 		}
