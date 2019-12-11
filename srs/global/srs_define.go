@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2013-2015 GOSRS(gosrs)
+Copyright (c) 2019 GOSRS(gosrs)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -206,7 +206,7 @@ const RTMP_SIG_SRS_NAME = "SRS(Simple RTMP Server)"
 const RTMP_SIG_SRS_URL_SHORT = "github.com/ossrs/srs"
 const RTMP_SIG_SRS_URL = "https://github.com/ossrs/srs"
 const RTMP_SIG_SRS_LICENSE = "The MIT License (MIT)"
-const RTMP_SIG_SRS_COPYRIGHT = "Copyright (c) 2013-2015 SRS(ossrs)"
+const RTMP_SIG_SRS_COPYRIGHT = "Copyright (c) 2019 SRS(ossrs)"
 const RTMP_SIG_SRS_PRIMARY = "SRS/2.0release"
 const RTMP_SIG_SRS_CONTRIBUTORS_URL = "https://github.com/ossrs/srs/blob/master/AUTHORS.txt"
 const RTMP_SIG_SRS_HANDSHAKE = "SRS(2.0.263)"

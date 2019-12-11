@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2013-2015 GOSRS(gosrs)
+Copyright (c) 2019 GOSRS(gosrs)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -24,26 +24,33 @@ package main
 
 import (
     "flag"
-    "fmt"
+    _ "fmt"
     "go_srs/srs/app"
     "go_srs/srs/app/config"
 	"net/http"
 	"bytes"
     "io/ioutil"
     "math/rand"
-	_ "net/http/pprof"
+    _ "net/http/pprof"
 )
 
 var (
 	conf = flag.String("c", "./conf/srs.conf", "set conf `conf`")
 )
 
+func init() {
+    // hook, err := lSyslog.NewSyslogHook("", "", syslog.LOG_INFO, "")
+    // if err == nil {
+    //     log.Hooks.Add(hook)
+    // }
+}
+
 func main() {
     flag.Parse()
     if err := config.GetInstance().Init(*conf); err != nil {
-        fmt.Println(err)
         return
     }
+    // log.Info("abc")
 
 	server := app.NewSrsServer()
 	_ = server.StartProcess(config.GetInstance().ListenPort)
