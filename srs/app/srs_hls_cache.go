@@ -25,7 +25,6 @@ package app
 import (
 	"go_srs/srs/codec"
 	"go_srs/srs/app/config"
-	log "github.com/sirupsen/logrus"
 )
 
 /**
@@ -67,11 +66,25 @@ func (this *SrsHlsCache) onPublish(muxer *SrsHlsMuxer, req *SrsRequest, segment_
 	tsFile := config.GetHlsTsFile(vhostName)
 	cleanUp := config.GetHlsCleanup(vhostName)
 	hlsWaitKeyframe := config.GetHlsWaitKeyframe(vhostName)
-	// this.muxer
-	log.Info("create m3u8 file:", m3u8File)
 	muxer.UpdateConfig(req, entryPrefix, hlsPath, m3u8File, tsFile, float64(hlsFragment), float64(hlsWindow), false, 0.0, cleanUp, hlsWaitKeyframe)
 
-	muxer.SegmentOpen(segment_start_dts)
+	muxer.segmentOpen(segment_start_dts)
+	return nil
+}
+
+func (this *SrsHlsCache) onUnpublish(muxer *SrsHlsMuxer) error {
+	if err := muxer.flushVideo(this.cache); err != nil {
+		return err
+	}
+
+	if err := muxer.flushAudio(this.cache); err != nil {
+		return err
+	}
+
+	if err := muxer.segmentClose(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -94,7 +107,7 @@ func (this *SrsHlsCache) writeAudio(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts i
 		return err
 	}
 
-	if err := muxer.flush_audio(this.cache); err != nil {
+	if err := muxer.flushAudio(this.cache); err != nil {
 		return err
 	}
 	return nil
@@ -113,26 +126,26 @@ func (this *SrsHlsCache) WriteVideo(c *SrsAvcAacCodec, muxer *SrsHlsMuxer, dts i
 		}
 	}
 
-	if err := muxer.flush_video(this.cache); err != nil {
+	if err := muxer.flushVideo(this.cache); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (this *SrsHlsCache) reapSegment(log_desc string, muxer *SrsHlsMuxer, segment_start_dts int64) error {
-	if err := muxer.segment_close(); err != nil {
+	if err := muxer.segmentClose(); err != nil {
 		return err
 	}
 
-	if err := muxer.SegmentOpen(segment_start_dts); err != nil {
+	if err := muxer.segmentOpen(segment_start_dts); err != nil {
 		return err
 	}
 
-	if err := muxer.flush_video(this.cache); err != nil {
+	if err := muxer.flushVideo(this.cache); err != nil {
 		return err
 	}
 
-	if err := muxer.flush_audio(this.cache); err != nil {
+	if err := muxer.flushAudio(this.cache); err != nil {
 		return err
 	}
 	return nil

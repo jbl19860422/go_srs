@@ -66,11 +66,6 @@ type SrsSource struct {
 	// TODO: FIXME: to support reload atc.
 	atc 			bool
 	jitterAlgorithm *SrsRtmpJitterAlgorithm
-
-	//record
-	//dvr				*SrsDvr
-	//dvr				*SrsDvrConsumer
-	//hls				*SrsHls
 	tsContext		*SrsTsContext
 }
 
@@ -90,7 +85,6 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		rtmp:c.rtmp,
 		gopCache:NewSrsGopCache(),
 		atc:false,
-		//hls:NewSrsHls(tsCtx),
 		tsContext: tsCtx,
 	}
 
@@ -119,7 +113,6 @@ func RemoveSrsSource(s *SrsSource) {
 	defer sourcePoolMtx.Unlock()
 	for k, v := range sourcePool {
 		if v == s {
-			fmt.Println("source removed")
 			delete(sourcePool,k)
 		}
 	}
@@ -209,36 +202,12 @@ func (this *SrsSource) onPublish() error {
 		this.consumers[i].OnPublish()
 	}
 
-	//if this.hls != nil {
-	//	err := this.hls.onPublish(this.req, false)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-
 	if this.handler != nil {
 		err := this.handler.OnPublish(this, this.req)
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (this *SrsSource) onHlsStart() error {
-	//if this.cacheSHVideo != nil {
-	//	err := this.hls.on_video(this.cacheSHVideo)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-	//
-	//if this.cacheSHAudio != nil {
-	//	err := this.hls.on_audio(this.cacheSHAudio)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
 	return nil
 }
 
@@ -256,8 +225,6 @@ func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
 }
 
 func (this *SrsSource) Initialize() {
-	//this.dvr.Initialize(this, this.req)
-	//this.hls.Initialize(this, this.req)
 }
 
 func (this *SrsSource) ProcessPublishMessage(msg *rtmp.SrsRtmpMessage) error {
@@ -314,58 +281,31 @@ func (this *SrsSource) RemoveConsumers() {
 func (this *SrsSource) OnAudio(msg *rtmp.SrsRtmpMessage) error {
 	isSequenceHeader := flvcodec.AudioIsSequenceHeader(msg.GetPayload())
 	if isSequenceHeader {
-		fmt.Println("***********************AudioIsSequenceHeader len=", len(msg.GetPayload()), "*************************")
 		this.cacheSHAudio = msg
 	}
 
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].Enqueue(msg, false, this.jitterAlgorithm)
-		// fmt.Println("***********************************************send audio**************************************")
 	}
 
 	if err := this.gopCache.cache(msg); err != nil {
 	}
-
-	//if err := this.dvr.on_audio(msg); err != nil {
-	//	return err
-	//}
-	//
-	//if err := this.hls.on_audio(msg); err != nil {
-	//	return err
-	//}
-
 	return nil
 }
 
 func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 	isSequenceHeader := flvcodec.VideoIsSequenceHeader(msg.GetPayload())
 	if isSequenceHeader {
-		fmt.Println("***********************VideoIsSequenceHeader*************************")
 		this.cacheSHVideo = msg
 	}
-	//fmt.Println("*************onVideo", len(this.consumers))
+
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].Enqueue(msg, false, this.jitterAlgorithm)
-		// fmt.Println("***********************************************send video**************************************")
 	}
 
 	if err := this.gopCache.cache(msg); err != nil {
 		return err
 	}
-
-	//if err := this.dvr.on_video(msg); err != nil {
-	//	return err
-	//}
-
-	//if err := this.hls.on_video(msg); err != nil {
-	//	fmt.Println(err)
-	//	return err
-	//}
-
-	// tsMsg := &SrsTsMessage{
-	// 	payload:
-	// }
-	// this.tsContext.Encode(ts, codec.SrsCodecVideoAVC, codec.SrsCodecAudioAAC)
 
 	return nil
 }
@@ -451,7 +391,6 @@ func (this *SrsSource) SetCache(cache bool) {
 * @param dm, whether dumps the metadata.
 * @param dg, whether dumps the gop cache.
 */
-	
 func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bool) Consumer {
 	this.consumersMtx.Lock()
 	consumer := NewSrsConsumer(this, conn)
@@ -462,8 +401,7 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 	//todo copy meta data
 	//todo cppy sequence header
 	//todo copy gop to consumers queue
-	//many things todo 
-	fmt.Println("CreateConsumer len=", len(this.consumers))
+	//many things todo
 	if this.cacheMetaData != nil {
 		consumer.Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
 	}
@@ -476,7 +414,6 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 		consumer.Enqueue(this.cacheSHAudio, false, this.jitterAlgorithm)
 	}
 
-	
 	if err := this.gopCache.dump(consumer, false, this.jitterAlgorithm); err != nil {
 		return nil
 	}
@@ -530,7 +467,6 @@ func (this *SrsSource) CyclePublish() error {
 }
 
 func (this *SrsSource) StopPublish() {
-	//this.dvr.Close()
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].OnUnpublish()
 	}

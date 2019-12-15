@@ -40,6 +40,7 @@ type SrsConsumer struct {
 	queue           *SrsMessageQueue
 	StreamId		int
 	queueRecvThread *SrsQueueRecvThread
+	consuming 		bool
 }
 
 func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) Consumer {
@@ -91,10 +92,12 @@ func (this *SrsConsumer) ConsumeCycle() error {
 }
 
 func (this *SrsConsumer) StopConsume() error {
-	this.source.RemoveConsumer(this)
-	this.conn.Close()
-	this.queueRecvThread.Stop()
-	this.queue.Break()
+	if this.consuming {
+		this.source.RemoveConsumer(this)
+		this.conn.Close()
+		this.queueRecvThread.Stop()
+		this.queue.Break()
+	}
 	return nil
 }
 

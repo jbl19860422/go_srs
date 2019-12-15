@@ -28,7 +28,6 @@ import (
 	"io"
 	"go_srs/srs/utils"
 	"errors"
-	"fmt"
 )
 
 type SrsTsMuxer struct {
@@ -192,9 +191,6 @@ func (this *SrsTsMuxer) encodePes(msg *SrsTsMessage, pid int16, sid SrsTsStream,
 		n, err := this.writer.Write(s.Data())
 		_ = err
 		_ = n
-		if len(s.Data()) != 188 {
-			fmt.Println("errrrrrrrrrrrrrrrrrrrrrrrrrrrpayload_len=", len(msg.payload), "&pkts_count=", len(pkts), "&data_len=", len(s.Data()))
-		}
 	}
 	return nil
 }

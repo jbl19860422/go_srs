@@ -152,18 +152,16 @@ func (this *SrsHlsMuxer) UpdateConfig(req *SrsRequest, entry_prefix string, hls_
 	this.hls_window = window
 	this.deviation_ts = 0
 	this.m3u8_file = m3u8_file
-	fmt.Println("xxxxxxxxxxxxxxxxxxxm3u8_file=", this.m3u8_file, "xxxxxxxxxxxxxxxxx")
 	this.m3u8_url = utils.Srs_path_build_stream(this.m3u8_file, req.vhost, req.app, req.stream)
 	this.m3u8 = hls_path + "/" + this.m3u8_url
 	//todo set max td
-	fmt.Println("??????????????????????mu38=", this.m3u8, "********************, app=", req.app)
 	this.max_td = 10000
 	this.m3u8_dir = path.Dir(this.m3u8)
 	err := os.MkdirAll(this.m3u8_dir, os.ModePerm)
 	return err
 }
 
-func (this *SrsHlsMuxer) flush_video(cache *SrsTsCache) error {
+func (this *SrsHlsMuxer) flushVideo(cache *SrsTsCache) error {
 	if cache.video == nil || len(cache.video.payload) <= 0 {
 		return errors.New("the len of video must not be 0")
 	}
@@ -176,7 +174,7 @@ func (this *SrsHlsMuxer) flush_video(cache *SrsTsCache) error {
 	return nil
 }
 
-func (this *SrsHlsMuxer) flush_audio(cache *SrsTsCache) error {
+func (this *SrsHlsMuxer) flushAudio(cache *SrsTsCache) error {
 	if this.current == nil {
 		return nil
 	}
@@ -204,7 +202,7 @@ func (this *SrsHlsMuxer) updateACodec(ac codec.SrsCodecAudio) error {
 
 const SRS_JUMP_WHEN_PIECE_DEVIATION = 20
 
-func (this *SrsHlsMuxer) SegmentOpen(segment_start_dts int64) error {
+func (this *SrsHlsMuxer) segmentOpen(segment_start_dts int64) error {
 	if this.current != nil {
 		return nil
 	}
@@ -273,7 +271,7 @@ func (this *SrsHlsMuxer) SegmentOpen(segment_start_dts int64) error {
 	return nil
 }
 
-func (this *SrsHlsMuxer) refresh_m3u8() {
+func (this *SrsHlsMuxer) refreshM3u8() {
 	if len(this.segments) == 0 {
 		return
 	}
@@ -324,8 +322,7 @@ func (this *SrsHlsMuxer) _refresh_m3u8(m3u8_file string) error {
 	return nil
 }
 
-func (this *SrsHlsMuxer) segment_close() error {
-	fmt.Println("segment_close")
+func (this *SrsHlsMuxer) segmentClose() error {
 	if this.current == nil {
 		return nil
 	}
@@ -376,7 +373,7 @@ func (this *SrsHlsMuxer) segment_close() error {
 		}
 	}
 
-	this.refresh_m3u8()
+	this.refreshM3u8()
 	return nil
 }
 

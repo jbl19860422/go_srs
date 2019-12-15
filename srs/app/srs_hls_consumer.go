@@ -40,6 +40,7 @@ type SrsHlsConsumer struct {
 
 	lastUpdateTime	int64
 	streamDts 		int64
+	consuming 		bool
 }
 
 func NewSrsHlsConsumer(s *SrsSource, req *SrsRequest) *SrsHlsConsumer {
@@ -52,6 +53,7 @@ func NewSrsHlsConsumer(s *SrsSource, req *SrsRequest) *SrsHlsConsumer {
 		muxer:NewSrsHlsMuxer(),
 		hlsCache:NewSrsHlsCache(),
 		context:NewSrsTsContext(),
+		consuming:false,
 	}
 }
 
@@ -68,11 +70,17 @@ func (this *SrsHlsConsumer) OnPublish() error {
 }
 
 func (this *SrsHlsConsumer) OnUnpublish() error {
-
+	this.StopConsume()
+	this.hlsCache.onUnpublish(this.muxer)
 	return nil
 }
 
 func (this *SrsHlsConsumer) ConsumeCycle() error {
+	this.consuming = true
+	defer func() {
+		this.consuming = false
+	}()
+
 	for {
 		msg, err := this.queue.Wait()
 		if err != nil {
@@ -165,6 +173,7 @@ func (this *SrsHlsConsumer) onMetadata(metaData *rtmp.SrsRtmpMessage) error {
 func (this *SrsHlsConsumer) StopConsume() error {
 	this.source.RemoveConsumer(this)
 	this.queue.Break()
+
 	return nil
 }
 
