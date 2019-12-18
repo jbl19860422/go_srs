@@ -31,7 +31,6 @@ import (
 	"go_srs/srs/utils"
 	"strconv"
 	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -286,7 +285,6 @@ func (this *SrsHlsMuxer) refreshM3u8() {
 }
 
 func (this *SrsHlsMuxer) _refresh_m3u8(m3u8_file string) error {
-	fmt.Println("m3u8_file=", this.m3u8_file)
 	f, err := os.OpenFile(m3u8_file, os.O_RDWR | os.O_CREATE, 0755)
 	if err != nil {
 		return err
