@@ -25,15 +25,8 @@ package app
 
 import (
 	"go_srs/srs/codec"
-	"math/rand"
+	"go_srs/srs/utils"
 )
-
-var srs_gvid int64 = rand.Int63n(10000000)
-
-func srs_generate_id() int64 {
-	srs_gvid++
-	return srs_gvid
-}
 
 type SrsStatisticVhost struct {
 	id 		int64
@@ -44,7 +37,7 @@ type SrsStatisticVhost struct {
 
 func NewSrsStatisticVhost() *SrsStatisticVhost {
 	return &SrsStatisticVhost{
-		id:srs_generate_id(),
+		id:utils.SrsGenerateId(),
 	}
 }
 
@@ -54,11 +47,31 @@ type SrsStatisticStreamVideo struct {
 	avc_level 		codec.SrsAvcLevel		`json:"avc_level"`
 }
 
+func NewSrsStatisticStreamVideo(vcodec codec.SrsCodecVideo, avc_profile codec.SrsAvcProfile, avc_level codec.SrsAvcLevel) *SrsStatisticStreamVideo {
+	return &SrsStatisticStreamVideo{
+		vcodec:vcodec,
+		avc_profile:avc_profile,
+		avc_level:avc_level,
+	}
+}
+
 type SrsStatisticStreamAudio struct {
 	acodec 			codec.SrsCodecAudio				`json:"acodec"`
 	asample_rate 	codec.SrsCodecAudioSampleRate	`json:"asample_rate"`
 	asound_type 	codec.SrsCodecAudioSoundType	`json:"asound_type"`
 	aac_object 		codec.SrsAacObjectType			`json:"aac_object"`
+}
+
+func NewSrsStatisticStreamAudio(acodec 			codec.SrsCodecAudio,
+									asample_rate 	codec.SrsCodecAudioSampleRate,
+									asound_type 	codec.SrsCodecAudioSoundType,
+									aac_object 		codec.SrsAacObjectType) *SrsStatisticStreamAudio {
+	return &SrsStatisticStreamAudio{
+		acodec:acodec,
+		asample_rate:asample_rate,
+		asound_type:asound_type,
+		aac_object:aac_object,
+	}
 }
 
 type SrsStatisticStream struct {
@@ -79,7 +92,7 @@ type SrsStatisticStream struct {
 
 func NewSrsStatisticStream() *SrsStatisticStream {
 	return &SrsStatisticStream{
-		id:srs_generate_id(),
+		id:utils.SrsGenerateId(),
 		vhost:nil,
 		connection_cid:-1,
 		video:nil,
@@ -138,8 +151,43 @@ func(this *SrsStatistic) FindClient(cid int64) *SrsStatisticClient {
 	return c
 }
 
-func(this *SrsStatistic) OnVideoInfo(req *SrsRequest, vcodec codec.SrsCodecVideo, avc_profile codec.SrsAvcProfile, avc_level codec.SrsAvcLevel) {
+func(this *SrsStatistic) OnVideoInfo(req *SrsRequest, vcodec codec.SrsCodecVideo, avc_profile codec.SrsAvcProfile, avc_level codec.SrsAvcLevel) error {
+	vhost := this.createVHost(req)
+	stream := this.createStream(vhost, req)
+	stream.video = NewSrsStatisticStreamVideo(vcodec, avc_profile, avc_level)
+	return nil
+}
 
+func(this *SrsStatistic) OnAudioInfo(req *SrsRequest,
+										acodec codec.SrsCodecAudio,
+										asample_rate codec.SrsCodecAudioSampleRate,
+										asound_type codec.SrsCodecAudioSoundType,
+										aac_object codec.SrsAacObjectType) error {
+	vhost := this.createVHost(req)
+	stream := this.createStream(vhost, req)
+	stream.audio = NewSrsStatisticStreamAudio(acodec, asample_rate, asound_type, aac_object)
+	return nil
+}
+
+func(this *SrsStatistic) OnVideoFrames(req *SrsRequest, nb_frames uint64) error {
+	vhost := this.createVHost(req)
+	stream := this.createStream(vhost, req)
+	stream.nb_frames += nb_frames
+	return nil
+}
+
+func(this *SrsStatistic) OnStreamPublish(req *SrsRequest, cid int) error {
+	vhost := this.createVHost(req)
+	stream := this.createStream(vhost, req)
+	stream.Publish(cid)
+	return nil
+}
+
+func(this *SrsStatistic) OnStreamClose(req *SrsRequest, cid int) error {
+	vhost := this.createVHost(req)
+	stream := this.createStream(vhost, req)
+	stream.Close()
+	return nil
 }
 
 func(this *SrsStatistic) createVHost(req *SrsRequest) *SrsStatisticVhost {
@@ -171,7 +219,7 @@ func(this *SrsStatistic) createStream(vhost *SrsStatisticVhost, req *SrsRequest)
 
 var instance *SrsStatistic
 
-func GetInstance() *SrsStatistic {
+func GetStatisticInstance() *SrsStatistic {
 	if instance == nil {
 		instance = &SrsStatistic{}
 	}

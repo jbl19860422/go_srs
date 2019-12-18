@@ -31,7 +31,15 @@ import (
 	"strings"
 	"go_srs/srs/global"
 	"runtime"
+	"math/rand"
 )
+
+var srs_gvid int64 = rand.Int63n(10000000)
+
+func SrsGenerateId() int64 {
+	srs_gvid++
+	return srs_gvid
+}
 
 func numberToBytes(data interface{}, order binary.ByteOrder) []byte {
 	buf := new(bytes.Buffer)

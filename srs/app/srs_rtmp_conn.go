@@ -34,6 +34,7 @@ import (
 )
 
 type SrsRtmpConn struct {
+	id 						int64
 	rtmp 					*rtmp.SrsRtmpServer
 	req						*SrsRequest
 	res 					*SrsResponse
@@ -44,6 +45,7 @@ type SrsRtmpConn struct {
 
 func NewSrsRtmpConn(c net.Conn, s *SrsServer) *SrsRtmpConn {
 	rtmpConn := &SrsRtmpConn{
+		id:utils.SrsGenerateId(),
 		req:NewSrsRequest(),
 		res:NewSrsResponse(1),
 		server:s,
@@ -52,7 +54,7 @@ func NewSrsRtmpConn(c net.Conn, s *SrsServer) *SrsRtmpConn {
 	return rtmpConn
 }
 
-func (this *SrsRtmpConn) Start() error {
+func (this *SrsRtmpConn) ServiceLoop() error {
 	return this.doCycle()
 }
 

@@ -45,6 +45,7 @@ type SrsSHRequester interface {
 }
 
 type SrsSource struct {
+	source_id 		int
 	handler 		ISrsSourceHandler
 	conn			*SrsRtmpConn
 	rtmp			*rtmp.SrsRtmpServer
@@ -66,7 +67,6 @@ type SrsSource struct {
 	// TODO: FIXME: to support reload atc.
 	atc 			bool
 	jitterAlgorithm *SrsRtmpJitterAlgorithm
-	tsContext		*SrsTsContext
 }
 
 var sourcePoolMtx sync.Mutex
@@ -77,7 +77,6 @@ func init() {
 }
 
 func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource {
-	tsCtx := NewSrsTsContext()
 	source := &SrsSource{
 		req:r,
 		conn:c,
@@ -85,7 +84,6 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		rtmp:c.rtmp,
 		gopCache:NewSrsGopCache(),
 		atc:false,
-		tsContext: tsCtx,
 	}
 
 	dvrConsumer := NewSrsDvrConsumer(source, r)
@@ -208,6 +206,9 @@ func (this *SrsSource) onPublish() error {
 			return err
 		}
 	}
+
+	//stat := GetStatisticInstance()
+	//stat.OnStreamPublish(this.req, this.)
 	return nil
 }
 

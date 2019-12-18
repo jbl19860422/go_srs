@@ -112,7 +112,7 @@ func (this *SrsServer) HandleConnection(conn net.Conn) {
 		conn.Close()
 		return
 	}
-	err = rtmpConn.Start()
+	err = rtmpConn.ServiceLoop()
 	this.RemoveConn(rtmpConn)
 }
 
