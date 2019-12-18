@@ -183,7 +183,7 @@ func(this *SrsStatistic) OnStreamPublish(req *SrsRequest, cid int64) error {
 	return nil
 }
 
-func(this *SrsStatistic) OnStreamClose(req *SrsRequest, cid int) error {
+func(this *SrsStatistic) OnStreamClose(req *SrsRequest, cid int64) error {
 	vhost := this.createVHost(req)
 	stream := this.createStream(vhost, req)
 	stream.Close()

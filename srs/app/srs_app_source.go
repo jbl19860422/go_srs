@@ -472,4 +472,6 @@ func (this *SrsSource) StopPublish() {
 		this.consumers[i].OnUnpublish()
 	}
 	this.recvThread.Stop()
+	stat := GetStatisticInstance()
+	stat.OnStreamClose(this.req, this.source_id)
 }
