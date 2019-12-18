@@ -221,7 +221,13 @@ var instance *SrsStatistic
 
 func GetStatisticInstance() *SrsStatistic {
 	if instance == nil {
-		instance = &SrsStatistic{}
+		instance = &SrsStatistic{
+			vhosts:make(map[int64]*SrsStatisticVhost, 0),
+			rvhosts:make(map[string]*SrsStatisticVhost, 0),
+			streams:make(map[int64]*SrsStatisticStream, 0),
+			rstreams:make(map[string]*SrsStatisticStream, 0),
+			clients:make(map[int64]*SrsStatisticClient, 0),
+		}
 	}
 	return instance
 }
