@@ -81,7 +81,7 @@ type SrsStatisticStream struct {
 	stream 	string				`json:"name"`
 	url 	string				`json:"url"`
 	active 	bool				`json:"active"`
-	connection_cid 	int			`json:"cid"`
+	connection_cid 	int64		`json:"cid"`
 	nb_clients 		int			`json:"clients"`
 	nb_frames 		uint64		`json:"frames"`
 	//video
@@ -100,7 +100,7 @@ func NewSrsStatisticStream() *SrsStatisticStream {
 	}
 }
 
-func(this *SrsStatisticStream) Publish(cid int) {
+func(this *SrsStatisticStream) Publish(cid int64) {
 	this.connection_cid = cid
 	this.active = true
 	this.vhost.nb_streams++
@@ -176,7 +176,7 @@ func(this *SrsStatistic) OnVideoFrames(req *SrsRequest, nb_frames uint64) error 
 	return nil
 }
 
-func(this *SrsStatistic) OnStreamPublish(req *SrsRequest, cid int) error {
+func(this *SrsStatistic) OnStreamPublish(req *SrsRequest, cid int64) error {
 	vhost := this.createVHost(req)
 	stream := this.createStream(vhost, req)
 	stream.Publish(cid)

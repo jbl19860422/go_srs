@@ -45,7 +45,7 @@ type SrsSHRequester interface {
 }
 
 type SrsSource struct {
-	source_id 		int
+	source_id 		int64
 	handler 		ISrsSourceHandler
 	conn			*SrsRtmpConn
 	rtmp			*rtmp.SrsRtmpServer
@@ -78,6 +78,7 @@ func init() {
 
 func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource {
 	source := &SrsSource{
+		source_id:c.id,
 		req:r,
 		conn:c,
 		handler:h,
@@ -123,7 +124,6 @@ func FetchOrCreate(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) (*SrsSour
 	}
 
 	streamUrl := r.GetStreamUrl()
-	fmt.Println("create source url=", streamUrl)
 	vhost := r.vhost
 	_ = vhost
 	sourcePoolMtx.Lock()
@@ -207,8 +207,8 @@ func (this *SrsSource) onPublish() error {
 		}
 	}
 
-	//stat := GetStatisticInstance()
-	//stat.OnStreamPublish(this.req, this.)
+	stat := GetStatisticInstance()
+	stat.OnStreamPublish(this.req, this.source_id)
 	return nil
 }
 
