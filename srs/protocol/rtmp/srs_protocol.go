@@ -340,7 +340,6 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 	chunk.Header.timestamp &= 0x7fffffff
 	// copy header to msg
 	chunk.RtmpMessage.header = chunk.Header
-
 	// increase the msg count, the chunk stream can accept fmt=1/2/3 message now.
 	chunk.MsgCount++
 	return
@@ -352,7 +351,6 @@ func (this *SrsProtocol) RecvInterlacedMessage() (*SrsRtmpMessage, error) {
 		return nil, err
 	}
 	var chunk *SrsChunkStream
-
 	if cid < SRS_PERF_CHUNK_STREAM_CACHE {
 		chunk = this.chunkCache[cid]
 	} else {
