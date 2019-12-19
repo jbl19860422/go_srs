@@ -75,18 +75,16 @@ func NewSrsStatisticStreamAudio(acodec 			codec.SrsCodecAudio,
 }
 
 type SrsStatisticStream struct {
-	id 		int64				`json:"id"`
-	vhost 	*SrsStatisticVhost
-	app 	string				`json:"app"`
-	stream 	string				`json:"name"`
-	url 	string				`json:"url"`
-	active 	bool				`json:"active"`
-	connection_cid 	int64		`json:"cid"`
-	nb_clients 		int			`json:"clients"`
-	nb_frames 		uint64		`json:"frames"`
-	//video
+	id 				int64				`json:"id"`
+	vhost 			*SrsStatisticVhost
+	app 			string				`json:"app"`
+	stream 			string				`json:"name"`
+	url 			string				`json:"url"`
+	active 			bool				`json:"active"`
+	connection_cid 	int64				`json:"cid"`
+	nb_clients 		int					`json:"clients"`
+	nb_frames 		uint64				`json:"frames"`
 	video 			*SrsStatisticStreamVideo 	`json:"video"`
-	//audio
 	audio 			*SrsStatisticStreamAudio	`json:"audio"`
 }
 

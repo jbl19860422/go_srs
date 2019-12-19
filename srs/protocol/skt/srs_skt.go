@@ -35,9 +35,11 @@ type SrsIOErrListener interface {
 }
 
 type SrsIOReadWriter struct {
-	conn     net.Conn
-	IOReader *bufio.Reader
-	IOWriter *bufio.Writer
+	conn     	net.Conn
+	IOReader 	*bufio.Reader
+	IOWriter 	*bufio.Writer
+	nb_read 	int64
+	nb_write	int64
 }
 
 func NewSrsIOReadWriter(c net.Conn) *SrsIOReadWriter {
@@ -49,12 +51,24 @@ func NewSrsIOReadWriter(c net.Conn) *SrsIOReadWriter {
 	return rw
 }
 
+func(this *SrsIOReadWriter) GetRecvBytes() int64 {
+	return this.nb_read
+}
+
+func(this *SrsIOReadWriter) GetSendBytes() int64 {
+	return this.nb_write
+}
+
 func (this *SrsIOReadWriter) GetClientIP() string {
 	return this.conn.RemoteAddr().String()
 }
 
 func (this *SrsIOReadWriter) Read(b []byte) (int, error) {
-	return this.IOReader.Read(b)
+	c, e := this.IOReader.Read(b)
+	if e == nil {
+		this.nb_read += int64(c)
+	}
+	return c, e
 }
 
 func (this *SrsIOReadWriter) Close() {
@@ -63,7 +77,11 @@ func (this *SrsIOReadWriter) Close() {
 
 func (this *SrsIOReadWriter) ReadWithTimeout(b []byte, timeoutms uint32) (int, error) {
 	this.conn.SetReadDeadline(time.Now().Add(time.Millisecond * time.Duration(timeoutms)))
-	return this.IOReader.Read(b)
+	c, e := this.IOReader.Read(b)
+	if e == nil {
+		this.nb_read += int64(c)
+	}
+	return c, e
 }
 
 func (this *SrsIOReadWriter) ReadFully(b []byte, timeoutms uint32) (int, error) {
@@ -75,6 +93,7 @@ func (this *SrsIOReadWriter) ReadFully(b []byte, timeoutms uint32) (int, error) 
 			return 0, err
 		}
 
+		this.nb_read += int64(n)
 		left = left - n
 		if left <= 0 {
 			return count, nil
@@ -84,16 +103,23 @@ func (this *SrsIOReadWriter) ReadFully(b []byte, timeoutms uint32) (int, error) 
 
 func (this *SrsIOReadWriter) ReadFullyWithTimeout(b []byte, timeoutms uint32) (int, error) {
 	this.conn.SetReadDeadline(time.Now().Add(time.Millisecond * time.Duration(timeoutms)))
-	return io.ReadFull(this.conn, b)
+	c, e := io.ReadFull(this.conn, b)
+	if e == nil {
+		this.nb_read += int64(c)
+	}
+	return c, e
 }
 
 func (this *SrsIOReadWriter) Write(b []byte) (int, error) {
 	n, err := this.IOWriter.Write(b)
 	_ = this.IOWriter.Flush()
+	this.nb_write += int64(n)
 	return n, err
 }
 
 func (this *SrsIOReadWriter) WriteWithTimeout(b []byte, timeoutms uint32) (int, error) {
 	this.conn.SetWriteDeadline(time.Now().Add(time.Millisecond * time.Duration(timeoutms)))
-	return this.IOWriter.Write(b)
+	c, e := this.IOWriter.Write(b)
+	this.nb_write += int64(c)
+	return c, e
 }

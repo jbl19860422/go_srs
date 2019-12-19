@@ -24,15 +24,16 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	// "os"
 	"sync"
 	"errors"
-	"fmt"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/codec/flv"
 	"go_srs/srs/protocol/packet"
 	"go_srs/srs/global"
 	"go_srs/srs/utils"
+	"go_srs/srs/app/config"
+	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 type ISrsSourceHandler interface {
@@ -67,6 +68,13 @@ type SrsSource struct {
 	// TODO: FIXME: to support reload atc.
 	atc 			bool
 	jitterAlgorithm *SrsRtmpJitterAlgorithm
+
+	nb_msgs 		int
+	video_frames 	int
+	audio_frames 	int
+	exitMonitor    	chan bool
+	//to allow extern http api to expire the source
+	expire			chan bool
 }
 
 var sourcePoolMtx sync.Mutex
@@ -85,6 +93,8 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		rtmp:c.rtmp,
 		gopCache:NewSrsGopCache(),
 		atc:false,
+		exitMonitor:make(chan bool),
+		expire:make(chan bool),
 	}
 
 	dvrConsumer := NewSrsDvrConsumer(source, r)
@@ -221,7 +231,7 @@ func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
 		_ = pkt
 		//todo isfmle process
 	}
-
+	this.nb_msgs++
 	return this.ProcessPublishMessage(msg)
 }
 
@@ -233,12 +243,13 @@ func (this *SrsSource) ProcessPublishMessage(msg *rtmp.SrsRtmpMessage) error {
 	if msg.GetHeader().IsAudio() {
 		// process audio
 		if err := this.OnAudio(msg); err != nil {
-
+			this.audio_frames++
 		}
 	}
 
 	if msg.GetHeader().IsVideo() {
 		if err := this.OnVideo(msg); err != nil {
+			this.video_frames++
 		}
 		//process video
 	}
@@ -337,7 +348,6 @@ func (this *SrsSource) OnMetaData(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMet
     // srs_trace("got metadata%s", ss.str().c_str());
 	var width float64
 	_ = pkt.Get("width", &width)
-	fmt.Println("width=", width)
 	pkt.Set("server", global.RTMP_SIG_SRS_SERVER)
 	pkt.Set("srs_primary", global.RTMP_SIG_SRS_PRIMARY)
 	pkt.Set("srs_authors", global.RTMP_SIG_SRS_AUTHROS)
@@ -462,8 +472,60 @@ func (this *SrsSource) RemoveConsumer(consumer Consumer) {
 
 func (this *SrsSource) CyclePublish() error {
 	this.recvThread.Start()
+	//这里需要定时检查收到的信息，实现SrsRtmpConn::do_publishing的功能
+	this.startMonitor()
 	this.recvThread.Join()
 	this.StopPublish()
+	return nil
+}
+
+func(this *SrsSource) Expire() {
+	log.Info("connection expired")
+	close(this.expire)
+	this.StopPublish()
+}
+
+func(this *SrsSource) startMonitor() error {
+	go func() {
+		publish_1stpkt_timeout := config.GetPublish1stpktTimeout(this.req.vhost)
+		publish_normal_timeout := config.GetPublishNormalPktTimeout(this.req.vhost)
+		last_nb_msgs := 0
+		last_video_frames := 0
+	DONE:
+		for {
+			var timeOut uint32 = 0
+			if this.nb_msgs == 0 {
+				timeOut = publish_1stpkt_timeout
+			} else {
+				timeOut = publish_normal_timeout
+			}
+			select {
+				case <- this.exitMonitor: {
+					break DONE
+				}
+				case <- this.expire: {
+					break DONE
+				}
+				case <- time.After(time.Microsecond * time.Duration(timeOut)):{
+					if this.nb_msgs <= last_nb_msgs {//error no msg got
+						this.StopPublish()
+						break DONE
+					}
+				}
+			}
+			//do some statistic process
+			stat := GetStatisticInstance()
+			stat.OnVideoFrames(this.req, uint64(this.video_frames - last_video_frames))
+			last_video_frames = this.video_frames
+			//todo first need use kbps to get info
+			log.Trace("<- client publish ")
+		}
+	}()
+	return nil
+}
+
+func(this *SrsSource) stopMonitor() error {
+	close(this.exitMonitor)
 	return nil
 }
 

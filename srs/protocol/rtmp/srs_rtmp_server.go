@@ -25,7 +25,6 @@ package rtmp
 import (
 	_ "context"
 	_ "log"
-	"net"
 	_ "net/url"
 	_ "strings"
 	_ "time"
@@ -42,12 +41,13 @@ type SrsRtmpServer struct {
 	IOErrListener 	skt.SrsIOErrListener
 }
 
-func NewSrsRtmpServer(conn net.Conn, listener skt.SrsIOErrListener) *SrsRtmpServer {
-	io_ := skt.NewSrsIOReadWriter(conn)
+func NewSrsRtmpServer(io *skt.SrsIOReadWriter, listener skt.SrsIOErrListener) *SrsRtmpServer {
+	//io_ := skt.NewSrsIOReadWriter(conn)
+	//io_ = io
 	return &SrsRtmpServer{
-		io: io_,
-		Protocol: NewSrsProtocol(io_), 
-		HandShaker: NewSrsSimpleHandShake(io_),
+		io: io,
+		Protocol: NewSrsProtocol(io),
+		HandShaker: NewSrsSimpleHandShake(io),
 		IOErrListener:listener,
 	}
 }

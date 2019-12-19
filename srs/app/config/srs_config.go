@@ -201,6 +201,34 @@ func GetDvrPlan(vhost string) string {
 	return h.Dvr.DvrPlan
 }
 
+const SRS_CONF_DEFAULT_1STPKT_TIMEOUT = 2000
+func GetPublish1stpktTimeout(vhost string) uint32 {
+	h := GetInstance().GetVHost(vhost)
+	if h == nil {
+		return SRS_CONF_DEFAULT_1STPKT_TIMEOUT
+	}
+
+	if h.Enabled != "on" {
+		return h.Publish1stPktTimeout
+	}
+
+	return SRS_CONF_DEFAULT_1STPKT_TIMEOUT
+}
+
+const SRS_CONF_DEFAULT_NORPKT_TIMEOUT = 5000
+func GetPublishNormalPktTimeout(vhost string) uint32 {
+	h := GetInstance().GetVHost(vhost)
+	if h == nil {
+		return SRS_CONF_DEFAULT_NORPKT_TIMEOUT
+	}
+
+	if h.Enabled != "on" {
+		return h.PublishNormalTimeout
+	}
+
+	return SRS_CONF_DEFAULT_NORPKT_TIMEOUT
+}
+
 var config *SrsConfig
 
 func GetInstance() *SrsConfig {

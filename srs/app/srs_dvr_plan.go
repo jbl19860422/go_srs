@@ -38,11 +38,9 @@ type SrsDvrPlan interface {
 
 func NewSrsDvrPlan(req *SrsRequest) SrsDvrPlan {
 	dvrPlan := config.GetDvrPlan(req.vhost)
-	fmt.Println("dvrplan=", dvrPlan)
 	if dvrPlan == "session" {
 		return NewSrsSessionDvrPlan(req)
 	} else if dvrPlan == "append" {
-		fmt.Println("****************append dvr********************")
 		return NewSrsAppendDvrPlan(req)
 	}
 	return nil

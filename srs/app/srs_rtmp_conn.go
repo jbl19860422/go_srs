@@ -31,6 +31,8 @@ import (
 	"go_srs/srs/protocol/packet"
 	"go_srs/srs/app/config"
 	"go_srs/srs/utils"
+	"go_srs/srs/protocol/kbps"
+	"go_srs/srs/protocol/skt"
 )
 
 type SrsRtmpConn struct {
@@ -40,17 +42,21 @@ type SrsRtmpConn struct {
 	res 					*SrsResponse
 	server					*SrsServer
 	source					*SrsSource
+	kbps 					*kbps.SrsKbps
 	clientType 				rtmp.SrsRtmpConnType
 }
 
 func NewSrsRtmpConn(c net.Conn, s *SrsServer) *SrsRtmpConn {
+	io := skt.NewSrsIOReadWriter(c)
 	rtmpConn := &SrsRtmpConn{
 		id:utils.SrsGenerateId(),
 		req:NewSrsRequest(),
 		res:NewSrsResponse(1),
 		server:s,
+		kbps:kbps.NewSrsKbps(),
 	}
-	rtmpConn.rtmp = rtmp.NewSrsRtmpServer(c, rtmpConn)
+	rtmpConn.kbps.SetStatisticIo(io, io)
+	rtmpConn.rtmp = rtmp.NewSrsRtmpServer(io, rtmpConn)
 	return rtmpConn
 }
 
@@ -152,11 +158,9 @@ func (this *SrsRtmpConn) streamServiceCycle() error {
 		return err
 	}
 
-
 	this.req.schema, this.req.host, this.req.vhost, this.req.app, _, this.req.port, this.req.param, err = utils.SrsDiscoveryTcUrl(this.req.tcUrl, this.req.stream)
 
 	if strings.Contains(this.req.stream, "?") {
-
 		i := strings.Index(this.req.stream, "?")
 		param := this.req.stream[i+1:]
 		m, _ := url.ParseQuery(param)
@@ -317,8 +321,6 @@ func (this *SrsRtmpConn) httpHooksOnUnpublish() error {
 	}
 	return nil
 }
-
-
 
 func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 	//TODO edge process
