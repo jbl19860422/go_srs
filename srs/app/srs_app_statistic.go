@@ -26,6 +26,7 @@ package app
 import (
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
+	"sync"
 )
 
 type SrsStatisticVhost struct {
@@ -216,9 +217,9 @@ func(this *SrsStatistic) createStream(vhost *SrsStatisticVhost, req *SrsRequest)
 }
 
 var instance *SrsStatistic
-
+var once sync.Once
 func GetStatisticInstance() *SrsStatistic {
-	if instance == nil {
+	once.Do(func() {
 		instance = &SrsStatistic{
 			vhosts:make(map[int64]*SrsStatisticVhost, 0),
 			rvhosts:make(map[string]*SrsStatisticVhost, 0),
@@ -226,6 +227,7 @@ func GetStatisticInstance() *SrsStatistic {
 			rstreams:make(map[string]*SrsStatisticStream, 0),
 			clients:make(map[int64]*SrsStatisticClient, 0),
 		}
-	}
+	})
+
 	return instance
 }

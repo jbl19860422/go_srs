@@ -26,6 +26,7 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	"sync"
 )
 
 type SrsConfig struct {
@@ -216,7 +217,7 @@ func GetPublish1stpktTimeout(vhost string) uint32 {
 }
 
 const SRS_CONF_DEFAULT_NORPKT_TIMEOUT = 5000
-func GetPublishNormalPktTimeout(vhost string) uint32 {
+	func GetPublishNormalPktTimeout(vhost string) uint32 {
 	h := GetInstance().GetVHost(vhost)
 	if h == nil {
 		return SRS_CONF_DEFAULT_NORPKT_TIMEOUT
@@ -230,11 +231,12 @@ func GetPublishNormalPktTimeout(vhost string) uint32 {
 }
 
 var config *SrsConfig
-
+var once sync.Once
 func GetInstance() *SrsConfig {
-	if config == nil {
+	once.Do(func() {
 		config = &SrsConfig{}
-	}
+	})
+
 	return config
 }
 
