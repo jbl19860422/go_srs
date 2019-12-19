@@ -88,7 +88,6 @@ func (this *SrsDvrConsumer) ConsumeCycle() error {
 }
 
 func (this *SrsDvrConsumer) StopConsume() error {
-	this.source.RemoveConsumer(this)
 	//send connection close to response writer
 	this.queue.Break()
 	return nil

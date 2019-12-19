@@ -31,9 +31,6 @@ import (
 	"go_srs/srs/protocol/packet"
 	"go_srs/srs/global"
 	"go_srs/srs/utils"
-	"go_srs/srs/app/config"
-	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 type ISrsSourceHandler interface {
@@ -51,7 +48,6 @@ type SrsSource struct {
 	conn			*SrsRtmpConn
 	rtmp			*rtmp.SrsRtmpServer
 	req 			*SrsRequest
-	recvThread		*SrsRecvThread
 
 	consumersMtx 	sync.Mutex
 	consumers 		[]Consumer
@@ -68,13 +64,6 @@ type SrsSource struct {
 	// TODO: FIXME: to support reload atc.
 	atc 			bool
 	jitterAlgorithm *SrsRtmpJitterAlgorithm
-
-	nb_msgs 		int
-	video_frames 	int
-	audio_frames 	int
-	exitMonitor    	chan bool
-	//to allow extern http api to expire the source
-	expire			chan bool
 }
 
 var sourcePoolMtx sync.Mutex
@@ -93,8 +82,6 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		rtmp:c.rtmp,
 		gopCache:NewSrsGopCache(),
 		atc:false,
-		exitMonitor:make(chan bool),
-		expire:make(chan bool),
 	}
 
 	dvrConsumer := NewSrsDvrConsumer(source, r)
@@ -113,7 +100,6 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 		}()
 	}
 
-	source.recvThread = NewSrsRecvThread(c.rtmp, source, 1000)
 	return source
 }
 
@@ -222,57 +208,7 @@ func (this *SrsSource) onPublish() error {
 	return nil
 }
 
-func (this *SrsSource) Handle(msg *rtmp.SrsRtmpMessage) error {
-	if msg.GetHeader().IsAmf0Command() || msg.GetHeader().IsAmf3Command() {
-		pkt, err := this.rtmp.DecodeMessage(msg)
-		if err != nil {
-			return err
-		}
-		_ = pkt
-		//todo isfmle process
-	}
-	this.nb_msgs++
-	return this.ProcessPublishMessage(msg)
-}
-
 func (this *SrsSource) Initialize() {
-}
-
-func (this *SrsSource) ProcessPublishMessage(msg *rtmp.SrsRtmpMessage) error {
-	//todo fix edge process
-	if msg.GetHeader().IsAudio() {
-		// process audio
-		if err := this.OnAudio(msg); err != nil {
-			this.audio_frames++
-		}
-	}
-
-	if msg.GetHeader().IsVideo() {
-		if err := this.OnVideo(msg); err != nil {
-			this.video_frames++
-		}
-		//process video
-	}
-	//todo fix aggregate message
-	//todo fix amf0 or amf3 data
-
-	// process onMetaData
-    if (msg.GetHeader().IsAmf0Data() || msg.GetHeader().IsAmf3Data()) {
-		pkt, err := this.rtmp.DecodeMessage(msg)
-		if err != nil {
-			return err
-		}
-
-		switch pkt.(type) {
-			case *packet.SrsOnMetaDataPacket: {
-				err := this.OnMetaData(msg, pkt.(*packet.SrsOnMetaDataPacket))
-				if err != nil {
-					return err
-				}
-			}
-		}
-    }
-	return nil
 }
 
 func (this *SrsSource) OnRecvError(err error) {
@@ -470,70 +406,11 @@ func (this *SrsSource) RemoveConsumer(consumer Consumer) {
 	}
 }
 
-func (this *SrsSource) CyclePublish() error {
-	this.recvThread.Start()
-	//这里需要定时检查收到的信息，实现SrsRtmpConn::do_publishing的功能
-	this.startMonitor()
-	this.recvThread.Join()
-	this.StopPublish()
-	return nil
-}
-
-func(this *SrsSource) Expire() {
-	log.Info("connection expired")
-	close(this.expire)
-	this.StopPublish()
-}
-
-func(this *SrsSource) startMonitor() error {
-	go func() {
-		publish_1stpkt_timeout := config.GetPublish1stpktTimeout(this.req.vhost)
-		publish_normal_timeout := config.GetPublishNormalPktTimeout(this.req.vhost)
-		last_nb_msgs := 0
-		last_video_frames := 0
-	DONE:
-		for {
-			var timeOut uint32 = 0
-			if this.nb_msgs == 0 {
-				timeOut = publish_1stpkt_timeout
-			} else {
-				timeOut = publish_normal_timeout
-			}
-			select {
-				case <- this.exitMonitor: {
-					break DONE
-				}
-				case <- this.expire: {
-					break DONE
-				}
-				case <- time.After(time.Microsecond * time.Duration(timeOut)):{
-					if this.nb_msgs <= last_nb_msgs {//error no msg got
-						this.StopPublish()
-						break DONE
-					}
-				}
-			}
-			//do some statistic process
-			stat := GetStatisticInstance()
-			stat.OnVideoFrames(this.req, uint64(this.video_frames - last_video_frames))
-			last_video_frames = this.video_frames
-			//todo first need use kbps to get info
-			log.Trace("<- client publish ")
-		}
-	}()
-	return nil
-}
-
-func(this *SrsSource) stopMonitor() error {
-	close(this.exitMonitor)
-	return nil
-}
-
 func (this *SrsSource) StopPublish() {
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].OnUnpublish()
 	}
-	this.recvThread.Stop()
+
 	stat := GetStatisticInstance()
 	stat.OnStreamClose(this.req, this.source_id)
 }

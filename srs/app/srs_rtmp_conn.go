@@ -90,17 +90,17 @@ func (this *SrsRtmpConn) Handle(msg *rtmp.SrsRtmpMessage) error {
 func (this *SrsRtmpConn) processPublishMessage(msg *rtmp.SrsRtmpMessage) error {
 	//todo fix edge process
 	if msg.GetHeader().IsAudio() {
-		// process audio
+		this.audio_frames++
 		if err := this.source.OnAudio(msg); err != nil {
-			this.audio_frames++
+
 		}
 	}
 
 	if msg.GetHeader().IsVideo() {
+		this.video_frames++
 		if err := this.source.OnVideo(msg); err != nil {
-			this.video_frames++
+
 		}
-		//process video
 	}
 	//todo fix aggregate message
 	//todo fix amf0 or amf3 data
@@ -125,6 +125,9 @@ func (this *SrsRtmpConn) processPublishMessage(msg *rtmp.SrsRtmpMessage) error {
 }
 
 func (this *SrsRtmpConn) Stop() {
+	if this.recvThread != nil {
+		this.recvThread.Stop()
+	}
 	this.rtmp.Close()
 	if this.req.typ == rtmp.SrsRtmpConnFMLEPublish || this.req.typ == rtmp.SrsRtmpConnFlashPublish || this.req.typ == rtmp.SrsRtmpConnHaivisionPublish {
 		this.source.RemoveConsumers()
@@ -395,14 +398,13 @@ func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 }
 
 func (this *SrsRtmpConn) doPublishing(source *SrsSource) error {
-	this.recvThread = NewSrsRecvThread(this.rtmp, source, 1000)
+	this.recvThread = NewSrsRecvThread(this.rtmp, this, 1000)
 	this.recvThread.Start()
 	//这里需要定时检查收到的信息，实现SrsRtmpConn::do_publishing的功能
 	this.startMonitor()
 	this.recvThread.Join()
-
+	this.stopMonitor()
 	return nil
-	//return source.CyclePublish()
 }
 
 
@@ -428,7 +430,7 @@ func(this *SrsRtmpConn) startMonitor() error {
 				case <- this.expire: {
 					break DONE
 				}
-				case <- time.After(time.Microsecond * time.Duration(timeOut)):{
+				case <- time.After(time.Millisecond * time.Duration(timeOut)):{
 					if this.nb_msgs <= last_nb_msgs {//error no msg got
 						break DONE
 					}

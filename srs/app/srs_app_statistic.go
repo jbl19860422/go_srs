@@ -27,6 +27,7 @@ import (
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
 	"sync"
+	log "github.com/sirupsen/logrus"
 )
 
 type SrsStatisticVhost struct {
@@ -172,6 +173,7 @@ func(this *SrsStatistic) OnVideoFrames(req *SrsRequest, nb_frames uint64) error 
 	vhost := this.createVHost(req)
 	stream := this.createStream(vhost, req)
 	stream.nb_frames += nb_frames
+	log.Info("nb_frames=", stream.nb_frames)
 	return nil
 }
 

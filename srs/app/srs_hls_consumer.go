@@ -171,9 +171,7 @@ func (this *SrsHlsConsumer) onMetadata(metaData *rtmp.SrsRtmpMessage) error {
 }
 
 func (this *SrsHlsConsumer) StopConsume() error {
-	this.source.RemoveConsumer(this)
 	this.queue.Break()
-
 	return nil
 }
 
