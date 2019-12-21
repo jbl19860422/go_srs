@@ -396,9 +396,14 @@ func (this *SrsSource) AppendConsumer(consumer Consumer) error {
 	return nil
 }
 
+func(this *SrsSource) OnConsumerError(consumer Consumer) {
+	this.RemoveConsumer(consumer)
+}
+
 func (this *SrsSource) RemoveConsumer(consumer Consumer) {
 	this.consumersMtx.Lock()
 	defer this.consumersMtx.Unlock()
+	consumer.StopConsume()
 	for i := 0; i < len(this.consumers); i++ {
 		if this.consumers[i] == consumer {
 			this.consumers = append(this.consumers[:i], this.consumers[i+1:]...)
@@ -406,10 +411,14 @@ func (this *SrsSource) RemoveConsumer(consumer Consumer) {
 	}
 }
 
-func (this *SrsSource) StopPublish() {
+func (this *SrsSource) UnPublish() {
 	for i := 0; i < len(this.consumers); i++ {
 		this.consumers[i].OnUnpublish()
 	}
+	// remove all consumers
+	this.consumersMtx.Lock()
+	defer this.consumersMtx.Unlock()
+	this.consumers = this.consumers[0:0]
 
 	stat := GetStatisticInstance()
 	stat.OnStreamClose(this.req, this.source_id)

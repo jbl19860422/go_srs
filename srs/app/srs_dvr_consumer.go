@@ -94,7 +94,7 @@ func (this *SrsDvrConsumer) StopConsume() error {
 }
 
 func (this *SrsDvrConsumer) OnRecvError(err error) {
-	this.StopConsume()
+	this.source.OnConsumerError(this)
 }
 
 func (this *SrsDvrConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) {

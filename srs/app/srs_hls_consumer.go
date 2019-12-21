@@ -176,7 +176,7 @@ func (this *SrsHlsConsumer) StopConsume() error {
 }
 
 func (this *SrsHlsConsumer) OnRecvError(err error) {
-	this.StopConsume()
+	this.source.OnConsumerError(this)
 }
 
 func (this *SrsHlsConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) {

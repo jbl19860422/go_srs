@@ -27,7 +27,6 @@ import (
 	"errors"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/protocol/packet"
-	"fmt"
 )
 
 type ConsumerStopListener interface {
@@ -78,7 +77,6 @@ func (this *SrsConsumer) ConsumeCycle() error {
 		//todo process realtime stream
 		msg, err := this.queue.Wait()
 		if err != nil {
-			fmt.Println("************remove because", err, "**************8")
 			return err
 		}
 
@@ -93,7 +91,6 @@ func (this *SrsConsumer) ConsumeCycle() error {
 
 func (this *SrsConsumer) StopConsume() error {
 	if this.consuming {
-		this.source.RemoveConsumer(this)
 		this.conn.Close()
 		this.queueRecvThread.Stop()
 		this.queue.Break()
@@ -102,7 +99,7 @@ func (this *SrsConsumer) StopConsume() error {
 }
 
 func (this *SrsConsumer) OnRecvError(err error) {
-	this.StopConsume()
+	this.source.OnConsumerError(this)
 }
 
 func (this *SrsConsumer) processPlayControlMsg(msg *rtmp.SrsRtmpMessage) error {

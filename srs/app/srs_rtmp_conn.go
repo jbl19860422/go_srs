@@ -351,7 +351,7 @@ func (this *SrsRtmpConn) publishing(s *SrsSource) error {
 
 	err := this.doPublishing(s)
 
-	this.source.StopPublish()
+	this.source.UnPublish()
 	//todo release publish
 	if err := this.httpHooksOnUnpublish(); err != nil {
 		return err
