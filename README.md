@@ -1,5 +1,5 @@
 # go_srs
-一个rtmp直播服务器，采用go语言编写，类似srs
+a rtmp server similar with srs, but is wrote by golang
 
 ## 目录说明
 |  目录  |  说明  |
