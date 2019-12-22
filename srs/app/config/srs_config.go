@@ -30,12 +30,14 @@ import (
 )
 
 type SrsConfig struct {
-	ListenPort     uint32                `json:"listen_port"`
-	Pid            string                `json:"pid"`
-	ChunkSize      uint32                `json:"chunk_size"`
-	MaxConnections uint32                `json:"max_connection"`
-	WorkDir        string                `json:"work_dir"`
-	VHosts         map[string]*VHostConf `json:"vhosts"`
+	ListenPort     	uint32                	`json:"listen_port"`
+	Pid            	string                	`json:"pid"`
+	ChunkSize      	uint32                	`json:"chunk_size"`
+	MaxConnections 	uint32                	`json:"max_connection"`
+	pithy_print_ms	int64 				  	`json:"pithy_print_ms"`
+	WorkDir        	string                	`json:"work_dir"`
+	VHosts         	map[string]*VHostConf 	`json:"vhosts"`
+	subscribers 	[]*SrsAppSubscriber
 }
 
 func (this *SrsConfig) GetVHost(name string) *VHostConf {
@@ -72,8 +74,19 @@ func (this *SrsConfig) initDefault() {
 	}
 }
 
-const SRS_CONF_DEFAULT_HLS_FRAGMENT = 10
+func(this *SrsConfig) AddSubscriber(s *SrsAppSubscriber) {
+	this.subscribers = append(this.subscribers, s)
+}
 
+func(this *SrsConfig) RemoveSubscriber(s *SrsAppSubscriber) {
+	for i := 0; i < len(this.subscribers); i++ {
+		if this.subscribers[i] == s {
+			this.subscribers = append(this.subscribers[:i], this.subscribers[i+1:]...)
+		}
+	}
+}
+
+const SRS_CONF_DEFAULT_HLS_FRAGMENT = 10
 func GetHlsFragment(vname string) uint32 {
 	vhost := GetInstance().GetVHost(vname)
 	if vhost == nil {
@@ -103,7 +116,6 @@ func GetHlsEntryPrefix(vname string) string {
 }
 
 const SRS_CONF_DEFAULT_HLS_PATH = "./html"
-
 func GetHlsPath(vname string) string {
 	vhost := GetInstance().GetVHost(vname)
 	if vhost == nil {
@@ -114,7 +126,6 @@ func GetHlsPath(vname string) string {
 }
 
 const SRS_CONF_DEFAULT_HLS_M3U8_FILE = "[app]/[stream].m3u8"
-
 func GetHlsM3u8File(vname string) string {
 	vhost := GetInstance().GetVHost(vname)
 	if vhost == nil {
@@ -125,7 +136,6 @@ func GetHlsM3u8File(vname string) string {
 }
 
 const SRS_CONF_DEFAULT_HLS_TS_FILE = "[app]/[stream]-[seq].ts"
-
 func GetHlsTsFile(vname string) string {
 	vhost := GetInstance().GetVHost(vname)
 	if vhost == nil {
@@ -136,7 +146,6 @@ func GetHlsTsFile(vname string) string {
 }
 
 const SRS_CONF_DEFAULT_HLS_CLEANUP = true
-
 func GetHlsCleanup(vname string) bool {
 	vhost := GetInstance().GetVHost(vname)
 	if vhost == nil {
@@ -147,7 +156,6 @@ func GetHlsCleanup(vname string) bool {
 }
 
 const SRS_CONF_DEFAULT_HLS_WAIT_KEYFRAME = true
-
 func GetHlsWaitKeyframe(vname string) bool {
 	vhost := GetInstance().GetVHost(vname)
 	if vhost == nil {
@@ -186,9 +194,7 @@ func GetDvrPath(vhost string) string {
 const SRS_CONF_DEFAULT_DVR_PLAN_SESSION = "session"
 const SRS_CONF_DEFAULT_DVR_PLAN_SEGMENT = "segment"
 const SRS_CONF_DEFAULT_DVR_PLAN_APPEND = "append"
-
 const SRS_CONF_DEFAULT_DVR_PLAN = SRS_CONF_DEFAULT_DVR_PLAN_SESSION
-
 func GetDvrPlan(vhost string) string {
 	h := GetInstance().GetVHost(vhost)
 	if h == nil {
@@ -217,7 +223,7 @@ func GetPublish1stpktTimeout(vhost string) uint32 {
 }
 
 const SRS_CONF_DEFAULT_NORPKT_TIMEOUT = 5000
-	func GetPublishNormalPktTimeout(vhost string) uint32 {
+func GetPublishNormalPktTimeout(vhost string) uint32 {
 	h := GetInstance().GetVHost(vhost)
 	if h == nil {
 		return SRS_CONF_DEFAULT_NORPKT_TIMEOUT
@@ -228,6 +234,14 @@ const SRS_CONF_DEFAULT_NORPKT_TIMEOUT = 5000
 	}
 
 	return SRS_CONF_DEFAULT_NORPKT_TIMEOUT
+}
+
+const SRS_CONF_DEFAULT_PITHY_PRINT_MS = 10000
+func(this *SrsConfig) GetPithyPrintMs() int64 {
+	if this.pithy_print_ms == 0 {
+		return SRS_CONF_DEFAULT_PITHY_PRINT_MS
+	}
+	return this.pithy_print_ms
 }
 
 var config *SrsConfig
@@ -261,5 +275,7 @@ func (this *SrsConfig) Init(file string) error {
 }
 
 func init() {
-	config = &SrsConfig{}
+	config = &SrsConfig{
+		subscribers:make([]*SrsAppSubscriber, 0),
+	}
 }

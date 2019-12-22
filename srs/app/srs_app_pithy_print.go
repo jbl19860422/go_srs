@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2019 GOSRS(gosrs)
+Copyright (c) 2013-2015 GOSRS(gosrs)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -21,10 +21,31 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-package config
+package app
 
-type SrsReloadHandler interface {
+import "go_srs/srs/app/config"
 
+type SrsStageInfo struct {
+	*config.SrsAppSubscriber
+	stage_id 				int64
+	nb_clients				int64
+	age 					int64
+	pithy_print_time_ms		int64
 }
 
+func NewSrsStageInfo(stage_id int64) *SrsStageInfo {
+	return &SrsStageInfo{
+		stage_id:stage_id,
+		nb_clients:0,
+		age:0,
+		pithy_print_time_ms:config.GetInstance().GetPithyPrintMs(),
+	}
+}
 
+type SrsPithyPrint struct {
+	client_id 		int64
+	stage_id 		int64
+	age 			int64
+	previout_tick 	int64
+
+}
