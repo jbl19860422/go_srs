@@ -27,6 +27,7 @@ import (
 	"errors"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/protocol/packet"
+	log "github.com/sirupsen/logrus"
 )
 
 type ConsumerStopListener interface {
@@ -90,15 +91,14 @@ func (this *SrsConsumer) ConsumeCycle() error {
 }
 
 func (this *SrsConsumer) StopConsume() error {
-	if this.consuming {
-		this.conn.Close()
-		this.queueRecvThread.Stop()
-		this.queue.Break()
-	}
+	this.conn.Close()
+	this.queueRecvThread.Stop()
+	this.queue.Break()
 	return nil
 }
 
 func (this *SrsConsumer) OnRecvError(err error) {
+	log.Info("consumer recv error")
 	this.source.OnConsumerError(this)
 }
 

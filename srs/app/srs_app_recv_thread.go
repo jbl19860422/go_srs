@@ -25,6 +25,7 @@ package app
 
 import (
 	"go_srs/srs/protocol/rtmp"
+	log "github.com/sirupsen/logrus"
 )
 
 type ISrsMessageHandler interface {
@@ -65,6 +66,7 @@ DONE:
 		if err != nil {
 			this.handler.OnRecvError(err)
 			close(this.done)
+			log.Debug("recv thread exit")
 			return err
 		}
 
@@ -79,6 +81,7 @@ DONE:
 			}
 		}
 	}
+	log.Debug("recv thread exit")
 	close(this.done)
 	return nil
 }

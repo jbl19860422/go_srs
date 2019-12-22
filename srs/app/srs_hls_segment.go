@@ -26,7 +26,7 @@ import (
 	"os"
 	"go_srs/srs/codec"
 	"io"
-	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 /**
@@ -70,11 +70,11 @@ func (this *SrsHlsSegment) Open(path string, ac codec.SrsCodecAudio, vc codec.Sr
 	var err error
 	this.writer, err = os.OpenFile(path, os.O_RDWR | os.O_CREATE, 0755)
 	if err != nil {
-		fmt.Println("open full path failed, ", this.full_path)
+		log.Error("open full path failed, ", this.full_path)
 		return err
 	}
 
-	fmt.Println("open segment path succeed:", this.full_path)
+	log.Info("open segment path succeed:", this.full_path)
 	this.muxer = NewSrsTsMuxer(this.writer, this.context, ac, vc)
 	return nil
 }

@@ -34,6 +34,7 @@ import (
 	"go_srs/srs/protocol/kbps"
 	"go_srs/srs/protocol/skt"
 	"time"
+	log "github.com/sirupsen/logrus"
 )
 
 type SrsRtmpConn struct {
@@ -442,6 +443,7 @@ func(this *SrsRtmpConn) startMonitor() error {
 			last_video_frames = this.video_frames
 			//todo first need use kbps to get info
 		}
+		log.Info("monitor thread exit")
 	}()
 	return nil
 }

@@ -27,6 +27,7 @@ import(
 	"errors"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/codec/flv"
+	log "github.com/sirupsen/logrus"
 )
 
 type SrsMessageQueue struct {
@@ -99,7 +100,7 @@ func (this *SrsMessageQueue) Wait() (*rtmp.SrsRtmpMessage, error) {
 	}
 	case <- this.exit :
 	{
-		fmt.Println("**************break from queue****************")
+		log.Info("break from queue")
 		return nil, errors.New("queue break")
 	}
 	}
