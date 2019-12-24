@@ -218,6 +218,10 @@ func(this *SrsStatistic) createStream(vhost *SrsStatisticVhost, req *SrsRequest)
 	return s
 }
 
+func(this *SrsStatistic) addDeltaToKbps(conn *SrsRtmpConn) {
+
+}
+
 var instance *SrsStatistic
 var once sync.Once
 func GetStatisticInstance() *SrsStatistic {

@@ -49,11 +49,11 @@ func NewSrsServer() *SrsServer {
 	}
 }
 
-func (this *SrsServer) OnRecvError(err error, c *SrsRtmpConn) {
+func(this *SrsServer) OnRecvError(err error, c *SrsRtmpConn) {
 	this.RemoveConn(c)
 }
 
-func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
+func(this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 	this.connsMtx.Lock()
 	defer this.connsMtx.Unlock()
 	for i := 0; i < len(this.conns); i++ {
@@ -64,17 +64,30 @@ func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 	}
 }
 
-func (this *SrsServer) AddConn(c *SrsRtmpConn) error {
+func(this *SrsServer) AddConn(c *SrsRtmpConn) error {
 	this.connsMtx.Lock()
+	defer this.connsMtx.Unlock()
 	if uint32(len(this.conns) + 1) > config.GetInstance().MaxConnections {
 		return fmt.Errorf("exceed the max connections, drop client:clients=%d, max=%d", len(this.conns), config.GetInstance().MaxConnections);
 	}
 	this.conns = append(this.conns, c)
-	this.connsMtx.Unlock()
 	return nil
 }
 
-func (this *SrsServer) StartProcess(port uint32) error {
+const (
+	SRS_SYS_NETWORK_RTMP_SERVER_RESOLUTION_TIMES  = 3
+)
+
+func(this *SrsServer) resampleKbps() {
+	stat := GetStatisticInstance()
+	this.connsMtx.Lock()
+	defer this.connsMtx.Unlock()
+	for i := 0; i < len(this.conns); i++ {
+		stat.addDeltaToKbps(this.conns[i])
+	}
+}
+
+func(this *SrsServer) StartProcess(port uint32) error {
 	log.Info("starting server...")
 
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(int(port)))
@@ -97,6 +110,14 @@ func (this *SrsServer) StartProcess(port uint32) error {
 	}()
 
 	log.Info("starting server succeed")
+	// start network rtmp server resolution times
+	go func() {
+		for {
+			time.Sleep(time.Second*SRS_SYS_NETWORK_RTMP_SERVER_RESOLUTION_TIMES)
+			this.resampleKbps()
+		}
+	}()
+
 	for {
 		conn, _ := ln.Accept()
 		go this.HandleConnection(conn)
@@ -105,7 +126,7 @@ func (this *SrsServer) StartProcess(port uint32) error {
 	return nil
 }
 
-func (this *SrsServer) HandleConnection(conn net.Conn) {
+func(this *SrsServer) HandleConnection(conn net.Conn) {
 	rtmpConn := NewSrsRtmpConn(conn, this)
 	err := this.AddConn(rtmpConn)
 	if err != nil {
@@ -116,10 +137,10 @@ func (this *SrsServer) HandleConnection(conn net.Conn) {
 	this.RemoveConn(rtmpConn)
 }
 
-func (this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
+func(this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
 	return nil
 }
 	
-func (this *SrsServer) OnUnpublish(s *SrsSource, r *SrsRequest) error {
+func(this *SrsServer) OnUnpublish(s *SrsSource, r *SrsRequest) error {
 	return nil
 }
