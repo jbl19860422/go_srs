@@ -72,7 +72,7 @@ func (this *SrsAmf0Object) Decode(stream *utils.SrsStream) error {
 			return err
 		}
 
-		var v SrsAmf0Any
+		var v ISrsAmf0Any
 		switch marker {
 		case RTMP_AMF0_Number:
 			{

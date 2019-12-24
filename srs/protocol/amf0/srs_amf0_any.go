@@ -26,14 +26,14 @@ import (
 	"go_srs/srs/utils"
 )
 
-type SrsAmf0Any interface {
+type ISrsAmf0Any interface {
 	Decode(stream *utils.SrsStream) error
 	Encode(stream *utils.SrsStream) error
 	IsMyType(stream *utils.SrsStream) (bool, error)
 	GetValue() interface{}
 }
 
-func GenerateSrsAmf0Any(marker byte) SrsAmf0Any {
+func GenerateSrsAmf0Any(marker byte) ISrsAmf0Any {
 	switch marker {
 	case RTMP_AMF0_Number:
 		return &SrsAmf0Number{}

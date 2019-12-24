@@ -70,7 +70,6 @@ func (this *SrsFlvSegment) Open(useTmpFile bool) error {
 	}
 
 	this.path = this.generatePath()
-		fmt.Println("*******************dvr file=", this.path, "******************")
 	var freshFlvFile bool = false
 	if _, err := os.Stat(this.path); os.IsExist(err) {
 		freshFlvFile = false
@@ -178,17 +177,15 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 
 	var name amf0.SrsAmf0String
 	if err := name.Decode(stream); err != nil {
-		fmt.Println("2222222222222222222")
 		return err
 	}
 	
 	marker, err := stream.PeekByte()
 	if err != nil {
-		fmt.Println("33333333333333333333333")
 		return err
 	}
 
-	var metaData amf0.SrsAmf0Any
+	var metaData amf0.ISrsAmf0Any
 	switch marker {
 		case amf0.RTMP_AMF0_Object:{
 			metaData = amf0.GenerateSrsAmf0Any(marker)
@@ -197,14 +194,12 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 			metaData = amf0.GenerateSrsAmf0Any(marker)
 		}
 		default:{
-			fmt.Println("4444444444444444444444444444")
 			return errors.New("error marker")
 		}
 	}
 
 	if metaData != nil {
 		if err = metaData.Decode(stream); err != nil {
-			fmt.Println("555555555555555555555555")
 			return err
 		}
 	}
@@ -225,19 +220,16 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 			metaData.(*amf0.SrsAmf0EcmaArray).Set("duration", float64(0))
 		}
 		default:{
-			fmt.Println("66666666666666666666666666")
 			return errors.New("error marker")
 		}
 	}
 	
 	writeStream := utils.NewSrsStream([]byte{})
 	if err = name.Encode(writeStream); err != nil {
-		fmt.Println("777777777777777777777777")
 		return err
 	}
 
 	if err = metaData.Encode(writeStream); err != nil {
-		fmt.Println("888888888888888888888888")
 		return err
 	}
 
@@ -246,7 +238,6 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("******************88write metadata done*****************")
 	// 11B flv tag header, 3B object EOF, 8B number value, 1B number flag.
 	//todo fix me, write readable code
 	this.durationOffset = off + int64(size) + 11 - 3 - 8

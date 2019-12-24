@@ -58,7 +58,7 @@ func (this *SrsAmf0EcmaArray) KeyAt(i int) string {
 	return ""
 }
 
-func (this *SrsAmf0EcmaArray) ValueAt(i int) SrsAmf0Any {
+func (this *SrsAmf0EcmaArray) ValueAt(i int) ISrsAmf0Any {
 	if i < len(this.Properties) {
 		return this.Properties[i].Value
 	}
@@ -103,7 +103,7 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 			return err
 		}
 
-		var v SrsAmf0Any
+		var v ISrsAmf0Any
 		switch marker {
 		case RTMP_AMF0_Number:
 			{

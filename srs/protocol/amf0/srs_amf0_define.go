@@ -70,7 +70,7 @@ const (
 
 type SrsValuePair struct {
 	Name  SrsAmf0Utf8
-	Value SrsAmf0Any
+	Value ISrsAmf0Any
 }
 
 const SRS_CONSTS_RTMP_SET_DATAFRAME  = "@setDataFrame"

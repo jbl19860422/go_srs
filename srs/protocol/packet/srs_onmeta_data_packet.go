@@ -31,7 +31,7 @@ import (
 )
 type SrsOnMetaDataPacket struct {
 	Name 		amf0.SrsAmf0String
-	MetaData	amf0.SrsAmf0Any
+	MetaData	amf0.ISrsAmf0Any
 }
 
 func NewSrsOnMetaDataPacket(command string) *SrsOnMetaDataPacket {
