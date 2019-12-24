@@ -23,15 +23,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package utils
 
 import (
-	"fmt"
-	"time"
 	"bytes"
 	"encoding/binary"
-	"net/url"
-	"strings"
+	"fmt"
 	"go_srs/srs/global"
-	"runtime"
 	"math/rand"
+	"net/url"
+	"runtime"
+	"strings"
+	"time"
 )
 
 var srs_gvid int64 = rand.Int63n(10000000)
@@ -270,7 +270,7 @@ func MpegtsCRC32(data []byte) uint32 {
 		crc = (crc << 8) ^ CRCTable[((crc>>24)^uint32(data[i]))&0xff]
 	}
 
-	return crc;
+	return crc
 }
 
 func GetCurrentMs() int64 {

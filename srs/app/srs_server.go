@@ -23,37 +23,37 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"net/http"
-	"sync"
-	_ "log"
-	"net"
-	"strconv"
-	"go_srs/srs/utils"
-	"runtime"
-	"time"
-	"go_srs/srs/app/config"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"go_srs/srs/app/config"
+	"go_srs/srs/utils"
+	_ "log"
+	"net"
+	"net/http"
+	"runtime"
+	"strconv"
+	"sync"
+	"time"
 )
 
 type SrsServer struct {
-	conns 		[]*SrsRtmpConn
-	flvServer 	*SrsHttpStreamServer
-	connsMtx	sync.Mutex
+	conns     []*SrsRtmpConn
+	flvServer *SrsHttpStreamServer
+	connsMtx  sync.Mutex
 }
 
 func NewSrsServer() *SrsServer {
 	return &SrsServer{
-		conns:make([]*SrsRtmpConn, 0),
-		flvServer:NewSrsHttpStreamServer(),
+		conns:     make([]*SrsRtmpConn, 0),
+		flvServer: NewSrsHttpStreamServer(),
 	}
 }
 
-func(this *SrsServer) OnRecvError(err error, c *SrsRtmpConn) {
+func (this *SrsServer) OnRecvError(err error, c *SrsRtmpConn) {
 	this.RemoveConn(c)
 }
 
-func(this *SrsServer) RemoveConn(c *SrsRtmpConn) {
+func (this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 	this.connsMtx.Lock()
 	defer this.connsMtx.Unlock()
 	for i := 0; i < len(this.conns); i++ {
@@ -64,21 +64,21 @@ func(this *SrsServer) RemoveConn(c *SrsRtmpConn) {
 	}
 }
 
-func(this *SrsServer) AddConn(c *SrsRtmpConn) error {
+func (this *SrsServer) AddConn(c *SrsRtmpConn) error {
 	this.connsMtx.Lock()
 	defer this.connsMtx.Unlock()
-	if uint32(len(this.conns) + 1) > config.GetInstance().MaxConnections {
-		return fmt.Errorf("exceed the max connections, drop client:clients=%d, max=%d", len(this.conns), config.GetInstance().MaxConnections);
+	if uint32(len(this.conns)+1) > config.GetInstance().MaxConnections {
+		return fmt.Errorf("exceed the max connections, drop client:clients=%d, max=%d", len(this.conns), config.GetInstance().MaxConnections)
 	}
 	this.conns = append(this.conns, c)
 	return nil
 }
 
 const (
-	SRS_SYS_NETWORK_RTMP_SERVER_RESOLUTION_TIMES  = 3
+	SRS_SYS_NETWORK_RTMP_SERVER_RESOLUTION_TIMES = 3
 )
 
-func(this *SrsServer) resampleKbps() {
+func (this *SrsServer) resampleKbps() {
 	stat := GetStatisticInstance()
 	this.connsMtx.Lock()
 	defer this.connsMtx.Unlock()
@@ -87,7 +87,7 @@ func(this *SrsServer) resampleKbps() {
 	}
 }
 
-func(this *SrsServer) StartProcess(port uint32) error {
+func (this *SrsServer) StartProcess(port uint32) error {
 	log.Info("starting server...")
 
 	ln, err := net.Listen("tcp", ":"+strconv.Itoa(int(port)))
@@ -103,7 +103,7 @@ func(this *SrsServer) StartProcess(port uint32) error {
 
 	go func() {
 		for {
-			time.Sleep(time.Second*2)
+			time.Sleep(time.Second * 2)
 			runtime.GC()
 			utils.TraceMemStats()
 		}
@@ -113,7 +113,7 @@ func(this *SrsServer) StartProcess(port uint32) error {
 	// start network rtmp server resolution times
 	go func() {
 		for {
-			time.Sleep(time.Second*SRS_SYS_NETWORK_RTMP_SERVER_RESOLUTION_TIMES)
+			time.Sleep(time.Second * SRS_SYS_NETWORK_RTMP_SERVER_RESOLUTION_TIMES)
 			this.resampleKbps()
 		}
 	}()
@@ -126,7 +126,7 @@ func(this *SrsServer) StartProcess(port uint32) error {
 	return nil
 }
 
-func(this *SrsServer) HandleConnection(conn net.Conn) {
+func (this *SrsServer) HandleConnection(conn net.Conn) {
 	rtmpConn := NewSrsRtmpConn(conn, this)
 	err := this.AddConn(rtmpConn)
 	if err != nil {
@@ -137,10 +137,10 @@ func(this *SrsServer) HandleConnection(conn net.Conn) {
 	this.RemoveConn(rtmpConn)
 }
 
-func(this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
+func (this *SrsServer) OnPublish(s *SrsSource, r *SrsRequest) error {
 	return nil
 }
-	
-func(this *SrsServer) OnUnpublish(s *SrsSource, r *SrsRequest) error {
+
+func (this *SrsServer) OnUnpublish(s *SrsSource, r *SrsRequest) error {
 	return nil
 }

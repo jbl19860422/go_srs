@@ -25,10 +25,10 @@ package amf0
 import (
 	"encoding/binary"
 	"errors"
-	"go_srs/srs/utils"
-	"reflect"
-	_ "log"
 	"fmt"
+	"go_srs/srs/utils"
+	_ "log"
+	"reflect"
 )
 
 type SrsAmf0EcmaArray struct {
@@ -97,7 +97,7 @@ func (this *SrsAmf0EcmaArray) Decode(stream *utils.SrsStream) error {
 		if err != nil {
 			return err
 		}
-		
+
 		marker, err := stream.PeekByte()
 		if err != nil {
 			return err

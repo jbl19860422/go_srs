@@ -24,13 +24,13 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"sync"
 	"errors"
-	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/codec/flv"
-	"go_srs/srs/protocol/packet"
 	"go_srs/srs/global"
+	"go_srs/srs/protocol/packet"
+	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/utils"
+	"sync"
 )
 
 type ISrsSourceHandler interface {
@@ -43,26 +43,26 @@ type SrsSHRequester interface {
 }
 
 type SrsSource struct {
-	source_id 		int64
-	handler 		ISrsSourceHandler
-	conn			*SrsRtmpConn
-	rtmp			*rtmp.SrsRtmpServer
-	req 			*SrsRequest
+	source_id int64
+	handler   ISrsSourceHandler
+	conn      *SrsRtmpConn
+	rtmp      *rtmp.SrsRtmpServer
+	req       *SrsRequest
 
-	consumersMtx 	sync.Mutex
-	consumers 		[]Consumer
-	gopCache		*SrsGopCache
-	cacheSHVideo 	*rtmp.SrsRtmpMessage
-	cacheSHAudio 	*rtmp.SrsRtmpMessage
-	cacheMetaData 	*rtmp.SrsRtmpMessage
+	consumersMtx  sync.Mutex
+	consumers     []Consumer
+	gopCache      *SrsGopCache
+	cacheSHVideo  *rtmp.SrsRtmpMessage
+	cacheSHAudio  *rtmp.SrsRtmpMessage
+	cacheMetaData *rtmp.SrsRtmpMessage
 
 	/**
-    * atc whether atc(use absolute time and donot adjust time),
-    * directly use msg time and donot adjust if atc is true,
-    * otherwise, adjust msg time to start from 0 to make flash happy.
-    */
+	 * atc whether atc(use absolute time and donot adjust time),
+	 * directly use msg time and donot adjust if atc is true,
+	 * otherwise, adjust msg time to start from 0 to make flash happy.
+	 */
 	// TODO: FIXME: to support reload atc.
-	atc 			bool
+	atc             bool
 	jitterAlgorithm *SrsRtmpJitterAlgorithm
 }
 
@@ -75,19 +75,19 @@ func init() {
 
 func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource {
 	source := &SrsSource{
-		source_id:c.id,
-		req:r,
-		conn:c,
-		handler:h,
-		rtmp:c.rtmp,
-		gopCache:NewSrsGopCache(),
-		atc:false,
+		source_id: c.id,
+		req:       r,
+		conn:      c,
+		handler:   h,
+		rtmp:      c.rtmp,
+		gopCache:  NewSrsGopCache(),
+		atc:       false,
 	}
 
 	dvrConsumer := NewSrsDvrConsumer(source, r)
 	if dvrConsumer != nil {
 		source.AppendConsumer(dvrConsumer)
-		go func(){
+		go func() {
 			dvrConsumer.ConsumeCycle()
 		}()
 	}
@@ -95,7 +95,7 @@ func NewSrsSource(c *SrsRtmpConn, r *SrsRequest, h ISrsSourceHandler) *SrsSource
 	hlsConsumer := NewSrsHlsConsumer(source, r)
 	if dvrConsumer != nil {
 		source.AppendConsumer(hlsConsumer)
-		go func(){
+		go func() {
 			hlsConsumer.ConsumeCycle()
 		}()
 	}
@@ -108,7 +108,7 @@ func RemoveSrsSource(s *SrsSource) {
 	defer sourcePoolMtx.Unlock()
 	for k, v := range sourcePool {
 		if v == s {
-			delete(sourcePool,k)
+			delete(sourcePool, k)
 		}
 	}
 }
@@ -144,9 +144,9 @@ func FetchSource(r *SrsRequest) *SrsSource {
 	}
 
 	//TODO
-	// we always update the request of resource, 
-    // for origin auth is on, the token in request maybe invalid,
-    // and we only need to update the token of request, it's simple.
+	// we always update the request of resource,
+	// for origin auth is on, the token in request maybe invalid,
+	// and we only need to update the token of request, it's simple.
 	//source->req->update_auth(r)
 	return source
 }
@@ -167,7 +167,6 @@ func (this *SrsSource) OnRequestSH(requester SrsSHRequester) error {
 	requester.GetSH(this.cacheMetaData, this.cacheSHAudio, this.cacheSHVideo)
 	return nil
 }
-
 
 func (this *SrsSource) on_dvr_request_sh() error {
 	//if this.cacheMetaData != nil {
@@ -259,29 +258,29 @@ func (this *SrsSource) OnVideo(msg *rtmp.SrsRtmpMessage) error {
 }
 
 func (this *SrsSource) OnMetaData(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMetaDataPacket) error {
-    // SrsAmf0Any* prop = NULL;
-	
+	// SrsAmf0Any* prop = NULL;
+
 	//todo
-    // when exists the duration, remove it to make ExoPlayer happy.
-    // if (metadata->metadata->get_property("duration") != NULL) {
-    //     metadata->metadata->remove("duration");
-    // }
-    
-    // generate metadata info to print
-    // std::stringstream ss;
-    // if ((prop = metadata->metadata->ensure_property_number("width")) != NULL) {
-    //     ss << ", width=" << (int)prop->to_number();
-    // }
-    // if ((prop = metadata->metadata->ensure_property_number("height")) != NULL) {
-    //     ss << ", height=" << (int)prop->to_number();
-    // }
-    // if ((prop = metadata->metadata->ensure_property_number("videocodecid")) != NULL) {
-    //     ss << ", vcodec=" << (int)prop->to_number();
-    // }
-    // if ((prop = metadata->metadata->ensure_property_number("audiocodecid")) != NULL) {
-    //     ss << ", acodec=" << (int)prop->to_number();
-    // }
-    // srs_trace("got metadata%s", ss.str().c_str());
+	// when exists the duration, remove it to make ExoPlayer happy.
+	// if (metadata->metadata->get_property("duration") != NULL) {
+	//     metadata->metadata->remove("duration");
+	// }
+
+	// generate metadata info to print
+	// std::stringstream ss;
+	// if ((prop = metadata->metadata->ensure_property_number("width")) != NULL) {
+	//     ss << ", width=" << (int)prop->to_number();
+	// }
+	// if ((prop = metadata->metadata->ensure_property_number("height")) != NULL) {
+	//     ss << ", height=" << (int)prop->to_number();
+	// }
+	// if ((prop = metadata->metadata->ensure_property_number("videocodecid")) != NULL) {
+	//     ss << ", vcodec=" << (int)prop->to_number();
+	// }
+	// if ((prop = metadata->metadata->ensure_property_number("audiocodecid")) != NULL) {
+	//     ss << ", acodec=" << (int)prop->to_number();
+	// }
+	// srs_trace("got metadata%s", ss.str().c_str());
 	var width float64
 	_ = pkt.Get("width", &width)
 	pkt.Set("server", global.RTMP_SIG_SRS_SERVER)
@@ -290,25 +289,25 @@ func (this *SrsSource) OnMetaData(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMet
 	// version, for example, 1.0.0
 	// add version to metadata, please donot remove it, for debug.
 	pkt.Set("server_version", global.RTMP_SIG_SRS_VERSION)
-	
+
 	// if allow atc_auto and bravo-atc detected, open atc for vhost.
 	//todo
-    // atc = _srs_config->get_atc(_req->vhost);
-    // if (_srs_config->get_atc_auto(_req->vhost)) {
-    //     if ((prop = metadata->metadata->get_property("bravo_atc")) != NULL) {
-    //         if (prop->is_string() && prop->to_str() == "true") {
-    //             atc = true;
-    //         }
-    //     }
-    // }
-    
+	// atc = _srs_config->get_atc(_req->vhost);
+	// if (_srs_config->get_atc_auto(_req->vhost)) {
+	//     if ((prop = metadata->metadata->get_property("bravo_atc")) != NULL) {
+	//         if (prop->is_string() && prop->to_str() == "true") {
+	//             atc = true;
+	//         }
+	//     }
+	// }
+
 	// encode the metadata to payload
 	d := make([]byte, 0)
 	stream := utils.NewSrsStream(d)
 	if err := pkt.Encode(stream); err != nil {
 		return err
 	}
-	
+
 	//this.cacheMetaData = rtmp.NewSrsRtmpMessage()
 	//this.cacheMetaData.SetHeader(*(msg.GetHeader()))
 	//
@@ -321,14 +320,14 @@ func (this *SrsSource) OnMetaData(msg *rtmp.SrsRtmpMessage, pkt *packet.SrsOnMet
 	}
 
 	//if err := this.dvr.OnMetaData(msg); err != nil {
-		//return err
-    //}
-    return nil
+	//return err
+	//}
+	return nil
 }
 
 //TODO
 func (this *SrsSource) SetCache(cache bool) {
-	
+
 }
 
 /**
@@ -337,7 +336,7 @@ func (this *SrsSource) SetCache(cache bool) {
 * @param ds, whether dumps the sequence header.
 * @param dm, whether dumps the metadata.
 * @param dg, whether dumps the gop cache.
-*/
+ */
 func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bool) Consumer {
 	this.consumersMtx.Lock()
 	consumer := NewSrsConsumer(this, conn)
@@ -356,7 +355,7 @@ func (this *SrsSource) CreateConsumer(conn *SrsRtmpConn, ds bool, dm bool, db bo
 	if this.cacheSHVideo != nil {
 		consumer.Enqueue(this.cacheSHVideo, false, this.jitterAlgorithm)
 	}
-	
+
 	if this.cacheSHAudio != nil {
 		consumer.Enqueue(this.cacheSHAudio, false, this.jitterAlgorithm)
 	}
@@ -377,7 +376,7 @@ func (this *SrsSource) AppendConsumer(consumer Consumer) error {
 	//todo copy meta data
 	//todo cppy sequence header
 	//todo copy gop to consumers queue
-	//many things todo 
+	//many things todo
 	if this.cacheMetaData != nil {
 		consumer.Enqueue(this.cacheMetaData, false, this.jitterAlgorithm)
 	}
@@ -385,7 +384,7 @@ func (this *SrsSource) AppendConsumer(consumer Consumer) error {
 	if this.cacheSHVideo != nil {
 		consumer.Enqueue(this.cacheSHVideo, false, this.jitterAlgorithm)
 	}
-	
+
 	if this.cacheSHAudio != nil {
 		consumer.Enqueue(this.cacheSHAudio, false, this.jitterAlgorithm)
 	}
@@ -396,7 +395,7 @@ func (this *SrsSource) AppendConsumer(consumer Consumer) error {
 	return nil
 }
 
-func(this *SrsSource) OnConsumerError(consumer Consumer) {
+func (this *SrsSource) OnConsumerError(consumer Consumer) {
 	this.RemoveConsumer(consumer)
 }
 

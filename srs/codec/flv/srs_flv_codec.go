@@ -23,11 +23,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package flvcodec
 
 import (
-	"io"
 	"encoding/binary"
 	"go_srs/srs/codec"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/utils"
+	"io"
 )
 
 func VideoIsKeyFrame(data []byte) bool {
@@ -104,23 +104,22 @@ func VideoIsAcceptable(data []byte) bool {
 	return true
 }
 
-
 const (
-	AudioTagType	=	0x08
-	VideoTagType	= 	0x09
-	MetaDataTagType	= 	0x18
+	AudioTagType    = 0x08
+	VideoTagType    = 0x09
+	MetaDataTagType = 0x18
 )
 
 const (
-	SRS_FLV_TAG_HEADER_SIZE = 11
+	SRS_FLV_TAG_HEADER_SIZE   = 11
 	SRS_FLV_PREVIOUS_TAG_SIZE = 4
 )
 
 type SrsFlvHeader struct {
-	signature 	[]byte  //FLV
-	version		byte
-	flags		byte	//第0位和第2位,分别表示 audio 与 video 存在的情况.(1表示存在,0表示不存在)。
-	headerSize	[]byte	//即自身的总长度，一直为9, 4字节
+	signature  []byte //FLV
+	version    byte
+	flags      byte   //第0位和第2位,分别表示 audio 与 video 存在的情况.(1表示存在,0表示不存在)。
+	headerSize []byte //即自身的总长度，一直为9, 4字节
 }
 
 func NewSrsFlvHeader(hasAudio bool, hasVideo bool) *SrsFlvHeader {
@@ -135,10 +134,10 @@ func NewSrsFlvHeader(hasAudio bool, hasVideo bool) *SrsFlvHeader {
 
 	h := utils.Int32ToBytes(0x09, binary.BigEndian)
 	return &SrsFlvHeader{
-		signature:[]byte{'F','L','V'},
-		version:0x01,
-		flags:f,
-		headerSize:h,
+		signature:  []byte{'F', 'L', 'V'},
+		version:    0x01,
+		flags:      f,
+		headerSize: h,
 	}
 }
 
@@ -152,22 +151,22 @@ func (this *SrsFlvHeader) Data() []byte {
 }
 
 type TagHeader struct {
-	tagType		byte
-	dataSize	[]byte //3byte
-	timestamp	[]byte	//4byte
-	reserved	[]byte	//全0
+	tagType   byte
+	dataSize  []byte //3byte
+	timestamp []byte //4byte
+	reserved  []byte //全0
 }
 
 func NewTagHeader(typ byte, timestamp uint32, dataSize int32) *TagHeader {
 	timestamp &= 0x7fffffff
 	s := utils.Int32ToBytes(dataSize, binary.BigEndian)
 	t := utils.UInt32ToBytes(timestamp, binary.BigEndian)[1:]
-	t = append(t, byte((timestamp >> 24) & 0xFF))
+	t = append(t, byte((timestamp>>24)&0xFF))
 	return &TagHeader{
-		tagType:typ, 
-		dataSize:s[1:4],
-		timestamp:t,
-		reserved:[]byte{0,0,0},
+		tagType:   typ,
+		dataSize:  s[1:4],
+		timestamp: t,
+		reserved:  []byte{0, 0, 0},
 	}
 }
 
@@ -181,16 +180,16 @@ func (this *TagHeader) Data() []byte {
 }
 
 type SrsFlvEncoder struct {
-	header 			*SrsFlvHeader
-	writer 			io.Writer
-	tagCount		int32
+	header   *SrsFlvHeader
+	writer   io.Writer
+	tagCount int32
 }
 
 func NewSrsFlvEncoder(w io.Writer) *SrsFlvEncoder {
 	return &SrsFlvEncoder{
-		writer:w,
-		header:NewSrsFlvHeader(true, true),
-		tagCount:0,
+		writer:   w,
+		header:   NewSrsFlvHeader(true, true),
+		tagCount: 0,
 	}
 }
 
@@ -239,7 +238,7 @@ func (this *SrsFlvEncoder) WriteTags(msgs []*rtmp.SrsRtmpMessage) error {
 	for i := 0; i < len(msgs); i++ {
 		if msgs[i].GetHeader().IsAudio() {
 			_, _ = this.WriteAudio(uint32(msgs[i].GetHeader().GetTimestamp()), msgs[i].GetPayload())
-		} else if(msgs[i].GetHeader().IsVideo()) {
+		} else if msgs[i].GetHeader().IsVideo() {
 			_, _ = this.WriteVideo(uint32(msgs[i].GetHeader().GetTimestamp()), msgs[i].GetPayload())
 		} else {
 			_, _ = this.WriteMetaData(msgs[i].GetPayload())

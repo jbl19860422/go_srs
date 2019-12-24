@@ -1,4 +1,3 @@
-
 /*
 The MIT License (MIT)
 
@@ -28,6 +27,7 @@ import (
 	"errors"
 	"math"
 )
+
 type SrsBitStream struct {
 	data    []byte
 	currBit uint32
@@ -65,18 +65,18 @@ func (this *SrsBitStream) ReadUEV() (int32, error) {
 	}
 	// 哥伦布熵编码解码
 	// ue(v) in 9.1 Parsing process for Exp-Golomb codes
-    // H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 227.
-    // Syntax elements coded as ue(v), me(v), or se(v) are Exp-Golomb-coded.
-    //      leadingZeroBits = -1;
-    //      for( b = 0; !b; leadingZeroBits++ )
-    //          b = read_bits( 1 )
-    // The variable codeNum is then assigned as follows:
+	// H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 227.
+	// Syntax elements coded as ue(v), me(v), or se(v) are Exp-Golomb-coded.
+	//      leadingZeroBits = -1;
+	//      for( b = 0; !b; leadingZeroBits++ )
+	//          b = read_bits( 1 )
+	// The variable codeNum is then assigned as follows:
 	//      codeNum = (2<<leadingZeroBits) - 1 + read_bits( leadingZeroBits )
-	
+
 	var leadingZeroBits int = -1
 	var b int8 = 0
 	var err error
-	
+
 	for b = 0; b == 0 && !this.Empty(); leadingZeroBits++ {
 		b, err = this.ReadBit()
 		if err != nil {
@@ -95,7 +95,7 @@ func (this *SrsBitStream) ReadUEV() (int32, error) {
 		if err != nil {
 			return -1, err
 		}
-		v += int32(b) << uint(leadingZeroBits - 1 - i)
+		v += int32(b) << uint(leadingZeroBits-1-i)
 	}
 	return v, nil
 }
@@ -108,9 +108,9 @@ func (this *SrsBitStream) ReadSEV() (int32, error) {
 	// H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 229
 	//(−1)k+1 Ceil( k÷2 )
 	var v int32 = 0
-	v = int32(math.Ceil(float64(codeNum)/2))
+	v = int32(math.Ceil(float64(codeNum) / 2))
 	if codeNum%2 == 0 {
-		v = (-1)*v
+		v = (-1) * v
 	}
 	return v, nil
 }

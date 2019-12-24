@@ -24,31 +24,31 @@ package rtmp
 
 import (
 	_ "context"
+	"go_srs/srs/global"
+	"go_srs/srs/protocol/amf0"
+	"go_srs/srs/protocol/packet"
+	"go_srs/srs/protocol/skt"
 	_ "log"
 	_ "net/url"
 	_ "strings"
 	_ "time"
-	"go_srs/srs/protocol/skt"
-	"go_srs/srs/protocol/packet"
-	"go_srs/srs/protocol/amf0"
-	"go_srs/srs/global"
 )
 
 type SrsRtmpServer struct {
-	io   			*skt.SrsIOReadWriter
-	Protocol    	*SrsProtocol
-	HandShaker  	*SrsSimpleHandShake
-	IOErrListener 	skt.SrsIOErrListener
+	io            *skt.SrsIOReadWriter
+	Protocol      *SrsProtocol
+	HandShaker    *SrsSimpleHandShake
+	IOErrListener skt.SrsIOErrListener
 }
 
 func NewSrsRtmpServer(io *skt.SrsIOReadWriter, listener skt.SrsIOErrListener) *SrsRtmpServer {
 	//io_ := skt.NewSrsIOReadWriter(conn)
 	//io_ = io
 	return &SrsRtmpServer{
-		io: io,
-		Protocol: NewSrsProtocol(io),
-		HandShaker: NewSrsSimpleHandShake(io),
-		IOErrListener:listener,
+		io:            io,
+		Protocol:      NewSrsProtocol(io),
+		HandShaker:    NewSrsSimpleHandShake(io),
+		IOErrListener: listener,
 	}
 }
 
@@ -107,19 +107,22 @@ func (this *SrsRtmpServer) IdentifyClient(streamId int) (SrsRtmpConnType, string
 
 		pkt, err := this.Protocol.DecodeMessage(msg)
 		switch pkt.(type) {
-			//todo
-			case *packet.SrsCreateStreamPacket: {
+		//todo
+		case *packet.SrsCreateStreamPacket:
+			{
 				typ, streamname, duration, err = this.identifyCreateStreamClient(pkt.(*packet.SrsCreateStreamPacket), streamId)
 				return typ, streamname, duration, err
 			}
-			case *packet.SrsFMLEStartPacket: {
+		case *packet.SrsFMLEStartPacket:
+			{
 				typ, streamname, err = this.identifyFmlePublishClient(pkt.(*packet.SrsFMLEStartPacket))
 				if err != nil {
 					return typ, streamname, 0, nil
 				}
 				return typ, streamname, 0, nil
 			}
-			case *packet.SrsPlayPacket:{
+		case *packet.SrsPlayPacket:
+			{
 				typ, streamname, duration, err = this.identifyPlayclient(pkt.(*packet.SrsPlayPacket))
 				return typ, streamname, duration, err
 			}
@@ -156,15 +159,18 @@ func (this *SrsRtmpServer) identifyCreateStreamClient(req *packet.SrsCreateStrea
 
 		pkt, err := this.Protocol.DecodeMessage(msg)
 		switch pkt.(type) {
-			case *packet.SrsPlayPacket:{
+		case *packet.SrsPlayPacket:
+			{
 				typ, streamname, duration, err = this.identifyPlayclient(pkt.(*packet.SrsPlayPacket))
 				return typ, streamname, duration, err
 			}
-			case *packet.SrsCreateStreamPacket: {
+		case *packet.SrsCreateStreamPacket:
+			{
 				typ, streamname, duration, err = this.identifyCreateStreamClient(pkt.(*packet.SrsCreateStreamPacket), streamId)
 				return typ, streamname, duration, err
 			}
-			case *packet.SrsFMLEStartPacket: {
+		case *packet.SrsFMLEStartPacket:
+			{
 				typ, streamname, err = this.identifyFmlePublishClient(pkt.(*packet.SrsFMLEStartPacket))
 				if err != nil {
 					return typ, streamname, 0, nil
@@ -181,7 +187,7 @@ func (this *SrsRtmpServer) identifyCreateStreamClient(req *packet.SrsCreateStrea
 }
 
 func (this *SrsRtmpServer) identifyPlayclient(pkt *packet.SrsPlayPacket) (SrsRtmpConnType, string, float64, error) {
-	return SrsRtmpConnPlay, pkt.StreamName.GetValue().(string), pkt.Duration.GetValue().(float64),nil
+	return SrsRtmpConnPlay, pkt.StreamName.GetValue().(string), pkt.Duration.GetValue().(float64), nil
 }
 
 func (this *SrsRtmpServer) SendMsg(msg *SrsRtmpMessage, streamId int) error {
@@ -201,7 +207,7 @@ func (this *SrsRtmpServer) identifyFmlePublishClient(req *packet.SrsFMLEStartPac
 }
 
 func (this *SrsRtmpServer) StartPlay(streamId int) error {
-	 // StreamBegin
+	// StreamBegin
 	pkt := packet.NewSrsUserControlPacket()
 	pkt.EventType = global.SrcPCUCStreamBegin
 	pkt.EventData = int32(streamId)
@@ -217,7 +223,7 @@ func (this *SrsRtmpServer) StartPlay(streamId int) error {
 	callPkt.Data.Set(global.StatusDescription, "Playing and resetting stream.")
 	callPkt.Data.Set(global.StatusDetails, "stream")
 	callPkt.Data.Set(global.StatusClientId, global.RTMP_SIG_CLIENT_ID)
-	
+
 	err = this.Protocol.SendPacket(callPkt, int32(streamId))
 	if err != nil {
 		return err
@@ -236,7 +242,7 @@ func (this *SrsRtmpServer) StartPlay(streamId int) error {
 		return err
 	}
 	// allow audio/video sample.
-    // @see: https://github.com/ossrs/srs/issues/49
+	// @see: https://github.com/ossrs/srs/issues/49
 	samplePkt := packet.NewSrsSampleAccessPacket()
 	samplePkt.VideoSampleAccess.Value = true
 	samplePkt.AudioSampleAccess.Value = true
@@ -293,21 +299,21 @@ func (this *SrsRtmpServer) ResponseConnectApp(objectEncoding float64) error {
 
 	data := amf0.NewSrsAmf0EcmaArray()
 	data.Set("version", global.RTMP_SIG_FMS_VER)
-    data.Set("srs_sig", global.RTMP_SIG_SRS_KEY)
-    data.Set("srs_server", global.RTMP_SIG_SRS_SERVER)
-    data.Set("srs_license", global.RTMP_SIG_SRS_LICENSE)
-    data.Set("srs_role", global.RTMP_SIG_SRS_ROLE)
-    data.Set("srs_url", global.RTMP_SIG_SRS_URL)
-    data.Set("srs_version", global.RTMP_SIG_SRS_VERSION)
-    data.Set("srs_site", global.RTMP_SIG_SRS_WEB)
-    data.Set("srs_email", global.RTMP_SIG_SRS_EMAIL)
-    data.Set("srs_copyright", global.RTMP_SIG_SRS_COPYRIGHT)
-    data.Set("srs_primary", global.RTMP_SIG_SRS_PRIMARY)
+	data.Set("srs_sig", global.RTMP_SIG_SRS_KEY)
+	data.Set("srs_server", global.RTMP_SIG_SRS_SERVER)
+	data.Set("srs_license", global.RTMP_SIG_SRS_LICENSE)
+	data.Set("srs_role", global.RTMP_SIG_SRS_ROLE)
+	data.Set("srs_url", global.RTMP_SIG_SRS_URL)
+	data.Set("srs_version", global.RTMP_SIG_SRS_VERSION)
+	data.Set("srs_site", global.RTMP_SIG_SRS_WEB)
+	data.Set("srs_email", global.RTMP_SIG_SRS_EMAIL)
+	data.Set("srs_copyright", global.RTMP_SIG_SRS_COPYRIGHT)
+	data.Set("srs_primary", global.RTMP_SIG_SRS_PRIMARY)
 	data.Set("srs_authors", global.RTMP_SIG_SRS_AUTHROS)
-	data.Set("srs_pid", float64(12345));
-    data.Set("srs_id", float64(12345));
+	data.Set("srs_pid", float64(12345))
+	data.Set("srs_id", float64(12345))
 	pkt.Info.Set("data", data)
-	
+
 	err := this.Protocol.SendPacket(pkt, 0)
 	return err
 }

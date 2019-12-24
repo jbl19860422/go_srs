@@ -73,5 +73,5 @@ type SrsValuePair struct {
 	Value ISrsAmf0Any
 }
 
-const SRS_CONSTS_RTMP_SET_DATAFRAME  = "@setDataFrame"
+const SRS_CONSTS_RTMP_SET_DATAFRAME = "@setDataFrame"
 const SRS_CONSTS_RTMP_ON_METADATA = "onMetaData"

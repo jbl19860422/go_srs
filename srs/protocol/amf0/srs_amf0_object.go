@@ -203,5 +203,3 @@ func (this *SrsAmf0Object) Get(name string, pval interface{}) error {
 func (this *SrsAmf0Object) GetValue() interface{} {
 	return this.Properties
 }
-
-

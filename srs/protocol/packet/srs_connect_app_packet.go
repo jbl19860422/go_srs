@@ -25,24 +25,24 @@ package packet
 import (
 	"errors"
 	// "log"
+	"go_srs/srs/global"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
-	"go_srs/srs/global"
 )
 
 type SrsConnectAppPacket struct {
-	CommandName 	amf0.SrsAmf0String
-	TransactionId 	amf0.SrsAmf0Number
-	CommandObj 		*amf0.SrsAmf0Object
-	Args 			*amf0.SrsAmf0Object
+	CommandName   amf0.SrsAmf0String
+	TransactionId amf0.SrsAmf0Number
+	CommandObj    *amf0.SrsAmf0Object
+	Args          *amf0.SrsAmf0Object
 }
 
 func NewSrsConnectAppPacket() *SrsConnectAppPacket {
 	return &SrsConnectAppPacket{
-		CommandName: amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:amf0.RTMP_AMF0_COMMAND_CONNECT}},
-		TransactionId: amf0.SrsAmf0Number{Value:1},
-		CommandObj: amf0.NewSrsAmf0Object(),
-		Args: nil,
+		CommandName:   amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_COMMAND_CONNECT}},
+		TransactionId: amf0.SrsAmf0Number{Value: 1},
+		CommandObj:    amf0.NewSrsAmf0Object(),
+		Args:          nil,
 	}
 }
 

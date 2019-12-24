@@ -30,7 +30,7 @@ import (
 type SrsTsPacket struct {
 	tsHeader        *SrsTsHeader
 	adaptationField *SrsTsAdapationField
-	payload		[]byte
+	payload         []byte
 }
 
 func NewSrsTsPacket() *SrsTsPacket {
@@ -44,7 +44,7 @@ func (this *SrsTsPacket) Decode(stream *utils.SrsStream) error {
 }
 
 func (this *SrsTsPacket) Encode(stream *utils.SrsStream) {
-	this.tsHeader.Encode(stream)//4
+	this.tsHeader.Encode(stream) //4
 	if this.tsHeader.adaptationFieldControl == SrsTsAdapationControlFieldOnly || this.tsHeader.adaptationFieldControl == SrsTsAdapationControlBoth {
 		this.adaptationField.Encode(stream)
 	}

@@ -22,6 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 package app
+
 //discuss @iso13818-1.pdf, page 61
 import (
 	"encoding/binary"
@@ -61,7 +62,7 @@ func NewSrsTsPayloadPATProgram(program_number int16, p int16) *SrsTsPayloadPATPr
 
 func (this *SrsTsPayloadPATProgram) Encode(stream *utils.SrsStream) {
 	var tmpv int32 = int32(this.pid) & 0x1FFF
-    tmpv |= int32((uint32(this.number) << 16) & 0xFFFF0000)
+	tmpv |= int32((uint32(this.number) << 16) & 0xFFFF0000)
 	tmpv |= (int32(this.const1Value) << 13) & 0xE000
 	stream.WriteInt32(tmpv, binary.BigEndian)
 }
@@ -158,26 +159,26 @@ func CreatePAT(context *SrsTsContext, pmt_number int16, pmt_pid int16) *SrsTsPac
 }
 
 func (this *SrsTsPayloadPAT) Encode(stream *utils.SrsStream) {
-	s := utils.NewSrsStream([]byte{})//3
-	this.psiHeader.Encode(s) //5
+	s := utils.NewSrsStream([]byte{}) //3
+	this.psiHeader.Encode(s)          //5
 	s.WriteInt16(this.transportStreamId, binary.BigEndian)
 	this.const1Value0 = 0x03
 	var b byte = 0
 	b |= byte(this.currentNextIndicator & 0x01)
 	b |= byte((this.versionNumber << 1) & 0x3e)
-	b |= byte(this.const1Value0 << 6) & 0xC0
+	b |= byte(this.const1Value0<<6) & 0xC0
 	s.WriteByte(b)
 
 	s.WriteByte(byte(this.sectionNumber))
-	s.WriteByte(byte(this.lastSectionNumber))//5
+	s.WriteByte(byte(this.lastSectionNumber)) //5
 	for i := 0; i < len(this.programs); i++ {
-		this.programs[i].Encode(s)//4
+		this.programs[i].Encode(s) //4
 	}
 
 	CRC32 := utils.MpegtsCRC32(s.Data()[1:])
-	s.WriteInt32(int32(CRC32), binary.BigEndian)//4
+	s.WriteInt32(int32(CRC32), binary.BigEndian) //4
 	stream.WriteBytes(s.Data())
-	if len(stream.Data()) + 4 < 188 {
+	if len(stream.Data())+4 < 188 {
 		i := 188 - len(stream.Data()) - 4
 		for j := 0; j < i; j++ {
 			stream.WriteByte(0xff)

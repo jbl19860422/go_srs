@@ -28,8 +28,6 @@ type SrsResponse struct {
 
 func NewSrsResponse(sid int) *SrsResponse {
 	return &SrsResponse{
-		StreamId:sid,
+		StreamId: sid,
 	}
 }
-
-

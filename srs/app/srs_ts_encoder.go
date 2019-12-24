@@ -24,20 +24,20 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"io"
-	"go_srs/srs/codec"
 	"errors"
 	"fmt"
+	"go_srs/srs/codec"
+	"io"
 )
 
 type SrsTsEncoder struct {
-	codec 	*SrsAvcAacCodec
-	sampler	*SrsCodecSampler
-	tsCache	*SrsTsCache
+	codec   *SrsAvcAacCodec
+	sampler *SrsCodecSampler
+	tsCache *SrsTsCache
 	context *SrsTsContext
-	muxer 	*SrsTsMuxer
+	muxer   *SrsTsMuxer
 
-	writer	io.Writer
+	writer io.Writer
 }
 
 func NewSrsTsEncoder(w io.Writer) *SrsTsEncoder {
@@ -47,12 +47,12 @@ func NewSrsTsEncoder(w io.Writer) *SrsTsEncoder {
 	context := NewSrsTsContext()
 	m := NewSrsTsMuxer(w, context, codec.SrsCodecAudioAAC, codec.SrsCodecVideoAVC)
 	return &SrsTsEncoder{
-		codec:c,
-		sampler:s,
-		tsCache:cache,
-		context:context,
-		writer:w,
-		muxer:m,
+		codec:   c,
+		sampler: s,
+		tsCache: cache,
+		context: context,
+		writer:  w,
+		muxer:   m,
 	}
 }
 
@@ -78,7 +78,7 @@ func (this *SrsTsEncoder) WriteAudio(timestamp uint32, data []byte) (uint32, err
 
 	this.muxer.UpdateACodec(acodec)
 	if acodec == codec.SrsCodecAudioAAC && this.sampler.AacPacketType == codec.SrsCodecAudioTypeSequenceHeader {
-		return 0, nil	//ignore aac sequence header
+		return 0, nil //ignore aac sequence header
 	}
 
 	dts := int64(timestamp * 90)
@@ -103,7 +103,7 @@ func (this *SrsTsEncoder) WriteVideo(timestamp uint32, data []byte) (uint32, err
 		return 0, nil
 	}
 
-	if (this.codec.videoCodecId != codec.SrsCodecVideoAVC) {
+	if this.codec.videoCodecId != codec.SrsCodecVideoAVC {
 		return 0, nil
 	}
 

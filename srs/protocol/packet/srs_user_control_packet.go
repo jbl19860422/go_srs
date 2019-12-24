@@ -21,7 +21,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package packet
- 
+
 import (
 	"encoding/binary"
 	"go_srs/srs/global"
@@ -197,11 +197,10 @@ func (this *SrsUserControlPacket) Encode(stream *utils.SrsStream) error {
 	return nil
 }
 
-
 func (this *SrsUserControlPacket) GetPreferCid() int32 {
-    return global.RTMP_CID_ProtocolControl
+	return global.RTMP_CID_ProtocolControl
 }
 
 func (this *SrsUserControlPacket) GetMessageType() int8 {
-    return global.RTMP_MSG_UserControlMessage
+	return global.RTMP_MSG_UserControlMessage
 }

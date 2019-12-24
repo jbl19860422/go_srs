@@ -24,8 +24,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"go_srs/srs/protocol/rtmp"
 	log "github.com/sirupsen/logrus"
+	"go_srs/srs/protocol/rtmp"
 )
 
 type ISrsMessageHandler interface {

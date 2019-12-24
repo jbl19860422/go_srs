@@ -24,22 +24,22 @@ package packet
 
 import (
 	_ "errors"
-	_ "log"
+	"go_srs/srs/global"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
-	"go_srs/srs/global"
+	_ "log"
 )
 
 type SrsFMLEStartPacket struct {
-	CommandName		amf0.SrsAmf0String
-	TransactionId 	amf0.SrsAmf0Number
-	StreamName    	amf0.SrsAmf0String
-	NullObj			amf0.SrsAmf0Null
+	CommandName   amf0.SrsAmf0String
+	TransactionId amf0.SrsAmf0Number
+	StreamName    amf0.SrsAmf0String
+	NullObj       amf0.SrsAmf0Null
 }
 
 func NewSrsFMLEStartPacket(name string) *SrsFMLEStartPacket {
 	return &SrsFMLEStartPacket{
-		CommandName: amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:name}},
+		CommandName: amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: name}},
 	}
 }
 

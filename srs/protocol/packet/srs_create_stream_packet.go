@@ -22,21 +22,22 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package packet
 
-import(
-	"go_srs/srs/utils"
-	"go_srs/srs/protocol/amf0"
+import (
 	"go_srs/srs/global"
+	"go_srs/srs/protocol/amf0"
+	"go_srs/srs/utils"
 )
+
 type SrsCreateStreamPacket struct {
 	CommandName   amf0.SrsAmf0String
 	TransactionId amf0.SrsAmf0Number
 	CommandObj    *amf0.SrsAmf0Object
-	NullObj		  amf0.SrsAmf0Null
+	NullObj       amf0.SrsAmf0Null
 }
 
 func NewSrsCreateStreamPacket() *SrsCreateStreamPacket {
 	return &SrsCreateStreamPacket{
-		CommandName: amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:amf0.RTMP_AMF0_COMMAND_CREATE_STREAM}},
+		CommandName: amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_COMMAND_CREATE_STREAM}},
 		CommandObj:  amf0.NewSrsAmf0Object(),
 	}
 }

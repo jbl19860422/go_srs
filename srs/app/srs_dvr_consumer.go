@@ -27,10 +27,10 @@ import (
 )
 
 type SrsDvrConsumer struct {
-	source          *SrsSource
-	req 			*SrsRequest
-	queue           *SrsMessageQueue
-	plan			SrsDvrPlan
+	source *SrsSource
+	req    *SrsRequest
+	queue  *SrsMessageQueue
+	plan   SrsDvrPlan
 }
 
 func NewSrsDvrConsumer(s *SrsSource, req *SrsRequest) *SrsDvrConsumer {
@@ -39,9 +39,9 @@ func NewSrsDvrConsumer(s *SrsSource, req *SrsRequest) *SrsDvrConsumer {
 		return nil
 	}
 	return &SrsDvrConsumer{
-		source:s,
-		plan:p,
-		queue:NewSrsMessageQueue(),
+		source: s,
+		plan:   p,
+		queue:  NewSrsMessageQueue(),
 	}
 }
 

@@ -44,9 +44,9 @@ type SrsSampleAccessPacket struct {
 
 func NewSrsSampleAccessPacket() *SrsSampleAccessPacket {
 	return &SrsSampleAccessPacket{
-		CommandName: amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_DATA_SAMPLE_ACCESS}},
-		VideoSampleAccess:amf0.SrsAmf0Boolean{Value:false},
-		AudioSampleAccess:amf0.SrsAmf0Boolean{Value:false},
+		CommandName:       amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_DATA_SAMPLE_ACCESS}},
+		VideoSampleAccess: amf0.SrsAmf0Boolean{Value: false},
+		AudioSampleAccess: amf0.SrsAmf0Boolean{Value: false},
 	}
 }
 
@@ -68,5 +68,3 @@ func (this *SrsSampleAccessPacket) Encode(stream *utils.SrsStream) error {
 	_ = this.AudioSampleAccess.Encode(stream)
 	return nil
 }
-
-

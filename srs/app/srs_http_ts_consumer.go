@@ -23,25 +23,25 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"net/http"
 	"go_srs/srs/protocol/rtmp"
+	"net/http"
 )
 
 type SrsHttpTsConsumer struct {
-	source          *SrsSource
-	queue           *SrsMessageQueue
-	StreamId		int
-	writer			http.ResponseWriter
-	tsEncoder		*SrsTsEncoder
+	source    *SrsSource
+	queue     *SrsMessageQueue
+	StreamId  int
+	writer    http.ResponseWriter
+	tsEncoder *SrsTsEncoder
 }
 
 func NewSrsHttpTsConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request) *SrsHttpTsConsumer {
 	return &SrsHttpTsConsumer{
-		source:s,
-		writer:w,
-		queue:NewSrsMessageQueue(),
-		StreamId:0,
-		tsEncoder:NewSrsTsEncoder(w),
+		source:    s,
+		writer:    w,
+		queue:     NewSrsMessageQueue(),
+		StreamId:  0,
+		tsEncoder: NewSrsTsEncoder(w),
 	}
 }
 
@@ -57,7 +57,7 @@ func (this *SrsHttpTsConsumer) ConsumeCycle() error {
 	this.tsEncoder.WriteHeader()
 	go func() {
 		notify := this.writer.(http.CloseNotifier).CloseNotify()
-		<- notify
+		<-notify
 		this.StopConsume()
 	}()
 	this.writer.Header().Set("Content-Type", "video/MP2T")

@@ -24,19 +24,20 @@ package packet
 
 import (
 	"errors"
+	"go_srs/srs/global"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
-	"go_srs/srs/global"
 	// "fmt"
 )
+
 type SrsOnMetaDataPacket struct {
-	Name 		amf0.SrsAmf0String
-	MetaData	amf0.ISrsAmf0Any
+	Name     amf0.SrsAmf0String
+	MetaData amf0.ISrsAmf0Any
 }
 
 func NewSrsOnMetaDataPacket(command string) *SrsOnMetaDataPacket {
 	return &SrsOnMetaDataPacket{
-		Name:amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:command}},
+		Name: amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: command}},
 	}
 }
 
@@ -55,17 +56,19 @@ func (this *SrsOnMetaDataPacket) Decode(stream *utils.SrsStream) error {
 			return err
 		}
 	}
-	
+
 	marker, err2 := stream.PeekByte()
 	if err2 != nil {
 		return err2
 	}
 
 	switch marker {
-		case amf0.RTMP_AMF0_Object:{
+	case amf0.RTMP_AMF0_Object:
+		{
 			this.MetaData = amf0.GenerateSrsAmf0Any(marker)
 		}
-		case amf0.RTMP_AMF0_EcmaArray:{
+	case amf0.RTMP_AMF0_EcmaArray:
+		{
 			this.MetaData = amf0.GenerateSrsAmf0Any(marker)
 		}
 	}
@@ -75,20 +78,22 @@ func (this *SrsOnMetaDataPacket) Decode(stream *utils.SrsStream) error {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
 func (this *SrsOnMetaDataPacket) Set(name string, value interface{}) error {
 	if this.MetaData == nil {
-		this.MetaData =  amf0.GenerateSrsAmf0Any(amf0.RTMP_AMF0_EcmaArray)
+		this.MetaData = amf0.GenerateSrsAmf0Any(amf0.RTMP_AMF0_EcmaArray)
 	}
 
 	switch this.MetaData.(type) {
-		case *amf0.SrsAmf0Object: {
+	case *amf0.SrsAmf0Object:
+		{
 			this.MetaData.(*amf0.SrsAmf0Object).Set(name, value)
 		}
-		case *amf0.SrsAmf0EcmaArray: {
+	case *amf0.SrsAmf0EcmaArray:
+		{
 			this.MetaData.(*amf0.SrsAmf0EcmaArray).Set(name, value)
 		}
 	}
@@ -101,10 +106,12 @@ func (this *SrsOnMetaDataPacket) Get(name string, value interface{}) error {
 	}
 
 	switch this.MetaData.(type) {
-		case *amf0.SrsAmf0Object: {
+	case *amf0.SrsAmf0Object:
+		{
 			return this.MetaData.(*amf0.SrsAmf0Object).Get(name, value)
 		}
-		case *amf0.SrsAmf0EcmaArray: {
+	case *amf0.SrsAmf0EcmaArray:
+		{
 			return this.MetaData.(*amf0.SrsAmf0EcmaArray).Get(name, value)
 		}
 	}

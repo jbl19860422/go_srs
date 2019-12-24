@@ -21,17 +21,19 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package packet
+
 import (
+	"go_srs/srs/global"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
-	"go_srs/srs/global"
 )
+
 type SrsPausePacket struct {
-	CommandName		amf0.SrsAmf0String
-	TransactionId	amf0.SrsAmf0Number
-	NullObj			amf0.SrsAmf0Null
-	IsPause			amf0.SrsAmf0Boolean
-	TimeMs			amf0.SrsAmf0Number
+	CommandName   amf0.SrsAmf0String
+	TransactionId amf0.SrsAmf0Number
+	NullObj       amf0.SrsAmf0Null
+	IsPause       amf0.SrsAmf0Boolean
+	TimeMs        amf0.SrsAmf0Number
 }
 
 func (s *SrsPausePacket) GetMessageType() int8 {

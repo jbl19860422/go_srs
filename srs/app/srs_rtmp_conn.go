@@ -23,48 +23,48 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"net"
-	"strings"
-	"net/url"
 	"errors"
-	"go_srs/srs/protocol/rtmp"
-	"go_srs/srs/protocol/packet"
-	"go_srs/srs/app/config"
-	"go_srs/srs/utils"
-	"go_srs/srs/protocol/kbps"
-	"go_srs/srs/protocol/skt"
-	"time"
 	log "github.com/sirupsen/logrus"
+	"go_srs/srs/app/config"
+	"go_srs/srs/protocol/kbps"
+	"go_srs/srs/protocol/packet"
+	"go_srs/srs/protocol/rtmp"
+	"go_srs/srs/protocol/skt"
+	"go_srs/srs/utils"
+	"net"
+	"net/url"
+	"strings"
+	"time"
 )
 
 type SrsRtmpConn struct {
-	id 						int64
-	rtmp 					*rtmp.SrsRtmpServer
-	req						*SrsRequest
-	res 					*SrsResponse
-	server					*SrsServer
-	source					*SrsSource
-	kbps 					*kbps.SrsKbps
-	clientType 				rtmp.SrsRtmpConnType
-	recvThread				*SrsRecvThread
-	exitMonitor    	chan bool
+	id          int64
+	rtmp        *rtmp.SrsRtmpServer
+	req         *SrsRequest
+	res         *SrsResponse
+	server      *SrsServer
+	source      *SrsSource
+	kbps        *kbps.SrsKbps
+	clientType  rtmp.SrsRtmpConnType
+	recvThread  *SrsRecvThread
+	exitMonitor chan bool
 	//to allow extern http api to expire the source
-	expire			chan bool
-	nb_msgs					int64
-	video_frames 			int64
-	audio_frames 			int64
+	expire       chan bool
+	nb_msgs      int64
+	video_frames int64
+	audio_frames int64
 }
 
 func NewSrsRtmpConn(c net.Conn, s *SrsServer) *SrsRtmpConn {
 	io := skt.NewSrsIOReadWriter(c)
 	rtmpConn := &SrsRtmpConn{
-		id:utils.SrsGenerateId(),
-		req:NewSrsRequest(),
-		res:NewSrsResponse(1),
-		server:s,
-		kbps:kbps.NewSrsKbps(),
-		exitMonitor:make(chan bool),
-		expire:make(chan bool),
+		id:          utils.SrsGenerateId(),
+		req:         NewSrsRequest(),
+		res:         NewSrsResponse(1),
+		server:      s,
+		kbps:        kbps.NewSrsKbps(),
+		exitMonitor: make(chan bool),
+		expire:      make(chan bool),
 	}
 	rtmpConn.kbps.SetStatisticIo(io, io)
 	rtmpConn.rtmp = rtmp.NewSrsRtmpServer(io, rtmpConn)
@@ -107,19 +107,20 @@ func (this *SrsRtmpConn) processPublishMessage(msg *rtmp.SrsRtmpMessage) error {
 	//todo fix amf0 or amf3 data
 
 	// process onMetaData
-	if (msg.GetHeader().IsAmf0Data() || msg.GetHeader().IsAmf3Data()) {
+	if msg.GetHeader().IsAmf0Data() || msg.GetHeader().IsAmf3Data() {
 		pkt, err := this.rtmp.DecodeMessage(msg)
 		if err != nil {
 			return err
 		}
 
 		switch pkt.(type) {
-		case *packet.SrsOnMetaDataPacket: {
-			err := this.source.OnMetaData(msg, pkt.(*packet.SrsOnMetaDataPacket))
-			if err != nil {
-				return err
+		case *packet.SrsOnMetaDataPacket:
+			{
+				err := this.source.OnMetaData(msg, pkt.(*packet.SrsOnMetaDataPacket))
+				if err != nil {
+					return err
+				}
 			}
-		}
 		}
 	}
 	return nil
@@ -138,7 +139,7 @@ func (this *SrsRtmpConn) Stop() {
 
 /*
 * @func：关闭连接，由底层consumer或者source调用，将导致内部socket读取接口返回错误，从而回溯
-*/
+ */
 func (this *SrsRtmpConn) Close() {
 	this.rtmp.Close()
 }
@@ -152,7 +153,7 @@ func (this *SrsRtmpConn) doCycle() error {
 	if err != nil {
 		return err
 	}
-	
+
 	err = pkt.(*packet.SrsConnectAppPacket).CommandObj.Get("tcUrl", &this.req.tcUrl)
 	if err != nil {
 		return err
@@ -252,36 +253,39 @@ func (this *SrsRtmpConn) streamServiceCycle() error {
 
 	this.clientType = this.req.typ
 
-	switch(this.req.typ) {
-	case rtmp.SrsRtmpConnPlay:{
-		if err := this.rtmp.StartPlay(this.res.StreamId); err != nil {
-			return err
-		}
+	switch this.req.typ {
+	case rtmp.SrsRtmpConnPlay:
+		{
+			if err := this.rtmp.StartPlay(this.res.StreamId); err != nil {
+				return err
+			}
 
-		if err := this.httpHooksOnPlay(); err != nil {
-			return err
-		}
-		
-		if err := this.playing(this.source); err != nil {
-			return err
-		}
+			if err := this.httpHooksOnPlay(); err != nil {
+				return err
+			}
 
-		if err := this.httpHooksOnStop(); err != nil {
-			return err
-		}
+			if err := this.playing(this.source); err != nil {
+				return err
+			}
 
-		return nil
-	}
-	case rtmp.SrsRtmpConnFMLEPublish:{
-		if err := this.rtmp.StartFmlePublish(0); err != nil {
-			return err
+			if err := this.httpHooksOnStop(); err != nil {
+				return err
+			}
+
+			return nil
 		}
-		return this.publishing(this.source)
-	}
-	default:{
-		return errors.New("invalid client type")
-	}
-	//todo SrsRtmpConnHaivisionPublish,SrsRtmpConnFlashPublish
+	case rtmp.SrsRtmpConnFMLEPublish:
+		{
+			if err := this.rtmp.StartFmlePublish(0); err != nil {
+				return err
+			}
+			return this.publishing(this.source)
+		}
+	default:
+		{
+			return errors.New("invalid client type")
+		}
+		//todo SrsRtmpConnHaivisionPublish,SrsRtmpConnFlashPublish
 	}
 	return nil
 }
@@ -314,7 +318,7 @@ func (this *SrsRtmpConn) httpHooksOnStop() error {
 	return nil
 }
 
-func (this *SrsRtmpConn) playing( source *SrsSource) error {
+func (this *SrsRtmpConn) playing(source *SrsSource) error {
 	consumer := source.CreateConsumer(this, true, true, true)
 	return this.doPlaying(source, consumer)
 }
@@ -390,7 +394,7 @@ func (this *SrsRtmpConn) httpHooksOnUnpublish() error {
 
 func (this *SrsRtmpConn) acquirePublish(source *SrsSource, isEdge bool) error {
 	//TODO edge process
-	
+
 	err := this.source.onPublish()
 	if err != nil {
 		return err
@@ -408,8 +412,7 @@ func (this *SrsRtmpConn) doPublishing(source *SrsSource) error {
 	return nil
 }
 
-
-func(this *SrsRtmpConn) startMonitor() error {
+func (this *SrsRtmpConn) startMonitor() error {
 	go func() {
 		publish_1stpkt_timeout := config.GetPublish1stpktTimeout(this.req.vhost)
 		publish_normal_timeout := config.GetPublishNormalPktTimeout(this.req.vhost)
@@ -425,21 +428,24 @@ func(this *SrsRtmpConn) startMonitor() error {
 			}
 
 			select {
-				case <- this.exitMonitor: {
+			case <-this.exitMonitor:
+				{
 					break DONE
 				}
-				case <- this.expire: {
+			case <-this.expire:
+				{
 					break DONE
 				}
-				case <- time.After(time.Millisecond * time.Duration(timeOut)):{
-					if this.nb_msgs <= last_nb_msgs {//error no msg got
+			case <-time.After(time.Millisecond * time.Duration(timeOut)):
+				{
+					if this.nb_msgs <= last_nb_msgs { //error no msg got
 						break DONE
 					}
 				}
 			}
 			//do some statistic process
 			stat := GetStatisticInstance()
-			stat.OnVideoFrames(this.req, uint64(this.video_frames - last_video_frames))
+			stat.OnVideoFrames(this.req, uint64(this.video_frames-last_video_frames))
 			last_video_frames = this.video_frames
 			//todo first need use kbps to get info
 		}
@@ -448,7 +454,7 @@ func(this *SrsRtmpConn) startMonitor() error {
 	return nil
 }
 
-func(this *SrsRtmpConn) stopMonitor() error {
+func (this *SrsRtmpConn) stopMonitor() error {
 	close(this.exitMonitor)
 	return nil
 }

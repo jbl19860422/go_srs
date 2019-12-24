@@ -49,6 +49,5 @@ func NewSrsRequest() *SrsRequest {
 }
 
 func (this SrsRequest) GetStreamUrl() string {
-    return utils.SrsGenerateStreamUrl(this.vhost, this.app, this.stream);
+	return utils.SrsGenerateStreamUrl(this.vhost, this.app, this.stream)
 }
-

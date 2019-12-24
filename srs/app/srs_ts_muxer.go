@@ -24,32 +24,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"go_srs/srs/codec"
-	"io"
-	"go_srs/srs/utils"
 	"errors"
+	"go_srs/srs/codec"
+	"go_srs/srs/utils"
+	"io"
 )
 
 type SrsTsMuxer struct {
-	as 			SrsTsStream
-	vs 			SrsTsStream
-	ready		bool
-	audioPid	int16
-	videoPid	int16
-	wrotePatPmt	bool
-	pids       	map[int]*SrsTsChannel
+	as          SrsTsStream
+	vs          SrsTsStream
+	ready       bool
+	audioPid    int16
+	videoPid    int16
+	wrotePatPmt bool
+	pids        map[int]*SrsTsChannel
 
-	context		*SrsTsContext
-	writer		io.Writer
+	context *SrsTsContext
+	writer  io.Writer
 }
 
 func NewSrsTsMuxer(w io.Writer, c *SrsTsContext, ac codec.SrsCodecAudio, vc codec.SrsCodecVideo) *SrsTsMuxer {
 	muxer := &SrsTsMuxer{
-		writer:w,
-		context:c,
-		wrotePatPmt:false,
-		ready:false,
-		pids:make(map[int]*SrsTsChannel),
+		writer:      w,
+		context:     c,
+		wrotePatPmt: false,
+		ready:       false,
+		pids:        make(map[int]*SrsTsChannel),
 	}
 
 	muxer.convertACodecToTsStream(ac)
@@ -61,7 +61,7 @@ func (this *SrsTsMuxer) convertACodecToTsStream(ac codec.SrsCodecAudio) {
 	var astream SrsTsStream
 	switch ac {
 	case codec.SrsCodecAudioAAC:
-		astream= SrsTsStreamAudioAAC
+		astream = SrsTsStreamAudioAAC
 		this.audioPid = TS_AUDIO_AAC_PID
 	case codec.SrsCodecAudioMP3:
 		astream = SrsTsStreamAudioMp3
@@ -71,7 +71,7 @@ func (this *SrsTsMuxer) convertACodecToTsStream(ac codec.SrsCodecAudio) {
 	}
 
 	if astream != this.as {
-		this.wrotePatPmt = false 	//rewrite pat pmt
+		this.wrotePatPmt = false //rewrite pat pmt
 	}
 	this.as = astream
 }

@@ -23,9 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package packet
 
 import (
+	"go_srs/srs/global"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
-	"go_srs/srs/global"
 )
 
 type SrsOnStatusCallPacket struct {
@@ -37,7 +37,7 @@ type SrsOnStatusCallPacket struct {
 
 func NewSrsOnStatusCallPacket() *SrsOnStatusCallPacket {
 	return &SrsOnStatusCallPacket{
-		CommandName:   amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value:amf0.RTMP_AMF0_COMMAND_ON_STATUS}},
+		CommandName:   amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_COMMAND_ON_STATUS}},
 		TransactionId: amf0.SrsAmf0Number{Value: 0},
 		Data:          amf0.NewSrsAmf0Object(),
 	}

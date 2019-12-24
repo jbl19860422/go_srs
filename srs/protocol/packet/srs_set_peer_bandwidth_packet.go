@@ -24,8 +24,8 @@ package packet
 
 import (
 	"encoding/binary"
-	"go_srs/srs/utils"
 	"go_srs/srs/global"
+	"go_srs/srs/utils"
 )
 
 type SrsPeerBandwidthType int

@@ -22,21 +22,21 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package rtmp
 
-import(
-	"errors"
-	"math/rand"
-	"time"
-	"encoding/binary"
+import (
 	"bytes"
+	"encoding/binary"
+	"errors"
 	"go_srs/srs/protocol/skt"
 	"go_srs/srs/utils"
+	"math/rand"
+	"time"
 )
 
 type SrsHandshakeBytes struct {
-	C0C1 []byte
+	C0C1   []byte
 	S0S1S2 []byte
-	C2 []byte
-	io *skt.SrsIOReadWriter
+	C2     []byte
+	io     *skt.SrsIOReadWriter
 }
 
 func NewSrsHandshakeBytes(io_ *skt.SrsIOReadWriter) *SrsHandshakeBytes {
@@ -54,11 +54,11 @@ func (this *SrsHandshakeBytes) ReadC0C1() error {
 	this.C0C1 = make([]byte, 1537)
 	left := 1537
 	for {
-		n, err := this.io.Read(this.C0C1[1537-left:1537])
+		n, err := this.io.Read(this.C0C1[1537-left : 1537])
 		if err != nil {
 			return err
 		}
-		
+
 		left = left - n
 		if left <= 0 {
 			return nil
@@ -95,7 +95,7 @@ func (this *SrsHandshakeBytes) ReadC2() int {
 	this.C2 = make([]byte, 1536)
 	left := 1536
 	for {
-		n, err := this.io.Read(this.C2[1536-left:1536])
+		n, err := this.io.Read(this.C2[1536-left : 1536])
 		if err != nil {
 			return -1
 		}

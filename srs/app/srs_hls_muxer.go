@@ -24,32 +24,32 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"os"
-	"path"
-	"time"
+	"errors"
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
+	"os"
+	"path"
 	"strconv"
-	"errors"
 	"strings"
+	"time"
 )
 
 type SrsHlsMuxer struct {
-	req *SrsRequest
-	hls_entry_prefix   string
-	hls_path           string
-	hls_ts_file        string
-	hls_wait_keyframe  bool
-	m3u8_dir           string
-	hls_aof_ratio      float64
+	req               *SrsRequest
+	hls_entry_prefix  string
+	hls_path          string
+	hls_ts_file       string
+	hls_wait_keyframe bool
+	m3u8_dir          string
+	hls_aof_ratio     float64
 	/*
 	* the hls fragment in seconds(read from config file), the duration of a piece of ts. default:10
 	 */
 	hls_fragment       float64
 	hls_window         float64
 	hls_ts_floor       bool
-	hls_cleanup		   bool
-	m3u8_file		   string
+	hls_cleanup        bool
+	m3u8_file          string
 	deviation_ts       int
 	accept_floor_ts    float64
 	previous_floor_ts  float64
@@ -67,7 +67,7 @@ type SrsHlsMuxer struct {
 
 func NewSrsHlsMuxer() *SrsHlsMuxer {
 	return &SrsHlsMuxer{
-		context:NewSrsTsContext(),
+		context: NewSrsTsContext(),
 	}
 }
 
@@ -76,7 +76,7 @@ func (this *SrsHlsMuxer) initialize() error {
 }
 
 func (this *SrsHlsMuxer) is_segment_overflow() bool {
-	if this.current.duration * 1000 < 2 * 100 {
+	if this.current.duration*1000 < 2*100 {
 		return false
 	}
 
@@ -87,7 +87,7 @@ func (this *SrsHlsMuxer) is_segment_overflow() bool {
 		deviation = 0.0
 	}
 
-	if this.current.duration >= this.hls_fragment + deviation {
+	if this.current.duration >= this.hls_fragment+deviation {
 		return true
 	}
 	return false
@@ -135,9 +135,9 @@ func (this *SrsHlsMuxer) deviation() int {
 }
 
 func (this *SrsHlsMuxer) UpdateConfig(req *SrsRequest, entry_prefix string, hls_path string,
-								m3u8_file string, ts_file string, fragment float64,window float64, 
-								ts_floor bool, aof_ratio float64, cleanup bool, wait_keyframe bool) error {
-									this.req = req
+	m3u8_file string, ts_file string, fragment float64, window float64,
+	ts_floor bool, aof_ratio float64, cleanup bool, wait_keyframe bool) error {
+	this.req = req
 	this.hls_entry_prefix = entry_prefix
 	this.hls_path = hls_path
 	this.hls_ts_file = ts_file
@@ -228,21 +228,21 @@ func (this *SrsHlsMuxer) segmentOpen(segment_start_dts int64) error {
 	//	}
 	//
 	//	if int64(this.accept_floor_ts - float64(current_floor_ts)) > SRS_JUMP_WHEN_PIECE_DEVIATION {
-     //       this.accept_floor_ts = float64(current_floor_ts - 1)
+	//       this.accept_floor_ts = float64(current_floor_ts - 1)
 	//	}
 	//
 	//	this.deviation_ts = (int)(this.accept_floor_ts - float64(current_floor_ts))
 	//
 	//	// dup/jmp detect for ts in floor mode.
-     //   if int64(this.previous_floor_ts) != 0 && int64(this.previous_floor_ts) != current_floor_ts - 1 {
+	//   if int64(this.previous_floor_ts) != 0 && int64(this.previous_floor_ts) != current_floor_ts - 1 {
 	//
-     //   }
-     //   this.previous_floor_ts = float64(current_floor_ts);
+	//   }
+	//   this.previous_floor_ts = float64(current_floor_ts);
 	//	// we always ensure the piece is increase one by one.
 	//	//todo ts file name replace
 	//}
 	////todo tsfile append seq suffix
-	ts_file := strconv.FormatInt(int64(((time.Now().UnixNano() / 1e6) / (1000 * 5))), 10) + ".ts"
+	ts_file := strconv.FormatInt(int64(((time.Now().UnixNano()/1e6)/(1000*5))), 10) + ".ts"
 	tsFile := utils.Srs_path_build_stream(this.hls_ts_file, this.req.vhost, this.req.app, this.req.stream)
 	tsFile = strings.Replace(tsFile, "[seq]", strconv.Itoa(this._sequence_no), -1)
 	this.current.full_path = this.hls_path + "/" + tsFile
@@ -253,7 +253,7 @@ func (this *SrsHlsMuxer) segmentOpen(segment_start_dts int64) error {
 		this.current.uri = ts_file
 	}
 	// open temp ts file.
-	tmp_file := this.current.full_path + ".tmp";
+	tmp_file := this.current.full_path + ".tmp"
 	if err := this.current.Open(tmp_file, default_acodec, default_vcodec); err != nil {
 		return err
 	}
@@ -262,11 +262,11 @@ func (this *SrsHlsMuxer) segmentOpen(segment_start_dts int64) error {
 		this.current.muxer.UpdateACodec(default_acodec)
 	}
 	_ = tmp_file
-	//todo	
+	//todo
 	// if err := this.current.muxer.open(tmp_file); err != nil {
 	// 	return err
 	// }
-	
+
 	return nil
 }
 
@@ -285,7 +285,7 @@ func (this *SrsHlsMuxer) refreshM3u8() {
 }
 
 func (this *SrsHlsMuxer) _refresh_m3u8(m3u8_file string) error {
-	f, err := os.OpenFile(m3u8_file, os.O_RDWR | os.O_CREATE, 0755)
+	f, err := os.OpenFile(m3u8_file, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		return err
 	}
@@ -313,7 +313,7 @@ func (this *SrsHlsMuxer) _refresh_m3u8(m3u8_file string) error {
 			f.WriteString("#EXT-X-DISCONTINUITY\n")
 		}
 
-		f.WriteString("#EXTINF:" + strconv.FormatFloat(this.segments[i].duration, 'f',3, 64) + "\n")
+		f.WriteString("#EXTINF:" + strconv.FormatFloat(this.segments[i].duration, 'f', 3, 64) + "\n")
 		f.WriteString(this.segments[i].uri + "\n")
 	}
 	f.Close()
@@ -328,7 +328,7 @@ func (this *SrsHlsMuxer) segmentClose() error {
 	// when too small, it maybe not enough data to play.
 	// when too large, it maybe timestamp corrupt.
 	// make the segment more acceptable, when in [min, max_td * 2], it's ok.
-	if this.current.duration * 1000 >= 100 && this.current.duration <= float64(this.max_td*2){
+	if this.current.duration*1000 >= 100 && this.current.duration <= float64(this.max_td*2) {
 		this.segments = append(this.segments, this.current)
 
 		full_path := this.current.full_path
@@ -374,4 +374,3 @@ func (this *SrsHlsMuxer) segmentClose() error {
 	this.refreshM3u8()
 	return nil
 }
-

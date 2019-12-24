@@ -23,17 +23,17 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package main
 
 import (
-    "flag"
-    _ "fmt"
-    "go_srs/srs/app"
-    "go_srs/srs/app/config"
-	"net/http"
 	"bytes"
-    "io/ioutil"
-    "math/rand"
-    _ "net/http/pprof"
-    log "github.com/sirupsen/logrus"
-    "os"
+	"flag"
+	_ "fmt"
+	log "github.com/sirupsen/logrus"
+	"go_srs/srs/app"
+	"go_srs/srs/app/config"
+	"io/ioutil"
+	"math/rand"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
 )
 
 var (
@@ -41,56 +41,56 @@ var (
 )
 
 func init() {
-    // 设置日志格式为json格式
-    log.SetFormatter(&log.TextFormatter{
-        DisableColors: true,
-        TimestampFormat: "2006-01-02 15:04:05",
-    })
-    // 设置将日志输出到标准输出（默认的输出为stderr，标准错误）
-    // 日志消息输出可以是任意的io.writer类型
-    log.SetOutput(os.Stdout)
-    // 设置日志级别为warn以上
-    log.SetLevel(log.ErrorLevel)
+	// 设置日志格式为json格式
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors:   true,
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
+	// 设置将日志输出到标准输出（默认的输出为stderr，标准错误）
+	// 日志消息输出可以是任意的io.writer类型
+	log.SetOutput(os.Stdout)
+	// 设置日志级别为warn以上
+	log.SetLevel(log.ErrorLevel)
 }
 
 func main() {
-    flag.Parse()
-    if err := config.GetInstance().Init(*conf); err != nil {
-        return
-    }
+	flag.Parse()
+	if err := config.GetInstance().Init(*conf); err != nil {
+		return
+	}
 
 	server := app.NewSrsServer()
 	_ = server.StartProcess(config.GetInstance().ListenPort)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-    err := r.ParseForm()
-    if nil != err {
-        w.Write([]byte(err.Error()))
-        return
-    }
-    doSomeThingOne(10000)
-    buff := genSomeBytes()
-    b, err := ioutil.ReadAll(buff)
-    if nil != err {
-        w.Write([]byte(err.Error()))
-        return
-    }
-    w.Write(b)
+	err := r.ParseForm()
+	if nil != err {
+		w.Write([]byte(err.Error()))
+		return
+	}
+	doSomeThingOne(10000)
+	buff := genSomeBytes()
+	b, err := ioutil.ReadAll(buff)
+	if nil != err {
+		w.Write([]byte(err.Error()))
+		return
+	}
+	w.Write(b)
 }
 
 func doSomeThingOne(times int) {
-    for i := 0; i < times; i++ {
-        for j := 0; j < times; j++ {
+	for i := 0; i < times; i++ {
+		for j := 0; j < times; j++ {
 
-        }
-    }
+		}
+	}
 }
 
 func genSomeBytes() *bytes.Buffer {
-    var buff bytes.Buffer
-    for i := 1; i < 20000; i++ {
-        buff.Write([]byte{'0' + byte(rand.Intn(10))})
-    }
-    return &buff
+	var buff bytes.Buffer
+	for i := 1; i < 20000; i++ {
+		buff.Write([]byte{'0' + byte(rand.Intn(10))})
+	}
+	return &buff
 }

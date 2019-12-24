@@ -23,37 +23,37 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
+	"go_srs/srs/codec"
 	"go_srs/srs/protocol/rtmp"
 	"go_srs/srs/utils"
-	"go_srs/srs/codec"
 )
 
 type SrsHlsConsumer struct {
-	source          *SrsSource
-	req 			*SrsRequest
-	queue           *SrsMessageQueue
-	codec    		*SrsAvcAacCodec
-	sampler   		*SrsCodecSampler
-	muxer    		*SrsHlsMuxer
-	hlsCache 		*SrsHlsCache
-	context	 		*SrsTsContext
+	source   *SrsSource
+	req      *SrsRequest
+	queue    *SrsMessageQueue
+	codec    *SrsAvcAacCodec
+	sampler  *SrsCodecSampler
+	muxer    *SrsHlsMuxer
+	hlsCache *SrsHlsCache
+	context  *SrsTsContext
 
-	lastUpdateTime	int64
-	streamDts 		int64
-	consuming 		bool
+	lastUpdateTime int64
+	streamDts      int64
+	consuming      bool
 }
 
 func NewSrsHlsConsumer(s *SrsSource, req *SrsRequest) *SrsHlsConsumer {
 	return &SrsHlsConsumer{
-		source:s,
-		req:req,
-		queue:NewSrsMessageQueue(),
-		codec:NewSrsAvcAacCodec(),
-		sampler:NewSrsCodecSampler(),
-		muxer:NewSrsHlsMuxer(),
-		hlsCache:NewSrsHlsCache(),
-		context:NewSrsTsContext(),
-		consuming:false,
+		source:    s,
+		req:       req,
+		queue:     NewSrsMessageQueue(),
+		codec:     NewSrsAvcAacCodec(),
+		sampler:   NewSrsCodecSampler(),
+		muxer:     NewSrsHlsMuxer(),
+		hlsCache:  NewSrsHlsCache(),
+		context:   NewSrsTsContext(),
+		consuming: false,
 	}
 }
 
@@ -124,7 +124,7 @@ func (this *SrsHlsConsumer) onVideo(video *rtmp.SrsRtmpMessage) error {
 		return this.hlsCache.onSequenceHeader(this.muxer)
 	}
 	//todo add jitter
-	dts := video.GetHeader().GetTimestamp()*90
+	dts := video.GetHeader().GetTimestamp() * 90
 	this.streamDts = dts
 
 	if err := this.hlsCache.WriteVideo(this.codec, this.muxer, dts, this.sampler); err != nil {
@@ -156,7 +156,7 @@ func (this *SrsHlsConsumer) onAudio(audio *rtmp.SrsRtmpMessage) error {
 		return this.hlsCache.onSequenceHeader(this.muxer)
 	}
 	//todo config jitter
-	dts := int64(audio.GetHeader().GetTimestamp()*90)
+	dts := int64(audio.GetHeader().GetTimestamp() * 90)
 	// for pure audio, we need to update the stream dts also.
 	this.streamDts = dts
 

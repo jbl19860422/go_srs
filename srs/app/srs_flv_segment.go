@@ -24,43 +24,43 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"os"
-	"errors"
 	"encoding/binary"
+	"errors"
+	"fmt"
+	"go_srs/srs/app/config"
+	"go_srs/srs/codec/flv"
+	"go_srs/srs/global"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/protocol/rtmp"
-	"go_srs/srs/global"
 	"go_srs/srs/utils"
-	"go_srs/srs/codec/flv"
-	"go_srs/srs/app/config"
-	"strings"
+	"os"
 	"strconv"
-	"fmt"
+	"strings"
 )
 
 type SrsFlvSegment struct {
-	path 			string
-	req 			*SrsRequest
-	flvEncoder		*flvcodec.SrsFlvEncoder
-	durationOffset	int64
-	filesizeOffset	int64
-	startTime		int64
+	path            string
+	req             *SrsRequest
+	flvEncoder      *flvcodec.SrsFlvEncoder
+	durationOffset  int64
+	filesizeOffset  int64
+	startTime       int64
 	previousPktTime int64
-	duration		int64
-	streamDuration	int64
-	tmpFlvFile		string
-	hasKeyFrame		bool
-	jitter 			*SrsRtmpJitter
-	file			*os.File
+	duration        int64
+	streamDuration  int64
+	tmpFlvFile      string
+	hasKeyFrame     bool
+	jitter          *SrsRtmpJitter
+	file            *os.File
 }
 
 func NewSrsFlvSegment(r *SrsRequest) *SrsFlvSegment {
 	return &SrsFlvSegment{
-		req:r,
-		startTime:-1,
-		previousPktTime:-1,
-		duration:0,
-		streamDuration:0,
+		req:             r,
+		startTime:       -1,
+		previousPktTime: -1,
+		duration:        0,
+		streamDuration:  0,
 	}
 }
 
@@ -93,7 +93,7 @@ func (this *SrsFlvSegment) Open(useTmpFile bool) error {
 			return err
 		}
 	} else {
-		if this.file, err = os.OpenFile(this.tmpFlvFile, os.O_CREATE | os.O_RDWR, 0755); err != nil {
+		if this.file, err = os.OpenFile(this.tmpFlvFile, os.O_CREATE|os.O_RDWR, 0755); err != nil {
 			return err
 		}
 	}
@@ -179,7 +179,7 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 	if err := name.Decode(stream); err != nil {
 		return err
 	}
-	
+
 	marker, err := stream.PeekByte()
 	if err != nil {
 		return err
@@ -187,13 +187,16 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 
 	var metaData amf0.ISrsAmf0Any
 	switch marker {
-		case amf0.RTMP_AMF0_Object:{
+	case amf0.RTMP_AMF0_Object:
+		{
 			metaData = amf0.GenerateSrsAmf0Any(marker)
 		}
-		case amf0.RTMP_AMF0_EcmaArray:{
+	case amf0.RTMP_AMF0_EcmaArray:
+		{
 			metaData = amf0.GenerateSrsAmf0Any(marker)
 		}
-		default:{
+	default:
+		{
 			return errors.New("error marker")
 		}
 	}
@@ -205,25 +208,28 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 	}
 
 	switch marker {
-		case amf0.RTMP_AMF0_Object:{
+	case amf0.RTMP_AMF0_Object:
+		{
 			metaData.(*amf0.SrsAmf0Object).Remove("fileSize")
 			metaData.(*amf0.SrsAmf0Object).Remove("framerate")
 			metaData.(*amf0.SrsAmf0Object).Set("service", global.RTMP_SIG_SRS_SERVER)
 			metaData.(*amf0.SrsAmf0Object).Set("filesize", float64(0))
 			metaData.(*amf0.SrsAmf0Object).Set("duration", float64(0))
 		}
-		case amf0.RTMP_AMF0_EcmaArray:{
+	case amf0.RTMP_AMF0_EcmaArray:
+		{
 			metaData.(*amf0.SrsAmf0EcmaArray).Remove("fileSize")
 			metaData.(*amf0.SrsAmf0EcmaArray).Remove("framerate")
 			metaData.(*amf0.SrsAmf0EcmaArray).Set("service", global.RTMP_SIG_SRS_SERVER)
 			metaData.(*amf0.SrsAmf0EcmaArray).Set("filesize", float64(0))
 			metaData.(*amf0.SrsAmf0EcmaArray).Set("duration", float64(0))
 		}
-		default:{
+	default:
+		{
 			return errors.New("error marker")
 		}
 	}
-	
+
 	writeStream := utils.NewSrsStream([]byte{})
 	if err = name.Encode(writeStream); err != nil {
 		return err
@@ -234,7 +240,7 @@ func (this *SrsFlvSegment) WriteMetaData(msg *rtmp.SrsRtmpMessage) error {
 	}
 
 	size := len(writeStream.Data())
-	off, err := this.file.Seek(0, 1)//SEEK_CUR
+	off, err := this.file.Seek(0, 1) //SEEK_CUR
 	if err != nil {
 		return err
 	}

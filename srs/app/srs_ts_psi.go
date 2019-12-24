@@ -62,7 +62,7 @@ const (
 )
 
 type SrsTsPayloadPSI struct {
-	packet 		*SrsTsPacket
+	packet *SrsTsPacket
 	/**
 	 * This is an 8-bit field whose value shall be the number of bytes, immediately following the pointer_field
 	 * until the first byte of the first section that is present in the payload of the Transport Stream packet (so a value of 0x00 in
@@ -101,15 +101,15 @@ type SrsTsPayloadPSI struct {
 func NewSrsTsPayloadPSI(p *SrsTsPacket) *SrsTsPayloadPSI {
 	return &SrsTsPayloadPSI{
 		pointerField: 0,
-		packet:p,
+		packet:       p,
 	}
 }
 
-func (this *SrsTsPayloadPSI) Encode(stream *utils.SrsStream) {//4B
+func (this *SrsTsPayloadPSI) Encode(stream *utils.SrsStream) { //4B
 	if this.packet.tsHeader.payloadUnitStartIndicator == 1 {
 		stream.WriteByte(byte(this.pointerField))
 	}
-	
+
 	stream.WriteByte(byte(this.tableId))
 
 	var slv int16 = 0
@@ -118,7 +118,7 @@ func (this *SrsTsPayloadPSI) Encode(stream *utils.SrsStream) {//4B
 	slv |= (int16(this.const1Value0) << 12) & 0x3000
 	this.const0Value = 0
 	slv |= (int16(this.const0Value) << 14) & 0x4000
-	slv |= int16(this.sectionSyntaxIndicator & 0x01) << 15
+	slv |= int16(this.sectionSyntaxIndicator&0x01) << 15
 	stream.WriteInt16(slv, binary.BigEndian)
 }
 

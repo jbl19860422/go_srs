@@ -23,37 +23,37 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package rtmp
 
 import (
+	_ "bufio"
 	"bytes"
 	_ "context"
 	"encoding/binary"
 	"errors"
+	"go_srs/srs/global"
+	"go_srs/srs/protocol/amf0"
+	"go_srs/srs/protocol/packet"
+	"go_srs/srs/protocol/skt"
+	"go_srs/srs/utils"
 	_ "log"
 	"reflect"
-	_ "bufio"
 	"time"
-	"go_srs/srs/protocol/skt"
-	"go_srs/srs/protocol/packet"
-	"go_srs/srs/protocol/amf0"
-	"go_srs/srs/utils"
-	"go_srs/srs/global"
 )
 
 const SRS_PERF_CHUNK_STREAM_CACHE = 16
 
 type AckWindowSize struct {
-	Window uint32
-	RecvBytes int64
+	Window         uint32
+	RecvBytes      int64
 	SequenceNumber uint32
 }
 
 type SrsProtocol struct {
-	io 				*skt.SrsIOReadWriter
-	chunkCache 		[]*SrsChunkStream
-	chunkStreams 	map[int32]*SrsChunkStream
-	inChunkSize 	int32
-	OutChunkSize 	int32
-	OutAckSize 		AckWindowSize
-	Requests 		map[float64]string
+	io           *skt.SrsIOReadWriter
+	chunkCache   []*SrsChunkStream
+	chunkStreams map[int32]*SrsChunkStream
+	inChunkSize  int32
+	OutChunkSize int32
+	OutAckSize   AckWindowSize
+	Requests     map[float64]string
 }
 
 func NewSrsProtocol(io_ *skt.SrsIOReadWriter) *SrsProtocol {
@@ -65,9 +65,9 @@ func NewSrsProtocol(io_ *skt.SrsIOReadWriter) *SrsProtocol {
 	}
 
 	return &SrsProtocol{
-		chunkStreams:make(map[int32]*SrsChunkStream),
-		chunkCache:     cache,
-		io:io_,
+		chunkStreams: make(map[int32]*SrsChunkStream),
+		chunkCache:   cache,
+		io:           io_,
 		inChunkSize:  global.SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE,
 		OutChunkSize: global.SRS_CONSTS_RTMP_PROTOCOL_CHUNK_SIZE,
 	}
@@ -207,7 +207,7 @@ func (s *SrsProtocol) ReadMessageHeader(chunk *SrsChunkStream, format byte) (err
 			// MUST NOT be present. For values greater than or equal to 0xffffff
 			// the normal timestamp field MUST NOT be used and MUST be set to
 			// 0xffffff and the extended timestamp MUST be sent.
-			
+
 			if format == RTMP_FMT_TYPE0 {
 				chunk.Header.timestamp = (int64)(chunk.Header.timestampDelta)
 			} else {
@@ -386,7 +386,7 @@ func (s *SrsProtocol) RecvMessagePayload(chunk *SrsChunkStream) (msg *SrsRtmpMes
 	//期望的剩余数据长度=总长度-已经接收的长度
 	payloadSize := chunk.Header.payloadLength - chunk.RtmpMessage.recvedSize
 
-	if s.inChunkSize < payloadSize {//如果长度大于in_chunk_size，则最大是in_chunk_size
+	if s.inChunkSize < payloadSize { //如果长度大于in_chunk_size，则最大是in_chunk_size
 		payloadSize = s.inChunkSize
 	}
 	// create msg payload if not initialized
@@ -402,7 +402,7 @@ func (s *SrsProtocol) RecvMessagePayload(chunk *SrsChunkStream) (msg *SrsRtmpMes
 
 	chunk.RtmpMessage.payload = append(chunk.RtmpMessage.payload, buf...)
 	chunk.RtmpMessage.recvedSize += payloadSize
-	
+
 	if chunk.Header.payloadLength == chunk.RtmpMessage.recvedSize {
 		newMsg := chunk.RtmpMessage
 		chunk.RtmpMessage = nil
@@ -476,18 +476,18 @@ func (this *SrsProtocol) doDecodeMessage(msg *SrsRtmpMessage, stream *utils.SrsS
 			pkt = packet.NewSrsPublishPacket()
 			err = pkt.Decode(stream)
 			return
-		}  else if command == amf0.RTMP_AMF0_COMMAND_UNPUBLISH {
-            pkt = packet.NewSrsFMLEStartPacket(command)
+		} else if command == amf0.RTMP_AMF0_COMMAND_UNPUBLISH {
+			pkt = packet.NewSrsFMLEStartPacket(command)
 			err = pkt.Decode(stream)
-        } else if command == amf0.RTMP_AMF0_COMMAND_CLOSE_STREAM {
+		} else if command == amf0.RTMP_AMF0_COMMAND_CLOSE_STREAM {
 			pkt = packet.NewSrsCloseStreamPacket()
 			err = pkt.Decode(stream)
 			return
-        } else if command == amf0.SRS_CONSTS_RTMP_SET_DATAFRAME || command == amf0.SRS_CONSTS_RTMP_ON_METADATA {
+		} else if command == amf0.SRS_CONSTS_RTMP_SET_DATAFRAME || command == amf0.SRS_CONSTS_RTMP_ON_METADATA {
 			pkt = packet.NewSrsOnMetaDataPacket(command)
 			err = pkt.Decode(stream)
-			return 
-        } 
+			return
+		}
 	} else if msg.header.IsSetChunkSize() {
 		pkt = packet.NewSrsSetChunkSizePacket()
 		err = pkt.Decode(stream)
@@ -542,11 +542,11 @@ func (this *SrsProtocol) ExpectMessage(pkt packet.SrsPacket) error {
 			if err != nil {
 				continue
 			}
-	
+
 			if msg == nil {
 				continue
 			}
-	
+
 			p, err1 := this.DecodeMessage(msg)
 			if err1 != nil {
 				continue
@@ -559,14 +559,14 @@ func (this *SrsProtocol) ExpectMessage(pkt packet.SrsPacket) error {
 			break
 		}
 	}()
-	
+
 	var tmp_pkt packet.SrsPacket
 	for {
 		select {
 		case tmp_pkt = <-donePkt:
 			reflect.ValueOf(pkt).Elem().Set(reflect.ValueOf(tmp_pkt).Elem())
 			return nil
-		case <- time.After(time.Second*2): 
+		case <-time.After(time.Second * 2):
 			return errors.New("expect message timeout, type=" + reflect.TypeOf(pkt).String())
 		}
 	}
@@ -622,7 +622,7 @@ func (this *SrsProtocol) doSimpleSend(mh *SrsMessageHeader, payload []byte) erro
 			d, err = srs_chunk_header_c3(mh.perferCid, int32(mh.timestamp))
 		}
 
-		payloadSize := utils.MinInt32(int32(len(leftPayload)), this.OutChunkSize)//int32(len(leftPayload))//
+		payloadSize := utils.MinInt32(int32(len(leftPayload)), this.OutChunkSize) //int32(len(leftPayload))//
 		sendPayload := leftPayload[:payloadSize]
 		leftPayload = leftPayload[payloadSize:]
 		d = append(d, sendPayload...)
@@ -662,7 +662,7 @@ func (this *SrsProtocol) SendMessages(msgs []*SrsRtmpMessage, streamId int) erro
 				d, err = srs_chunk_header_c3(msg.GetHeader().perferCid, int32(msg.GetHeader().timestamp))
 			}
 
-			payloadSize := utils.MinInt32(int32(len(leftPayload)), this.OutChunkSize)//int32(len(leftPayload))//
+			payloadSize := utils.MinInt32(int32(len(leftPayload)), this.OutChunkSize) //int32(len(leftPayload))//
 			sendPayload := leftPayload[:payloadSize]
 			leftPayload = leftPayload[payloadSize:]
 			d = append(d, sendPayload...)
@@ -690,15 +690,18 @@ func (this *SrsProtocol) onSendPacket(mh *SrsMessageHeader, pkt packet.SrsPacket
 		this.OutAckSize.Window = uint32(pkt.(*packet.SrsSetWindowAckSizePacket).AckowledgementWindowSize)
 	case global.RTMP_MSG_AMF0CommandMessage, global.RTMP_MSG_AMF3CommandMessage:
 		switch pkt.(type) {
-			case *packet.SrsConnectAppPacket:{
+		case *packet.SrsConnectAppPacket:
+			{
 				p := pkt.(*packet.SrsConnectAppPacket)
 				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
 			}
-			case *packet.SrsCreateStreamPacket:{
+		case *packet.SrsCreateStreamPacket:
+			{
 				p := pkt.(*packet.SrsCreateStreamPacket)
 				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
 			}
-			case *packet.SrsFMLEStartPacket:{
+		case *packet.SrsFMLEStartPacket:
+			{
 				p := pkt.(*packet.SrsFMLEStartPacket)
 				this.Requests[p.TransactionId.GetValue().(float64)] = p.CommandName.GetValue().(string)
 			}
@@ -727,7 +730,7 @@ func srs_chunk_header_c0(perferCid int32, timestamp int32, payload_length int32,
 		data[1] = b[2]
 		data[2] = b[1]
 		data[3] = b[0]
-	} else {//有扩展字段，则timestamp全f
+	} else { //有扩展字段，则timestamp全f
 		data[1] = 0xFF
 		data[2] = 0xFF
 		data[3] = 0xFF
@@ -781,36 +784,37 @@ func srs_chunk_header_c0(perferCid int32, timestamp int32, payload_length int32,
 }
 
 const SRS_CONSTS_RTMP_MAX_FMT3_HEADER_SIZE = 5
+
 func srs_chunk_header_c3(prefer_cid int32, timestamp int32) ([]byte, error) {
 	// to directly set the field.
 	var len int32 = 0
 	// to directly set the field.
 	data := make([]byte, SRS_CONSTS_RTMP_MAX_FMT3_HEADER_SIZE)
-    // write no message header chunk stream, fmt is 3
-    // @remark, if perfer_cid > 0x3F, that is, use 2B/3B chunk header,
-    // SRS will rollback to 1B chunk header.
+	// write no message header chunk stream, fmt is 3
+	// @remark, if perfer_cid > 0x3F, that is, use 2B/3B chunk header,
+	// SRS will rollback to 1B chunk header.
 	data[0] = byte(0xC0 | (prefer_cid & 0x3F))
-    len++
-    // for c0
-    // chunk extended timestamp header, 0 or 4 bytes, big-endian
-    //
-    // for c3:
-    // chunk extended timestamp header, 0 or 4 bytes, big-endian
-    // 6.1.3. Extended Timestamp
-    // This field is transmitted only when the normal time stamp in the
-    // chunk message header is set to 0x00ffffff. If normal time stamp is
-    // set to any value less than 0x00ffffff, this field MUST NOT be
-    // present. This field MUST NOT be present if the timestamp field is not
-    // present. Type 3 chunks MUST NOT have this field.
-    // adobe changed for Type3 chunk:
-    //        FMLE always sendout the extended-timestamp,
-    //        must send the extended-timestamp to FMS,
-    //        must send the extended-timestamp to flash-player.
-    // @see: ngx_rtmp_prepare_message
-    // @see: http://blog.csdn.net/win_lin/article/details/13363699
-    // TODO: FIXME: extract to outer.
-    if (timestamp >= global.RTMP_EXTENDED_TIMESTAMP) {
-        b := utils.Int32ToBytes(timestamp, binary.BigEndian)
+	len++
+	// for c0
+	// chunk extended timestamp header, 0 or 4 bytes, big-endian
+	//
+	// for c3:
+	// chunk extended timestamp header, 0 or 4 bytes, big-endian
+	// 6.1.3. Extended Timestamp
+	// This field is transmitted only when the normal time stamp in the
+	// chunk message header is set to 0x00ffffff. If normal time stamp is
+	// set to any value less than 0x00ffffff, this field MUST NOT be
+	// present. This field MUST NOT be present if the timestamp field is not
+	// present. Type 3 chunks MUST NOT have this field.
+	// adobe changed for Type3 chunk:
+	//        FMLE always sendout the extended-timestamp,
+	//        must send the extended-timestamp to FMS,
+	//        must send the extended-timestamp to flash-player.
+	// @see: ngx_rtmp_prepare_message
+	// @see: http://blog.csdn.net/win_lin/article/details/13363699
+	// TODO: FIXME: extract to outer.
+	if timestamp >= global.RTMP_EXTENDED_TIMESTAMP {
+		b := utils.Int32ToBytes(timestamp, binary.BigEndian)
 		data[1] = b[3]
 		data[2] = b[2]
 		data[3] = b[1]

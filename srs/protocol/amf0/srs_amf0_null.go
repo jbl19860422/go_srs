@@ -23,8 +23,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package amf0
 
 import (
-	"go_srs/srs/utils"
 	"errors"
+	"go_srs/srs/utils"
 	_ "log"
 )
 

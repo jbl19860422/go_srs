@@ -22,22 +22,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 package packet
+
 import (
+	"go_srs/srs/global"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
-	"go_srs/srs/global"
 )
 
 type SrsCloseStreamPacket struct {
-	CommandName		amf0.SrsAmf0String
-	TransactionId	amf0.SrsAmf0Number
-	NullObj			*amf0.SrsAmf0Object
+	CommandName   amf0.SrsAmf0String
+	TransactionId amf0.SrsAmf0Number
+	NullObj       *amf0.SrsAmf0Object
 }
 
 func NewSrsCloseStreamPacket() *SrsCloseStreamPacket {
 	return &SrsCloseStreamPacket{
-		CommandName: amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:amf0.RTMP_AMF0_COMMAND_CLOSE_STREAM}},
-		TransactionId: amf0.SrsAmf0Number{Value:0},
+		CommandName:   amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_COMMAND_CLOSE_STREAM}},
+		TransactionId: amf0.SrsAmf0Number{Value: 0},
 	}
 }
 

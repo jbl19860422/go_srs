@@ -22,23 +22,23 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 package packet
 
-import(
-	"go_srs/srs/utils"
-	"go_srs/srs/protocol/amf0"
+import (
 	"go_srs/srs/global"
+	"go_srs/srs/protocol/amf0"
+	"go_srs/srs/utils"
 )
 
 type SrsFMLEStartResPacket struct {
-	CommandName   	amf0.SrsAmf0String
-	TransactionId 	amf0.SrsAmf0Number
-	NullObj			amf0.SrsAmf0Null
-	UndefinedObj	amf0.SrsAmf0Undefined
+	CommandName   amf0.SrsAmf0String
+	TransactionId amf0.SrsAmf0Number
+	NullObj       amf0.SrsAmf0Null
+	UndefinedObj  amf0.SrsAmf0Undefined
 }
 
 func NewSrsFMLEStartResPacket(trans_id float64) *SrsFMLEStartResPacket {
 	return &SrsFMLEStartResPacket{
-		CommandName:   	amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:amf0.RTMP_AMF0_COMMAND_RESULT}},
-		TransactionId: 	amf0.SrsAmf0Number{Value:trans_id},
+		CommandName:   amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_COMMAND_RESULT}},
+		TransactionId: amf0.SrsAmf0Number{Value: trans_id},
 	}
 }
 

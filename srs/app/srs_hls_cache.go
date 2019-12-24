@@ -23,8 +23,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"go_srs/srs/codec"
 	"go_srs/srs/app/config"
+	"go_srs/srs/codec"
 )
 
 /**

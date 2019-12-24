@@ -24,10 +24,10 @@ package skt
 
 import (
 	"bufio"
+	_ "fmt"
 	"io"
 	"net"
 	"time"
-	_ "fmt"
 )
 
 type SrsIOErrListener interface {
@@ -35,27 +35,27 @@ type SrsIOErrListener interface {
 }
 
 type SrsIOReadWriter struct {
-	conn     	net.Conn
-	IOReader 	*bufio.Reader
-	IOWriter 	*bufio.Writer
-	nb_read 	int64
-	nb_write	int64
+	conn     net.Conn
+	IOReader *bufio.Reader
+	IOWriter *bufio.Writer
+	nb_read  int64
+	nb_write int64
 }
 
 func NewSrsIOReadWriter(c net.Conn) *SrsIOReadWriter {
 	rw := &SrsIOReadWriter{
-		conn:c,
+		conn: c,
 	}
 	rw.IOReader = bufio.NewReader(rw.conn)
 	rw.IOWriter = bufio.NewWriter(rw.conn)
 	return rw
 }
 
-func(this *SrsIOReadWriter) GetRecvBytes() int64 {
+func (this *SrsIOReadWriter) GetRecvBytes() int64 {
 	return this.nb_read
 }
 
-func(this *SrsIOReadWriter) GetSendBytes() int64 {
+func (this *SrsIOReadWriter) GetSendBytes() int64 {
 	return this.nb_write
 }
 
@@ -88,7 +88,7 @@ func (this *SrsIOReadWriter) ReadFully(b []byte, timeoutms uint32) (int, error) 
 	count := len(b)
 	left := count
 	for {
-		n, err := this.IOReader.Read(b[count-left:count])
+		n, err := this.IOReader.Read(b[count-left : count])
 		if err != nil {
 			return 0, err
 		}

@@ -29,22 +29,22 @@ import (
 )
 
 type SrsPlayPacket struct {
-	CommandName 	amf0.SrsAmf0String
-	TransactionId 	amf0.SrsAmf0Number
-	NullObj			amf0.SrsAmf0Null
-	StreamName		amf0.SrsAmf0String
-	Start			amf0.SrsAmf0Number
-	Duration		amf0.SrsAmf0Number
-	Reset			amf0.SrsAmf0Boolean
+	CommandName   amf0.SrsAmf0String
+	TransactionId amf0.SrsAmf0Number
+	NullObj       amf0.SrsAmf0Null
+	StreamName    amf0.SrsAmf0String
+	Start         amf0.SrsAmf0Number
+	Duration      amf0.SrsAmf0Number
+	Reset         amf0.SrsAmf0Boolean
 }
 
 func NewSrsPlayPacket() *SrsPlayPacket {
 	return &SrsPlayPacket{
-		CommandName:amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:amf0.RTMP_AMF0_COMMAND_PLAY}},
-		TransactionId:amf0.SrsAmf0Number{Value:0},
-		Start:amf0.SrsAmf0Number{Value:-2.0},
-		Duration:amf0.SrsAmf0Number{Value:-1.0},
-		Reset:amf0.SrsAmf0Boolean{Value:true},
+		CommandName:   amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_COMMAND_PLAY}},
+		TransactionId: amf0.SrsAmf0Number{Value: 0},
+		Start:         amf0.SrsAmf0Number{Value: -2.0},
+		Duration:      amf0.SrsAmf0Number{Value: -1.0},
+		Reset:         amf0.SrsAmf0Boolean{Value: true},
 	}
 }
 

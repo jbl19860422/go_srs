@@ -23,11 +23,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package packet
 
 import (
-	_ "log"
 	"errors"
+	"go_srs/srs/global"
 	"go_srs/srs/protocol/amf0"
 	"go_srs/srs/utils"
-	"go_srs/srs/global"
+	_ "log"
 )
 
 type SrsConnectAppResPacket struct {
@@ -39,10 +39,10 @@ type SrsConnectAppResPacket struct {
 
 func NewSrsConnectAppResPacket() *SrsConnectAppResPacket {
 	return &SrsConnectAppResPacket{
-		CommandName:    amf0.SrsAmf0String{Value:amf0.SrsAmf0Utf8{Value:amf0.RTMP_AMF0_COMMAND_RESULT}},
-		TransactionId:  amf0.SrsAmf0Number{Value:1},
-		Props:          amf0.NewSrsAmf0Object(),
-		Info:           amf0.NewSrsAmf0Object(),
+		CommandName:   amf0.SrsAmf0String{Value: amf0.SrsAmf0Utf8{Value: amf0.RTMP_AMF0_COMMAND_RESULT}},
+		TransactionId: amf0.SrsAmf0Number{Value: 1},
+		Props:         amf0.NewSrsAmf0Object(),
+		Info:          amf0.NewSrsAmf0Object(),
 	}
 }
 

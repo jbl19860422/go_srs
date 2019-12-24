@@ -27,37 +27,36 @@ import "go_srs/srs/app/config"
 
 type SrsStageInfo struct {
 	*config.SrsAppSubscriber
-	stage_id 				int64
-	nb_clients				int64
-	age 					int64
-	pithy_print_time_ms		int64
+	stage_id            int64
+	nb_clients          int64
+	age                 int64
+	pithy_print_time_ms int64
 }
 
 func NewSrsStageInfo(stage_id int64) *SrsStageInfo {
 	return &SrsStageInfo{
-		stage_id:stage_id,
-		nb_clients:0,
-		age:0,
-		pithy_print_time_ms:config.GetInstance().GetPithyPrintMs(),
+		stage_id:            stage_id,
+		nb_clients:          0,
+		age:                 0,
+		pithy_print_time_ms: config.GetInstance().GetPithyPrintMs(),
 	}
 }
 
-func(this *SrsStageInfo) Elapse(diff int64) {
+func (this *SrsStageInfo) Elapse(diff int64) {
 
 }
 
-func(this *SrsStageInfo) CanPrint() bool {
+func (this *SrsStageInfo) CanPrint() bool {
 	return true
 }
 
-func(this *SrsStageInfo) OnReloadPithyPrint() {
+func (this *SrsStageInfo) OnReloadPithyPrint() {
 
 }
 
 type SrsPithyPrint struct {
-	client_id 		int64
-	stage_id 		int64
-	age 			int64
-	previout_tick 	int64
-
+	client_id     int64
+	stage_id      int64
+	age           int64
+	previout_tick int64
 }

@@ -24,10 +24,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"fmt"
 	"errors"
-	"go_srs/srs/protocol/rtmp"
+	"fmt"
 	"go_srs/srs/codec/flv"
+	"go_srs/srs/protocol/rtmp"
 )
 
 const SRS_PURE_AUDIO_GUESS_COUNT = 115
@@ -41,10 +41,10 @@ type SrsGopCache struct {
 
 func NewSrsGopCache() *SrsGopCache {
 	return &SrsGopCache{
-		enabled:true,
-		gopCache:make([]*rtmp.SrsRtmpMessage, 0),
-		cachedVideoCount:0,
-		audioAfterLastVideoCount:0,
+		enabled:                  true,
+		gopCache:                 make([]*rtmp.SrsRtmpMessage, 0),
+		cachedVideoCount:         0,
+		audioAfterLastVideoCount: 0,
 	}
 }
 
@@ -113,7 +113,7 @@ func (this *SrsGopCache) pureAudio() bool {
 }
 
 func (this *SrsGopCache) dump(consumer Consumer, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) error {
-	for i:= 0; i < len(this.gopCache); i++ {
+	for i := 0; i < len(this.gopCache); i++ {
 		consumer.Enqueue(this.gopCache[i], atc, jitterAlgorithm)
 	}
 	fmt.Println("****************dump count=", len(this.gopCache), "****************")

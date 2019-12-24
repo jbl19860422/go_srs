@@ -27,37 +27,38 @@ import (
 	"errors"
 	"go_srs/srs/codec"
 )
+
 type SrsCodecSampler struct {
-	IsVideo			bool
-	SampleUnits		[]([]byte)
+	IsVideo     bool
+	SampleUnits []([]byte)
 	/**
-    * CompositionTime, video_file_format_spec_v10_1.pdf, page 78.
-    * cts = pts - dts, where dts = flvheader->timestamp.
-    */
-	Cts				int32
+	 * CompositionTime, video_file_format_spec_v10_1.pdf, page 78.
+	 * cts = pts - dts, where dts = flvheader->timestamp.
+	 */
+	Cts int32
 	//video specify
-	FrameType		codec.SrsCodecVideoAVCFrame
-	AvcPacketType	codec.SrsCodecVideoAVCType
+	FrameType     codec.SrsCodecVideoAVCFrame
+	AvcPacketType codec.SrsCodecVideoAVCType
 	//
-	HasIdr			bool
-	HasAud			bool
-	HasSpsPps		bool
+	HasIdr    bool
+	HasAud    bool
+	HasSpsPps bool
 
 	//
-	FirstNaluType	codec.SrsAvcNaluType
+	FirstNaluType codec.SrsAvcNaluType
 	//audio specify
-	ACodec			codec.SrsCodecAudio
-	SoundRate		codec.SrsCodecAudioSampleRate
-	SoundSize		codec.SrsCodecAudioSampleSize
-	SoundType		codec.SrsCodecAudioSoundType
-	AacPacketType	codec.SrsCodecAudioType
+	ACodec        codec.SrsCodecAudio
+	SoundRate     codec.SrsCodecAudioSampleRate
+	SoundSize     codec.SrsCodecAudioSampleSize
+	SoundType     codec.SrsCodecAudioSoundType
+	AacPacketType codec.SrsCodecAudioType
 }
 
 const SRS_SRS_MAX_CODEC_SAMPLE = 128
 
 func NewSrsCodecSampler() *SrsCodecSampler {
 	return &SrsCodecSampler{
-		SampleUnits:make([]([]byte), 0),
+		SampleUnits: make([]([]byte), 0),
 	}
 }
 
@@ -87,22 +88,21 @@ func (this *SrsCodecSampler) AddSampleUnit(data []byte) error {
 func (this *SrsCodecSampler) Clear() {
 	this.IsVideo = false
 	this.SampleUnits = this.SampleUnits[0:0]
-    this.Cts = 0
-    this.FrameType = codec.SrsCodecVideoAVCFrameReserved
+	this.Cts = 0
+	this.FrameType = codec.SrsCodecVideoAVCFrameReserved
 	this.AvcPacketType = codec.SrsCodecVideoAVCTypeReserved
 	this.HasIdr = false
-	this.HasAud  = false
+	this.HasAud = false
 	this.HasSpsPps = false
 	this.FirstNaluType = codec.SrsAvcNaluTypeReserved
-    
-    this.ACodec = codec.SrsCodecAudioReserved1
-    this.SoundRate = codec.SrsCodecAudioSampleRateReserved
-    this.SoundSize = codec.SrsCodecAudioSampleSizeReserved
-    this.SoundType = codec.SrsCodecAudioSoundTypeReserved
-    this.AacPacketType = codec.SrsCodecAudioTypeReserved
+
+	this.ACodec = codec.SrsCodecAudioReserved1
+	this.SoundRate = codec.SrsCodecAudioSampleRateReserved
+	this.SoundSize = codec.SrsCodecAudioSampleSizeReserved
+	this.SoundType = codec.SrsCodecAudioSoundTypeReserved
+	this.AacPacketType = codec.SrsCodecAudioTypeReserved
 }
 
 func (this *SrsCodecSampler) SetIsVideo(v bool) {
 	this.IsVideo = v
 }
-

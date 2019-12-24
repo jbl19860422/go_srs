@@ -23,9 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package amf0
 
 import (
-	"go_srs/srs/utils"
 	"encoding/binary"
 	"errors"
+	"go_srs/srs/utils"
 )
 
 type SrsAmf0Number struct {

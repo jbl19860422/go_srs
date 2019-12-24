@@ -25,8 +25,8 @@ package app
 import (
 	"fmt"
 	"net/http"
-	"strings"
 	"net/url"
+	"strings"
 )
 
 type SrsHttpStreamServer struct {
@@ -35,7 +35,7 @@ type SrsHttpStreamServer struct {
 
 func NewSrsHttpStreamServer() *SrsHttpStreamServer {
 	return &SrsHttpStreamServer{
-		sources:make(map[string]*SrsSource),
+		sources: make(map[string]*SrsSource),
 	}
 }
 
@@ -71,7 +71,7 @@ func (this *SrsHttpStreamServer) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		if ok {
 			vhost = vHostParams[0]
 		}
-		source, ok := sourcePool[vhost + s]
+		source, ok := sourcePool[vhost+s]
 		if !ok {
 			return
 		}
@@ -89,7 +89,7 @@ func (this *SrsHttpStreamServer) ServeHTTP(w http.ResponseWriter, r *http.Reques
 			vhost = vHostParams[0]
 		}
 
-		source, ok := sourcePool[vhost + s]
+		source, ok := sourcePool[vhost+s]
 		if !ok {
 			return
 		}

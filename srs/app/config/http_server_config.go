@@ -42,4 +42,3 @@ func (this *HttpServerConf) initDefault() {
 		this.Dir = "./html"
 	}
 }
-

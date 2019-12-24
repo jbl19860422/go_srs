@@ -24,9 +24,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
-	"encoding/binary"
 	"go_srs/srs/codec"
 	"go_srs/srs/utils"
 )
@@ -187,8 +187,6 @@ func (this *SrsAvcAacCodec) audioAACDemux(data []byte, sampler *SrsCodecSampler)
 		}
 	}
 
-	
-
 	return nil
 }
 
@@ -343,7 +341,7 @@ func (this *SrsAvcAacCodec) avc_demux_ibmf_format(stream *utils.SrsStream, sampl
 			return false
 		}
 		_ = d
-		
+
 		// 7.3.1 NAL unit syntax, H.264-AVC-ISO_IEC_14496-10.pdf, page 44.
 		err = sampler.AddSampleUnit(d)
 		if err != nil {
@@ -504,7 +502,6 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 		return nil
 	}
 
-
 	stream := utils.NewSrsStream(rbsp)
 	// for SPS, 7.3.2.1.1 Sequence parameter set data syntax
 	// H.264-AVC-ISO_IEC_14496-10-2012.pdf, page 62.
@@ -654,7 +651,7 @@ func (this *SrsAvcAacCodec) avc_demux_sps_rbsp(rbsp []byte) error {
 		if num_ref_frames_in_pic_order_cnt_cycle < 0 {
 			return errors.New("sps the num_ref_frames_in_pic_order_cnt_cycle invalid")
 		}
-		
+
 		for i := 0; i < int(num_ref_frames_in_pic_order_cnt_cycle); i++ {
 			offset_for_ref_frame_i, err := bs.ReadSEV()
 			_ = offset_for_ref_frame_i

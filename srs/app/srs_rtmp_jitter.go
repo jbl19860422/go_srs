@@ -5,26 +5,27 @@ import (
 )
 
 type SrsRtmpJitterAlgorithm int
+
 const (
-	_ SrsRtmpJitterAlgorithm 	= iota
-	SrsRtmpJitterAlgorithmFULL 	= 0x01
-	SrsRtmpJitterAlgorithmZERO  = 0x02
-	SrsRtmpJitterAlgorithmOFF 	= 0x03
+	_                          SrsRtmpJitterAlgorithm = iota
+	SrsRtmpJitterAlgorithmFULL                        = 0x01
+	SrsRtmpJitterAlgorithmZERO                        = 0x02
+	SrsRtmpJitterAlgorithmOFF                         = 0x03
 )
 
-const CONST_MAX_JITTER_MS_NEG 	= -250
-const CONST_MAX_JITTER_MS 		= 250
-const DEFAULT_FRAME_TIME_MS		= 10
+const CONST_MAX_JITTER_MS_NEG = -250
+const CONST_MAX_JITTER_MS = 250
+const DEFAULT_FRAME_TIME_MS = 10
 
 type SrsRtmpJitter struct {
-	lastPktTime			int64
-	lastPktCorrectTime	int64
+	lastPktTime        int64
+	lastPktCorrectTime int64
 }
 
 func NewSrsRtmpJitter() *SrsRtmpJitter {
 	return &SrsRtmpJitter{
-		lastPktCorrectTime:-1,
-		lastPktTime:0,
+		lastPktCorrectTime: -1,
+		lastPktTime:        0,
 	}
 }
 
@@ -58,7 +59,7 @@ func (this *SrsRtmpJitter) Correct(msg *rtmp.SrsRtmpMessage, ag SrsRtmpJitterAlg
 	*     is used to detect next jitter.
 	* 3. last_pkt_correct_time: simply add the positive delta,
 	*     and enforce the time monotonically.
-	*/
+	 */
 
 	timestamp := msg.GetHeader().GetTimestamp()
 	delta := timestamp - this.lastPktTime
@@ -66,7 +67,7 @@ func (this *SrsRtmpJitter) Correct(msg *rtmp.SrsRtmpMessage, ag SrsRtmpJitterAlg
 		delta = DEFAULT_FRAME_TIME_MS
 	}
 
-	if this.lastPktCorrectTime + delta > 0 {
+	if this.lastPktCorrectTime+delta > 0 {
 		this.lastPktCorrectTime = this.lastPktCorrectTime + delta
 	}
 	msg.GetHeader().SetTimestamp(this.lastPktCorrectTime)
@@ -77,4 +78,3 @@ func (this *SrsRtmpJitter) Correct(msg *rtmp.SrsRtmpMessage, ag SrsRtmpJitterAlg
 func (this *SrsRtmpJitter) GetTime() int64 {
 	return this.lastPktCorrectTime
 }
-

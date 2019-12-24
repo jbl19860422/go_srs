@@ -25,9 +25,9 @@ package app
 
 import (
 	"errors"
-	"go_srs/srs/protocol/rtmp"
-	"go_srs/srs/protocol/packet"
 	log "github.com/sirupsen/logrus"
+	"go_srs/srs/protocol/packet"
+	"go_srs/srs/protocol/rtmp"
 )
 
 type ConsumerStopListener interface {
@@ -38,23 +38,24 @@ type SrsConsumer struct {
 	source          *SrsSource
 	conn            *SrsRtmpConn
 	queue           *SrsMessageQueue
-	StreamId		int
+	StreamId        int
 	queueRecvThread *SrsQueueRecvThread
-	consuming 		bool
+	consuming       bool
 }
 
 func NewSrsConsumer(s *SrsSource, c *SrsRtmpConn) Consumer {
 	//todo
 	consumer := &SrsConsumer{
-		queue:  NewSrsMessageQueue(),
-		source: s,
-		conn:   c,
+		queue:    NewSrsMessageQueue(),
+		source:   s,
+		conn:     c,
 		StreamId: 1,
 	}
 	consumer.queueRecvThread = NewSrsQueueRecvThread(consumer, c.rtmp)
 	consumer.queueRecvThread.Start()
 	return consumer
 }
+
 //有两个协程需要处理，这里的cycle和queueRecvThread
 func (this *SrsConsumer) OnPublish() error {
 	return nil
@@ -66,7 +67,7 @@ func (this *SrsConsumer) OnUnpublish() error {
 
 func (this *SrsConsumer) ConsumeCycle() error {
 	for {
-		for !this.queueRecvThread.Empty() {//process signal message
+		for !this.queueRecvThread.Empty() { //process signal message
 			msg := this.queueRecvThread.GetMsg()
 			if msg != nil {
 				err := this.processPlayControlMsg(msg)
@@ -104,25 +105,27 @@ func (this *SrsConsumer) OnRecvError(err error) {
 
 func (this *SrsConsumer) processPlayControlMsg(msg *rtmp.SrsRtmpMessage) error {
 	if !msg.GetHeader().IsAmf0Command() && !msg.GetHeader().IsAmf3Command() {
-		//ignore 
+		//ignore
 		return nil
 	}
-	
+
 	pkt, err := this.conn.rtmp.DecodeMessage(msg)
 	if err != nil {
 		return err
 	}
-	//todo add callpacket 
+	//todo add callpacket
 	//todo process pause message
 	switch pkt.(type) {
-	case *packet.SrsCloseStreamPacket:{
-		//todo fix close stream action
-		return errors.New("get close stream packet")
-	}
-	case *packet.SrsPausePacket:{
-		//todo pause stream
-		return nil
-	}
+	case *packet.SrsCloseStreamPacket:
+		{
+			//todo fix close stream action
+			return errors.New("get close stream packet")
+		}
+	case *packet.SrsPausePacket:
+		{
+			//todo pause stream
+			return nil
+		}
 	}
 	return nil
 }
@@ -131,4 +134,3 @@ func (this *SrsConsumer) processPlayControlMsg(msg *rtmp.SrsRtmpMessage) error {
 func (this *SrsConsumer) Enqueue(msg *rtmp.SrsRtmpMessage, atc bool, jitterAlgorithm *SrsRtmpJitterAlgorithm) {
 	this.queue.Enqueue(msg)
 }
-

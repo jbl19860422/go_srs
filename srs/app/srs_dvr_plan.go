@@ -23,9 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
+	"fmt"
 	"go_srs/srs/app/config"
 	"go_srs/srs/protocol/rtmp"
-	"fmt"
 )
 
 type SrsDvrPlan interface {
@@ -47,13 +47,13 @@ func NewSrsDvrPlan(req *SrsRequest) SrsDvrPlan {
 }
 
 type SrsAppendDvrPlan struct {
-	lastUpdateTime 	int64
-	segment 		*SrsFlvSegment
+	lastUpdateTime int64
+	segment        *SrsFlvSegment
 }
 
 func NewSrsAppendDvrPlan(req *SrsRequest) *SrsAppendDvrPlan {
 	return &SrsAppendDvrPlan{
-		segment:NewSrsFlvSegment(req),
+		segment: NewSrsFlvSegment(req),
 	}
 }
 
@@ -77,14 +77,13 @@ func (this *SrsAppendDvrPlan) OnAudio(audio *rtmp.SrsRtmpMessage) error {
 	return this.segment.WriteAudio(audio)
 }
 
-
 type SrsSessionDvrPlan struct {
 	segment *SrsFlvSegment
 }
 
 func NewSrsSessionDvrPlan(req *SrsRequest) *SrsSessionDvrPlan {
 	return &SrsSessionDvrPlan{
-		segment:NewSrsFlvSegment(req),
+		segment: NewSrsFlvSegment(req),
 	}
 }
 

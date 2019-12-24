@@ -41,7 +41,7 @@ type SrsTsPayloadPMTESInfo struct {
 		program element
 	*/
 	elementaryPID int16 //13bits
-	const1Value1 int8  //4bits
+	const1Value1  int8  //4bits
 	/*
 		This is a 12-bit field, the first two bits of which shall be '00'. The remaining 10 bits specify the number
 		of bytes of the descriptors of the associated program element immediately following the ES_info_length field.
@@ -52,11 +52,11 @@ type SrsTsPayloadPMTESInfo struct {
 
 func NewSrsTsPayloadPMTESInfo(s SrsTsStream, pid int16) *SrsTsPayloadPMTESInfo {
 	return &SrsTsPayloadPMTESInfo{
-		streamType:s,
-		elementaryPID:pid,
-		const1Value0:0x07,
-		const1Value1:0x0f,
-		ESInfoLength:0,
+		streamType:    s,
+		elementaryPID: pid,
+		const1Value0:  0x07,
+		const1Value1:  0x0f,
+		ESInfoLength:  0,
 	}
 }
 
@@ -120,8 +120,8 @@ type SrsTsPayloadPMT struct {
 	/*
 		The value of this 8-bit field shall be 0x00.
 	*/
-	lastSectionNumber 	int8
-	const1Value1		int8 //3bits
+	lastSectionNumber int8
+	const1Value1      int8 //3bits
 	/*
 		This is a 13-bit field indicating the PID of the Transport Stream packets which shall contain the PCR fields
 		valid for the program specified by program_number. If no PCR is associated with a program definition for private
@@ -145,44 +145,44 @@ type SrsTsPayloadPMT struct {
 
 func NewSrsTsPayloadPMT(c *SrsTsContext, p *SrsTsPacket) *SrsTsPayloadPMT {
 	return &SrsTsPayloadPMT{
-		psiHeader: NewSrsTsPayloadPSI(p),
-		const1Value0:0x3,
-		const1Value1:0x7,
-		const1Value2:0x0f,
-		infoes:make([]*SrsTsPayloadPMTESInfo, 0),
-		context:c,
+		psiHeader:    NewSrsTsPayloadPSI(p),
+		const1Value0: 0x3,
+		const1Value1: 0x7,
+		const1Value2: 0x0f,
+		infoes:       make([]*SrsTsPayloadPMTESInfo, 0),
+		context:      c,
 	}
 }
 
 func (this *SrsTsPayloadPMT) Encode(stream *utils.SrsStream) {
-	s := utils.NewSrsStream([]byte{})//4
-	this.psiHeader.Encode(s) //5
+	s := utils.NewSrsStream([]byte{}) //4
+	this.psiHeader.Encode(s)          //5
 	s.WriteInt16(this.programNumber, binary.BigEndian)
 
 	var b byte = 0
 	b |= byte(this.currentNextIndicator & 0x01)
 	b |= byte((this.versionNumber << 1) & 0x3e)
-	b |= byte(this.const1Value0 << 6) & 0xC0
+	b |= byte(this.const1Value0<<6) & 0xC0
 	s.WriteByte(b)
-	
+
 	s.WriteByte(byte(this.sectionNumber))
-	s.WriteByte(byte(this.lastSectionNumber))//5  E1
+	s.WriteByte(byte(this.lastSectionNumber)) //5  E1
 
 	var ppv int16 = this.PCR_PID & 0x1FFF
 	ppv |= int16((int32(this.const1Value1) << 13) & 0xE000)
 	s.WriteInt16(ppv, binary.BigEndian)
 
 	var pilv int16 = this.programInfoLength & 0xFFF
-    pilv |= int16((int32(this.const1Value2) << 12) & 0xF000)
+	pilv |= int16((int32(this.const1Value2) << 12) & 0xF000)
 	s.WriteInt16(pilv, binary.BigEndian)
 
 	if this.programInfoLength > 0 {
-		//todo check length 
+		//todo check length
 		s.WriteBytes(this.programDescriptor)
 	}
 
 	for i := 0; i < len(this.infoes); i++ {
-		this.infoes[i].Encode(s)//4
+		this.infoes[i].Encode(s) //4
 		switch this.infoes[i].streamType {
 		case SrsTsStreamVideoH264, SrsTsStreamVideoMpeg4:
 			this.context.Set(int(this.infoes[i].elementaryPID), SrsTsPidApplyVideo, this.infoes[i].streamType)
@@ -192,9 +192,9 @@ func (this *SrsTsPayloadPMT) Encode(stream *utils.SrsStream) {
 	}
 
 	CRC32 := utils.MpegtsCRC32(s.Data()[1:])
-	s.WriteInt32(int32(CRC32), binary.BigEndian)//4
+	s.WriteInt32(int32(CRC32), binary.BigEndian) //4
 	stream.WriteBytes(s.Data())
-	if len(stream.Data()) + 4 < 188 {
+	if len(stream.Data())+4 < 188 {
 		i := 188 - len(stream.Data()) - 4
 		for j := 0; j < i; j++ {
 			stream.WriteByte(0xff)

@@ -23,27 +23,27 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package app
 
 import (
-	"go_srs/srs/codec/flv"
 	"fmt"
+	"go_srs/srs/codec/flv"
 	"go_srs/srs/protocol/rtmp"
 	"net/http"
 )
 
 type SrsHttpFlvConsumer struct {
-	source          *SrsSource
-	queue           *SrsMessageQueue
-	StreamId		int
-	writer			http.ResponseWriter
-	flvEncoder		*flvcodec.SrsFlvEncoder
+	source     *SrsSource
+	queue      *SrsMessageQueue
+	StreamId   int
+	writer     http.ResponseWriter
+	flvEncoder *flvcodec.SrsFlvEncoder
 }
 
 func NewSrsHttpFlvConsumer(s *SrsSource, w http.ResponseWriter, r *http.Request) *SrsHttpFlvConsumer {
 	return &SrsHttpFlvConsumer{
-		source:s,
-		writer:w,
-		queue:NewSrsMessageQueue(),
-		StreamId:0,
-		flvEncoder:flvcodec.NewSrsFlvEncoder(w),
+		source:     s,
+		writer:     w,
+		queue:      NewSrsMessageQueue(),
+		StreamId:   0,
+		flvEncoder: flvcodec.NewSrsFlvEncoder(w),
 	}
 }
 
@@ -59,7 +59,7 @@ func (this *SrsHttpFlvConsumer) ConsumeCycle() error {
 	this.flvEncoder.WriteHeader()
 	go func() {
 		notify := this.writer.(http.CloseNotifier).CloseNotify()
-		<- notify
+		<-notify
 		this.StopConsume()
 	}()
 	this.writer.Header().Set("Content-Type", "video/x-flv")

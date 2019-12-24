@@ -33,4 +33,3 @@ func (this *StatsConf) initDefault() {
 		this.Enabled = "off"
 	}
 }
-

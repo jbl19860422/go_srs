@@ -24,15 +24,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 package kbps
 
 type SrsKbps struct {
-	in		ISrsIOStatistic
-	out 	ISrsIOStatistic
+	in  ISrsIOStatistic
+	out ISrsIOStatistic
 }
 
 func NewSrsKbps() *SrsKbps {
 	return &SrsKbps{}
 }
 
-func(this *SrsKbps) SetStatisticIo(in ISrsIOStatistic, out ISrsIOStatistic) error {
+func (this *SrsKbps) SetStatisticIo(in ISrsIOStatistic, out ISrsIOStatistic) error {
 	this.in = in
 	this.out = out
 	return nil
