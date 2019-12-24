@@ -135,10 +135,10 @@ func (this *SrsAmf0Object) IsMyType(stream *utils.SrsStream) (bool, error) {
 		return false, err
 	}
 
-	if marker != RTMP_AMF0_Object {
-		return false, nil
+	if marker == RTMP_AMF0_Object {
+		return true, nil
 	}
-	return true, nil
+	return false, nil
 }
 
 func (this *SrsAmf0Object) Set(name string, value interface{}) {

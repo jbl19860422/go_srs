@@ -54,10 +54,10 @@ func (this *SrsAmf0Undefined) IsMyType(stream *utils.SrsStream) (bool, error) {
 		return false, err
 	}
 
-	if marker != RTMP_AMF0_Undefined {
-		return false, nil
+	if marker == RTMP_AMF0_Undefined {
+		return true, nil
 	}
-	return true, nil
+	return false, nil
 }
 
 func (this *SrsAmf0Undefined) GetValue() interface{} {

@@ -70,11 +70,11 @@ func (this *SrsAmf0ObjectEOF) IsMyType(stream *utils.SrsStream) (bool, error) {
 		return false, err
 	}
 
-	if b[0] != 0x00 || b[1] != 0x00 || b[2] != 0x09 {
-		return false, nil
+	if b[0] == 0x00 && b[1] == 0x00 && b[2] == 0x09 {
+		return true, nil
 	}
 
-	return true, nil
+	return false, nil
 }
 
 func (this *SrsAmf0ObjectEOF) GetValue() interface{} {

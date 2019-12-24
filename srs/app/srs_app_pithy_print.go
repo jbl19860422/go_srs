@@ -42,6 +42,18 @@ func NewSrsStageInfo(stage_id int64) *SrsStageInfo {
 	}
 }
 
+func(this *SrsStageInfo) Elapse(diff int64) {
+
+}
+
+func(this *SrsStageInfo) CanPrint() bool {
+	return true
+}
+
+func(this *SrsStageInfo) OnReloadPithyPrint() {
+
+}
+
 type SrsPithyPrint struct {
 	client_id 		int64
 	stage_id 		int64

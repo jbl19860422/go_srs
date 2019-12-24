@@ -167,10 +167,10 @@ func (this *SrsAmf0EcmaArray) IsMyType(stream *utils.SrsStream) (bool, error) {
 		return false, err
 	}
 
-	if marker != RTMP_AMF0_EcmaArray {
-		return false, nil
+	if marker == RTMP_AMF0_EcmaArray {
+		return true, nil
 	}
-	return true, nil
+	return false, nil
 }
 
 func (this *SrsAmf0EcmaArray) Remove(name string) {

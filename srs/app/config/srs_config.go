@@ -241,6 +241,7 @@ func(this *SrsConfig) GetPithyPrintMs() int64 {
 	if this.pithy_print_ms == 0 {
 		return SRS_CONF_DEFAULT_PITHY_PRINT_MS
 	}
+
 	return this.pithy_print_ms
 }
 

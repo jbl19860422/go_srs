@@ -59,10 +59,10 @@ func (this *SrsAmf0Null) IsMyType(stream *utils.SrsStream) (bool, error) {
 		return false, err
 	}
 
-	if marker != RTMP_AMF0_Null {
-		return false, nil
+	if marker == RTMP_AMF0_Null {
+		return true, nil
 	}
-	return true, nil
+	return false, nil
 }
 
 func (this *SrsAmf0Null) GetValue() interface{} {
