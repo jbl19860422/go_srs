@@ -66,7 +66,7 @@ func NewSrsRtmpConn(c net.Conn, s *SrsServer) *SrsRtmpConn {
 		exitMonitor: make(chan bool),
 		expire:      make(chan bool),
 	}
-	rtmpConn.kbps.SetStatisticIo(io, io)
+	rtmpConn.kbps.SetIO(io, io)
 	rtmpConn.rtmp = rtmp.NewSrsRtmpServer(io, rtmpConn)
 	return rtmpConn
 }
@@ -457,6 +457,10 @@ func (this *SrsRtmpConn) startMonitor() error {
 func (this *SrsRtmpConn) stopMonitor() error {
 	close(this.exitMonitor)
 	return nil
+}
+
+func (this *SrsRtmpConn) resample() {
+	this.kbps.Resample()
 }
 
 func (this *SrsRtmpConn) Playing(source *SrsSource) {

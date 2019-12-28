@@ -277,6 +277,10 @@ func GetCurrentMs() int64 {
 	return time.Now().UnixNano() / 1e6
 }
 
+func SystemTimeMs() int64 {
+	return time.Now().UnixNano() / 1e6
+}
+
 func GetNalus(stream *SrsStream) []([]byte) {
 	payload := stream.PeekLeftBytes()
 
