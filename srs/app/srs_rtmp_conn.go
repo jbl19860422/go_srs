@@ -175,8 +175,8 @@ func (this *SrsRtmpConn) doCycle() error {
 	}
 
 	m, _ := url.ParseQuery(u.RawQuery)
-	this.req.vhost = this.req.host
-	vhost, ok := m["vhost"]
+	this.req.vhost = this.req.host	// set default vhost
+	vhost, ok := m["vhost"]			// if the url param has vhost=xxx.xxx param, then use this as the vhost
 	if ok {
 		this.req.vhost = vhost[0]
 	}
